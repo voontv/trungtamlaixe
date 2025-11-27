@@ -36,8 +36,10 @@ namespace Ttlaixe.AutoConfig
 
         private static readonly MapperConfiguration mapperConfiguration = new MapperConfiguration(x =>
         {
-            //x.CreateMap<SysUserResponse, SysUser>();
-            //x.CreateMap<SysUser, SysUserResponse>();
+            x.CreateMap<KhoaHocCreateRequest, KhoaHoc>();
+            x.CreateMap<KhoaHoc, KhoaHocCreateRequest>();
+            x.CreateMap<DmDvhcResponse, DmDvhc>();
+            x.CreateMap<DmDvhc, DmDvhcResponse>();
         });
 
         private static readonly IMapper mapper = mapperConfiguration.CreateMapper();

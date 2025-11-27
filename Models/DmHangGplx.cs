@@ -56,4 +56,6 @@ public partial class DmHangGplx
     public string MoTaVncu { get; set; }
 
     public string MoTaEncu { get; set; }
+
+    public virtual ICollection<KhoaHoc> KhoaHocs { get; set; } = new List<KhoaHoc>();
 }
