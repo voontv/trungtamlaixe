@@ -67,4 +67,6 @@ public partial class DmHangDt
     public virtual ICollection<DmHangDtMonHoc> DmHangDtMonHocs { get; set; } = new List<DmHangDtMonHoc>();
 
     public virtual ICollection<KhoaHoc> KhoaHocs { get; set; } = new List<KhoaHoc>();
+
+    public virtual ICollection<NguoiLxHoSo> NguoiLxHoSos { get; set; } = new List<NguoiLxHoSo>();
 }

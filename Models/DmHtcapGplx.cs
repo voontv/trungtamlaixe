@@ -20,4 +20,6 @@ public partial class DmHtcapGplx
     public DateTime NgayTao { get; set; }
 
     public DateTime NgaySua { get; set; }
+
+    public virtual ICollection<NguoiLxHoSo> NguoiLxHoSos { get; set; } = new List<NguoiLxHoSo>();
 }

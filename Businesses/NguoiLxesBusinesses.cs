@@ -1,0 +1,162 @@
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
+using Ttlaixe.AutoConfig;
+using Ttlaixe.DTO.request;
+using Ttlaixe.Models;
+using Ttlaixe.OracleBusinesses;
+using Ttlaixe.Providers;
+using Ttlaixe.LibsStartup;
+using System.Text.RegularExpressions;
+namespace Ttlaixe.Businesses
+{
+    [ImplementBy(typeof(NguoiLxesBusinesses))]
+    public interface INguoiLxesBusinesses
+    {
+        Task<NguoiLx> CreateAsync(NguoiLxCreateRequest request);
+    }
+
+    public class NguoiLxesBusinesses : ControllerBase, INguoiLxesBusinesses
+    {
+        private readonly GplxCsdtContext _context;
+        private readonly ITokenGenerator _tokenGenerator;
+        private readonly IAuthenInfo _authenInfo;
+        public NguoiLxesBusinesses(GplxCsdtContext context, ITokenGenerator tokenGenerator, IAuthenInfo authenInfo)
+        {
+            _context = context;
+            _tokenGenerator = tokenGenerator;
+            _authenInfo = authenInfo;
+        }
+
+        public async Task<NguoiLx> CreateAsync(NguoiLxCreateRequest rq)
+        {
+            var now = DateTime.Now;
+            var user = _authenInfo.Get();
+
+            // ============= 0. Sinh MaDK = <MaCSDT>-<yyyyMMddHHmmssfff> =============
+            // Ví dụ: 48012-20250419150455500
+            var maDk = $"{Constants.MaCSDT}-{now:yyyyMMddHHmmssfff}";
+
+            // ============= 1. Tạo NguoiLx =============
+            var nguoi = new NguoiLx
+            {
+                MaDk = maDk,
+                HoDemNlx = rq.HoDemNlx?.Trim(),
+                TenNlx = rq.TenNlx?.Trim()
+            };
+
+            nguoi.HoVaTen = $"{nguoi.HoDemNlx} {nguoi.TenNlx}".Trim();
+            nguoi.HoVaTenIn = nguoi.HoVaTen.ToUpper();
+
+            nguoi.MaQuocTich = string.IsNullOrWhiteSpace(rq.MaQuocTich)
+                ? "VNM"
+                : rq.MaQuocTich;
+            nguoi.NgaySinh = rq.NgaySinh;   // "YYYYMMDD"
+
+            // Thường trú
+            nguoi.NoiTt = rq.NoiTt;
+            nguoi.NoiTtMaDvhc = rq.NoiTtMaDvhc;
+            nguoi.NoiTtMaDvql = rq.NoiTtMaDvql;
+
+            // Cư trú
+            nguoi.NoiCt = rq.NoiCt;
+            nguoi.NoiCtMaDvhc = rq.NoiCtMaDvhc;
+            nguoi.NoiCtMaDvql = rq.NoiCtMaDvql;
+
+            // CMT/CCCD
+            nguoi.SoCmt = rq.SoCmt;
+            nguoi.NgayCapCmt = rq.NgayCapCmt;
+            nguoi.NoiCapCmt = rq.NoiCapCmt;
+
+            nguoi.GhiChu = rq.GhiChu;
+            nguoi.GioiTinh = rq.GioiTinh;
+            nguoi.SoCmndCu = rq.SoCmndCu;
+
+            // Metadata
+            nguoi.TrangThai = true;
+            //nguoi.NguoiTao = user?.UserId;
+            //nguoi.NguoiSua = user?.UserId;
+            nguoi.NgayTao = now;
+            nguoi.NgaySua = now;
+            nguoi.HosoDvcc4 = 0;
+
+            // ============= 2. Sinh SoHoSo (001, 002, ..., 029, ...) =============
+            var lastSoHoSo = await _context.NguoiLxHoSos
+                .Where(x => x.MaCsdt == Constants.MaCSDT)
+                .OrderByDescending(x => x.SoHoSo)
+                .Select(x => x.SoHoSo)
+                .FirstOrDefaultAsync();
+
+            int nextSoHoSoNumber = 1;
+            if (!string.IsNullOrEmpty(lastSoHoSo) && int.TryParse(lastSoHoSo, out var parsed))
+            {
+                nextSoHoSoNumber = parsed + 1;
+            }
+
+            var soHoSo = nextSoHoSoNumber.ToString("D3"); // ví dụ "029"
+
+            // ============= 3. Tạo NguoiLxHoSo =============
+            var maLoaiHs = rq.MaLoaiHs.HasValue && rq.MaLoaiHs.Value > 0
+                ? rq.MaLoaiHs.Value
+                : 3;   // ví dụ: 3 = hồ sơ đào tạo mới
+
+            var hoSo = new NguoiLxHoSo
+            {
+                MaDk = maDk,
+                SoHoSo = soHoSo,
+                MaCsdt = Constants.MaCSDT,
+                MaSoGtvt = Constants.MaSoGTVT,
+                MaDvnhanHso = Constants.MaCSDT,
+
+                NgayNhanHso = now,
+                MaLoaiHs = maLoaiHs,
+                TtXuLy = "1",   // trạng thái xử lý ban đầu, tùy DM_TrangThai
+
+                DonViHocLx = rq.DonViHocLx,
+                NamHocLx = rq.NamHocLx,
+                HangGplx = rq.HangGplx,     // hạng đề nghị cấp
+                HangDaoTao = rq.HangDaoTao,   // hạng đào tạo
+                MaKhoaHoc = rq.MaKhoaHoc,
+
+                GiayCnsk = false,
+                TransferFlag = 0,
+                HosoDvcc4 = 0,
+                TrangThai = true,
+
+                //NguoiTao = user?.UserId,
+                //NguoiSua = user?.UserId,
+                NgayTao = now,
+                NgaySua = now
+            };
+
+            // ============= 4. Tạo list giấy tờ NguoiLxhsGiayTo từ request =============
+            if (rq.GiayTos != null && rq.GiayTos.Count > 0)
+            {
+                foreach (var gt in rq.GiayTos)
+                {
+                    var gtHoSo = new NguoiLxhsGiayTo
+                    {
+                        MaGt = gt.MaGt,
+                        MaDk = maDk,
+                        SoHoSo = soHoSo,
+                        TenGt = gt.TenGt,
+                        TrangThai = true
+                    };
+
+                    _context.NguoiLxhsGiayTos.Add(gtHoSo);
+                }
+            }
+
+            // ============= 5. Lưu tất cả vào DB =============
+            _context.NguoiLxes.Add(nguoi);
+            _context.NguoiLxHoSos.Add(hoSo);
+
+            await _context.SaveChangesAsync();
+
+            return nguoi;
+        }
+
+    }
+}

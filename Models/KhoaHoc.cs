@@ -112,4 +112,6 @@ public partial class KhoaHoc
     public virtual DmHangDt HangDtNavigation { get; set; }
 
     public virtual DmHangGplx HangGplxNavigation { get; set; }
+
+    public virtual ICollection<NguoiLxHoSo> NguoiLxHoSos { get; set; } = new List<NguoiLxHoSo>();
 }

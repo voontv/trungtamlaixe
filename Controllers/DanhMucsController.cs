@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Ttlaixe.Models;
 using Ttlaixe.Businesses;
+using Ttlaixe.DTO.response;
 
 namespace Ttlaixe.Controllers
 {
@@ -17,20 +18,31 @@ namespace Ttlaixe.Controllers
             _business = business;
         }
 
-        /* GET: api/BenhAns
-        [HttpGet]
-        public async Task<List<BenhAn>> GetLstBenhAn()
+
+        [HttpGet("diem-sat-hach/{hang}")]
+        public async Task<List<DmDiemSatHach>> GetDmDiemSatHach(string hang)
         {
-            return await _business.GetLstBenhAn();
+            return await _business.GetDmDiemSatHach(hang);
+        }
+        
+        [HttpGet("don-vi-hanh-chinh")]
+        public async Task<List<DmDvhcResponse>> GetDmDonViHanhChinh()
+        {
+            return await _business.GetDmDonViHanhChinh();
         }
 
-        // GET: api/BenhAns/5
-        [HttpGet("{id}")]
-        public async Task<object> GetData_BenhAn_Va_Phong_Giuong_ByBenhAn_IdHai(int id)
+        [HttpGet("hang-dao-dao")]
+        public async Task<List<DmHangDaoTaoResponse>> GetDmHangDaoTao()
         {
-           
-            return await _business.GetData_BenhAn_Va_Phong_Giuong_ByBenhAn_IdHai(id);
+            return await _business.GetDmHangDaoTao();
         }
-        */
+
+        [HttpGet("loai-ho-so-giay-to/{maHangGPLX}")]
+        public async Task<List<DmLoaiHsoGiayToResponse>> GetDmLoaiHsoGiayTo(string maHangGPLX)
+        {
+            return await _business.GetDmLoaiHsoGiayTo(maHangGPLX);
+        }
+
+    
     }
 }

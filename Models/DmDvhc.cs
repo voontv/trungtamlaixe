@@ -32,4 +32,8 @@ public partial class DmDvhc
     public DateTime NgaySua { get; set; }
 
     public byte[] RowVersion { get; set; }
+
+    public virtual ICollection<NguoiLx> NguoiLxNoiCtMaDvs { get; set; } = new List<NguoiLx>();
+
+    public virtual ICollection<NguoiLx> NguoiLxNoiTtMaDvs { get; set; } = new List<NguoiLx>();
 }

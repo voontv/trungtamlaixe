@@ -1,17 +1,11 @@
-﻿using Dapper;
+﻿
 using Ttlaixe.AutoConfig;
-using Ttlaixe.DTO.request;
 using Ttlaixe.DTO.response;
-using Ttlaixe.Exceptions;
 using Ttlaixe.Models;
 using Ttlaixe.OracleBusinesses;
-using Ttlaixe.Providers;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using System;
 using System.Collections.Generic;
-using System.Data.Common;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -23,16 +17,15 @@ namespace Ttlaixe.Businesses
         Task<List<DmDiemSatHach>> GetDmDiemSatHach(string hang);
         Task<List<DmDvhcResponse>> GetDmDonViHanhChinh();
         Task<List<DmHangDaoTaoResponse>> GetDmHangDaoTao();
+        Task<List<DmLoaiHsoGiayToResponse>> GetDmLoaiHsoGiayTo(string maHangGPLX);
     }
     public class DanhMucsBusinesses : ControllerBase, IDanhMucsBusinesses
     {
         private readonly GplxCsdtContext _context;
-        private readonly ITokenGenerator _tokenGenerator;
         private readonly IAuthenInfo _authenInfo;
-        public DanhMucsBusinesses(GplxCsdtContext context, ITokenGenerator tokenGenerator, IAuthenInfo authenInfo)
+        public DanhMucsBusinesses(GplxCsdtContext context, IAuthenInfo authenInfo)
         {
             _context = context;
-            _tokenGenerator = tokenGenerator;
             _authenInfo = authenInfo;
         }
         
@@ -67,6 +60,19 @@ namespace Ttlaixe.Businesses
                 TuoiHv = x.TuoiHv,
                 ThamNien = x.ThamNien
             })
+                .ToListAsync();
+        }
+
+        public async Task<List<DmLoaiHsoGiayToResponse>> GetDmLoaiHsoGiayTo(string maHangGPLX)
+        {
+            return await _context.DmLoaiHsoGiayTos.Where(x => x.TrangThai == true && x.MaHangGplx == maHangGPLX)
+                .Select(x => new DmLoaiHsoGiayToResponse
+                {
+                    MaGt = x.MaGt,
+                    MaLoaiHs = x.MaLoaiHs,
+                    MaHangGplx = x.MaHangGplx,
+                    TenGt = x.TenGt
+                })
                 .ToListAsync();
         }
     }

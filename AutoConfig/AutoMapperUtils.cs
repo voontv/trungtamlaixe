@@ -40,6 +40,8 @@ namespace Ttlaixe.AutoConfig
             x.CreateMap<KhoaHoc, KhoaHocCreateRequest>();
             x.CreateMap<DmDvhcResponse, DmDvhc>();
             x.CreateMap<DmDvhc, DmDvhcResponse>();
+            x.CreateMap<NguoiLxCreateRequest, NguoiLx>();
+            x.CreateMap<NguoiLx, NguoiLxCreateRequest>();
         });
 
         private static readonly IMapper mapper = mapperConfiguration.CreateMapper();

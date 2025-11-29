@@ -24,4 +24,6 @@ public partial class DmGiayTo
     public DateTime NgayTao { get; set; }
 
     public DateTime NgaySua { get; set; }
+
+    public virtual ICollection<NguoiLxhsGiayTo> NguoiLxhsGiayTos { get; set; } = new List<NguoiLxhsGiayTo>();
 }
