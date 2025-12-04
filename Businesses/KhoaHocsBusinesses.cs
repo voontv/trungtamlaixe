@@ -10,12 +10,16 @@ using Ttlaixe.OracleBusinesses;
 using Ttlaixe.Providers;
 using Ttlaixe.LibsStartup;
 using System.Text.RegularExpressions;
+using System.Collections.Generic;
+using Ttlaixe.DTO.response;
 namespace Ttlaixe.Businesses
 {
     [ImplementBy(typeof(KhoaHocsBusinesses))]
     public interface IKhoaHocsBusinesses
     {
-        Task<KhoaHoc> PostKhoaHoc(KhoaHocCreateRequest khoaHoc);
+        Task<KhoaHocResponse> PostKhoaHoc(KhoaHocCreateRequest khoaHoc);
+
+        Task<List<KhoaHocResponse>> GetListKhoaHocsTheoTg(MocThoiGian dk);
     }
 
     public class KhoaHocsBusinesses: ControllerBase, IKhoaHocsBusinesses
@@ -30,7 +34,7 @@ namespace Ttlaixe.Businesses
             _authenInfo = authenInfo;
         }
 
-        public async Task<KhoaHoc> PostKhoaHoc(KhoaHocCreateRequest khoaHocRq)
+        public async Task<KhoaHocResponse> PostKhoaHoc(KhoaHocCreateRequest khoaHocRq)
         {
             var time = DateTime.Now;
             var maKh = Constants.MaCSDT+"K"+time.Year.ToString()[^2..];//lấy 2 ký tự cuối của năm hiện tại
@@ -60,8 +64,29 @@ namespace Ttlaixe.Businesses
                     throw;
                 }
             }
+            var khoaHocRes = new KhoaHocResponse();
+            khoaHoc.Patch(khoaHocRes);
 
-           return khoaHoc;
+           return khoaHocRes;
+        }
+
+        public async Task<List<KhoaHocResponse>> GetListKhoaHocsTheoTg(MocThoiGian dk)
+        {
+            var result = _context.KhoaHocs.AsQueryable();
+            if(dk.NgayBatDau.HasValue)
+            {
+                result = result.Where(x => x.NgayKg >= dk.NgayBatDau.Value);
+            }
+
+            if (dk.NgayBatDau.HasValue)
+            {
+                result = result.Where(x => x.NgayKg < dk.NgayKetThuc.Value.AddDays(1));
+            }
+            var khoaHocs = await result.OrderByDescending(x => x.NgayKg).ToListAsync();
+            var khoaHocRess = new List<KhoaHocResponse>();
+            khoaHocs.Patch(khoaHocRess);
+
+            return khoaHocRess;
         }
 
         private bool KhoaHocExists(string id)

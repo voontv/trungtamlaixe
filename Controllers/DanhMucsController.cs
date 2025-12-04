@@ -31,11 +31,18 @@ namespace Ttlaixe.Controllers
             return await _business.GetDmDonViHanhChinh();
         }
 
-        [HttpGet("hang-dao-dao")]
-        public async Task<List<DmHangDaoTaoResponse>> GetDmHangDaoTao()
+        [HttpGet("ma-hang-dao-dao")]
+        public async Task<List<string>> GetMaHangDaoTao()
         {
-            return await _business.GetDmHangDaoTao();
+            return await _business.GetMaHangDaoTao();
         }
+
+        [HttpGet("loai-hinh-dao-dao")]
+        public async Task<List<string>> GetDmLoaiHinhDaoTao(string maHangDaoTao)
+        {
+            return await _business.GetDmLoaiHinhDaoTao(maHangDaoTao);
+        }
+
 
         [HttpGet("loai-ho-so-giay-to/{maHangGPLX}")]
         public async Task<List<DmLoaiHsoGiayToResponse>> GetDmLoaiHsoGiayTo(string maHangGPLX)

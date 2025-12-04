@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Ttlaixe.Businesses;
+using Ttlaixe.DTO.request;
+using Ttlaixe.DTO.response;
 using Ttlaixe.Models;
 
 namespace Ttlaixe.Controllers
@@ -21,8 +23,17 @@ namespace Ttlaixe.Controllers
             _business = business;
         }
 
-        
+        [HttpPost]
+        public async Task<NguoiLxResponse> CreateAsync(NguoiLxCreateRequest request)
+        {
+            return await _business.CreateAsync(request);
+        }
 
-        
+        [HttpPut]
+        public async Task<bool> UpdateAsync(NguoiLxResponse request)
+        {
+            return await _business.UpdateAsync(request);
+        }
+
     }
 }

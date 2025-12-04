@@ -16,7 +16,9 @@ namespace Ttlaixe.Businesses
     {
         Task<List<DmDiemSatHach>> GetDmDiemSatHach(string hang);
         Task<List<DmDvhcResponse>> GetDmDonViHanhChinh();
-        Task<List<DmHangDaoTaoResponse>> GetDmHangDaoTao();
+        Task<List<DmHangDaoTaoResponse>> GetDmThongTinHangDaoTao();
+        Task<List<string>> GetMaHangDaoTao();
+        Task<List<string>> GetDmLoaiHinhDaoTao(string maHangDt);
         Task<List<DmLoaiHsoGiayToResponse>> GetDmLoaiHsoGiayTo(string maHangGPLX);
     }
     public class DanhMucsBusinesses : ControllerBase, IDanhMucsBusinesses
@@ -49,7 +51,7 @@ namespace Ttlaixe.Businesses
                 .ToListAsync();
         }
 
-        public async Task<List<DmHangDaoTaoResponse>> GetDmHangDaoTao()
+        public async Task<List<DmHangDaoTaoResponse>> GetDmThongTinHangDaoTao()
         {
             return await _context.DmHangDts.Where(x => x.TrangThai == true).Select(x => new DmHangDaoTaoResponse 
             {
@@ -74,6 +76,16 @@ namespace Ttlaixe.Businesses
                     TenGt = x.TenGt
                 })
                 .ToListAsync();
+        }
+
+        public async Task<List<string>> GetMaHangDaoTao()
+        {
+            return await _context.DmHangDts.Where(x => x.TrangThai == true).Select(x => x.MaHangDt).ToListAsync();
+        }
+
+        public async Task<List<string>> GetDmLoaiHinhDaoTao(string maHangDt)
+        {
+            return await _context.DmHangDts.Where(x => x.HangGplx == maHangDt).Select(x => x.TenHangDt).ToListAsync();
         }
     }
 }
