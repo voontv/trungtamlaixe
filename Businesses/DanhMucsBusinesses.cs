@@ -19,6 +19,7 @@ namespace Ttlaixe.Businesses
         Task<List<DmHangDaoTaoResponse>> GetDmThongTinHangDaoTao();
         Task<List<string>> GetMaHangDaoTao();
         Task<List<string>> GetDmLoaiHinhDaoTao(string maHangDt);
+        Task<List<DmLoaiHsoResponse>> GetDmLoaiHso();
         Task<List<DmLoaiHsoGiayToResponse>> GetDmLoaiHsoGiayTo(string maHangGPLX);
     }
     public class DanhMucsBusinesses : ControllerBase, IDanhMucsBusinesses
@@ -86,6 +87,14 @@ namespace Ttlaixe.Businesses
         public async Task<List<string>> GetDmLoaiHinhDaoTao(string maHangDt)
         {
             return await _context.DmHangDts.Where(x => x.HangGplx == maHangDt).Select(x => x.TenHangDt).ToListAsync();
+        }
+
+        public async Task<List<DmLoaiHsoResponse>> GetDmLoaiHso()
+        {
+            var hsos = new List<DmLoaiHsoResponse>();
+            var result = await _context.DmLoaiHsos.Where(x => x.TrangThai == true).ToListAsync();
+            result.Patch(hsos);
+            return hsos;
         }
     }
 }

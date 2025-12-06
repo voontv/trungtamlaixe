@@ -23,6 +23,12 @@ namespace Ttlaixe.Controllers
             _business = business;
         }
 
+        [HttpGet("thong-tin-nguoi-lai-xe/{maDK}")]
+        public async Task<NguoiLxResponse> GetThongTinNguoiLx(string maDK)
+        {
+            return await _business.GetThongTinNguoiLx(maDK);
+        }
+
         [HttpPost]
         public async Task<NguoiLxResponse> CreateAsync(NguoiLxCreateRequest request)
         {

@@ -4,6 +4,9 @@ namespace Ttlaixe.DTO.request
 {
     public class KhoaHocCreateRequest
     {
+
+        public string MaCsdt { get; set; }
+        public string MaSoGtvt { get; set; }
         public string TenKh { get; set; }
         public string HangGplx { get; set; }
         public string HangDt { get; set; }

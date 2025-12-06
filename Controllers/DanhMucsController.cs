@@ -18,7 +18,6 @@ namespace Ttlaixe.Controllers
             _business = business;
         }
 
-
         [HttpGet("diem-sat-hach/{hang}")]
         public async Task<List<DmDiemSatHach>> GetDmDiemSatHach(string hang)
         {
@@ -43,13 +42,16 @@ namespace Ttlaixe.Controllers
             return await _business.GetDmLoaiHinhDaoTao(maHangDaoTao);
         }
 
+        [HttpGet("loai-ho-so")]
+        public async Task<List<DmLoaiHsoResponse>> GetDmLoaiHso()
+        {
+            return await _business.GetDmLoaiHso();
+        }
 
         [HttpGet("loai-ho-so-giay-to/{maHangGPLX}")]
         public async Task<List<DmLoaiHsoGiayToResponse>> GetDmLoaiHsoGiayTo(string maHangGPLX)
         {
             return await _business.GetDmLoaiHsoGiayTo(maHangGPLX);
-        }
-
-    
+        } 
     }
 }

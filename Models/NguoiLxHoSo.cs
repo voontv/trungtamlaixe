@@ -352,5 +352,7 @@ public partial class NguoiLxHoSo
 
     public virtual KhoaHoc MaKhoaHocNavigation { get; set; }
 
+    public virtual DmLoaiHso MaLoaiHsNavigation { get; set; }
+
     public virtual ICollection<NguoiLxhsGiayTo> NguoiLxhsGiayTos { get; set; } = new List<NguoiLxhsGiayTo>();
 }

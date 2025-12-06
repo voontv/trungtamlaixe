@@ -12,6 +12,7 @@ using Ttlaixe.LibsStartup;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using Ttlaixe.DTO.response;
+using Ttlaixe.Exceptions;
 namespace Ttlaixe.Businesses
 {
     [ImplementBy(typeof(KhoaHocsBusinesses))]
@@ -47,13 +48,14 @@ namespace Ttlaixe.Businesses
             khoaHocRq.Patch(khoaHoc);
             khoaHoc.NgayTao = time;
             khoaHoc.NgaySua = khoaHoc.NgayTao;
+            khoaHoc.MaKh = maKh;
 
             _context.KhoaHocs.Add(khoaHoc);
             try
             {
                 await _context.SaveChangesAsync();
             }
-            catch (DbUpdateException)
+            catch (DbUpdateException e)
             {
                 if (KhoaHocExists(khoaHoc.MaKh))
                 {
@@ -61,7 +63,7 @@ namespace Ttlaixe.Businesses
                 }
                 else
                 {
-                    throw;
+                    throw new BadRequestException("Error found is "+e.Message);
                 }
             }
             var khoaHocRes = new KhoaHocResponse();

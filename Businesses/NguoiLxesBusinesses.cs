@@ -11,6 +11,7 @@ using Ttlaixe.Providers;
 using Ttlaixe.LibsStartup;
 using System.Text.RegularExpressions;
 using Ttlaixe.DTO.response;
+using Ttlaixe.Exceptions;
 namespace Ttlaixe.Businesses
 {
     [ImplementBy(typeof(NguoiLxesBusinesses))]
@@ -19,6 +20,8 @@ namespace Ttlaixe.Businesses
         Task<NguoiLxResponse> CreateAsync(NguoiLxCreateRequest request);
 
         Task<bool> UpdateAsync(NguoiLxResponse rq);
+
+        Task<NguoiLxResponse> GetThongTinNguoiLx(string maDk);
     }
 
     public class NguoiLxesBusinesses : ControllerBase, INguoiLxesBusinesses
@@ -36,8 +39,12 @@ namespace Ttlaixe.Businesses
         public async Task<NguoiLxResponse> CreateAsync(NguoiLxCreateRequest rq)
         {
             var now = DateTime.Now;
-            var user = _authenInfo.Get();
+            //var user = _authenInfo.Get();
 
+            if (await ExistsSoCmtInKhoaHocAsync(rq.MaCsdt, rq.MaKhoaHoc, rq.SoCmt))
+            {
+                throw new BadRequestException("Số CMT này đã tồn tại trong khóa học này.");
+            }
             // ============= 0. Sinh MaDK = <MaCSDT>-<yyyyMMddHHmmssfff> =============
             // Ví dụ: 48012-20250419150455500
             var maDk = $"{Constants.MaCSDT}-{now:yyyyMMddHHmmssfff}";
@@ -46,6 +53,7 @@ namespace Ttlaixe.Businesses
             var nguoi = new NguoiLx
             {
                 MaDk = maDk,
+                DonViNhanHso = rq.MaCsdt,
                 HoDemNlx = rq.HoDemNlx?.Trim(),
                 TenNlx = rq.TenNlx?.Trim()
             };
@@ -84,10 +92,10 @@ namespace Ttlaixe.Businesses
             nguoi.NgayTao = now;
             nguoi.NgaySua = now;
             nguoi.HosoDvcc4 = 0;
-
+            var ttxuly = string.IsNullOrEmpty(rq.DuongDanAnh) ? "01" : "03";
             // ============= 2. Sinh SoHoSo (001, 002, ..., 029, ...) =============
             var lastSoHoSo = await _context.NguoiLxHoSos
-                .Where(x => x.MaCsdt == Constants.MaCSDT)
+                .Where(x => x.MaCsdt == Constants.MaCSDT && x.MaKhoaHoc == rq.MaKhoaHoc)
                 .OrderByDescending(x => x.SoHoSo)
                 .Select(x => x.SoHoSo)
                 .FirstOrDefaultAsync();
@@ -103,7 +111,7 @@ namespace Ttlaixe.Businesses
             // ============= 3. Tạo NguoiLxHoSo =============
             var maLoaiHs = rq.MaLoaiHs.HasValue && rq.MaLoaiHs.Value > 0
                 ? rq.MaLoaiHs.Value
-                : 3;   // ví dụ: 3 = hồ sơ đào tạo mới
+                : 2;   // ví dụ: 3 = hồ sơ đào tạo mới
 
             var hoSo = new NguoiLxHoSo
             {
@@ -115,9 +123,10 @@ namespace Ttlaixe.Businesses
 
                 NgayNhanHso = now,
                 MaLoaiHs = maLoaiHs,
-                TtXuLy = "1",   // trạng thái xử lý ban đầu, tùy DM_TrangThai
 
-                DonViHocLx = rq.DonViHocLx,
+                TtXuLy = ttxuly,
+
+            DonViHocLx = rq.MaCsdt,
                 NamHocLx = rq.NamHocLx,
                 HangGplx = rq.HangGplx,     // hạng đề nghị cấp
                 HangDaoTao = rq.HangDaoTao,   // hạng đào tạo
@@ -219,7 +228,7 @@ namespace Ttlaixe.Businesses
                 : hoSo.MaLoaiHs;
 
             hoSo.MaLoaiHs = maLoaiHs;
-            hoSo.DonViHocLx = rq.DonViHocLx;
+            hoSo.MaCsdt = rq.MaCsdt;
             hoSo.NamHocLx = rq.NamHocLx;
             hoSo.HangGplx = rq.HangGplx;
             hoSo.HangDaoTao = rq.HangDaoTao;
@@ -255,5 +264,30 @@ namespace Ttlaixe.Businesses
             return true;
         }
 
+        public async Task<bool> ExistsSoCmtInKhoaHocAsync(string maCSDT, string maKhoaHoc, string soCmt)
+        {
+            return await (
+                from h in _context.NguoiLxHoSos
+                join n in _context.NguoiLxes
+                    on h.MaDk equals n.MaDk
+                where h.MaDvnhanHso == maCSDT
+                      && h.MaKhoaHoc == maKhoaHoc
+                      && n.SoCmt == soCmt
+                select n
+            ).AnyAsync();
+        }
+
+        public async Task<NguoiLxResponse> GetThongTinNguoiLx(string maDk)
+        {
+            var nguoiLxHoSo = await _context.NguoiLxHoSos.FindAsync(maDk);
+            var nguoiLx = await _context.NguoiLxes.FindAsync(maDk);
+            var nguoiLxGiayTo = await _context.NguoiLxhsGiayTos.Where(x => x.MaDk == maDk).ToListAsync();
+
+            var nguoiLxRes = new NguoiLxResponse();
+            nguoiLxHoSo.Patch(nguoiLxRes);
+            nguoiLx.Patch(nguoiLxRes);
+            nguoiLxGiayTo.Patch(nguoiLxRes.GiayTos);
+            return nguoiLxRes;
+        }
     }
 }
