@@ -41,10 +41,14 @@ namespace Ttlaixe.DTO.response
         public DateTime? NgayThi { get; set; }
 
         public DateTime? NgaySh { get; set; }
+        /// <summary>Loại hồ sơ (DM_LoaiHS), ví dụ: 3 = đào tạo mới</summary>
+        public int? MaLoaiHs { get; set; }
 
         /// <summary>
         /// Tổng số học viên của khóa học
         /// </summary>
+        public int? ThoiGianDt { get; set; }               // ví dụ: 60
+
         public int? TongSoHv { get; set; }
 
         public int? SoHvtotNghiep { get; set; }

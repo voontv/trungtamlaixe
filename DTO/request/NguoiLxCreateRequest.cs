@@ -26,11 +26,7 @@ namespace Ttlaixe.DTO.request
 
         public string SoCmndCu { get; set; }
 
-        // ====== Phần dùng cho hồ sơ ======
-
-        /// <summary>Loại hồ sơ (DM_LoaiHS), ví dụ: 3 = đào tạo mới</summary>
-        public int? MaLoaiHs { get; set; }
-
+   
         /// <summary>Hạng GPLX đề nghị cấp (DM_HangGPLX), vd: B1, C…</summary>
         public string HangGplx { get; set; }
 
@@ -53,10 +49,6 @@ namespace Ttlaixe.DTO.request
         /// </summary>
         public string NoiTtMaDvql { get; set; }
 
-        /// <summary>
-        /// Nơi cư trú. Ghi chi tiết Số nhà/Đường phố/Thôn/Xóm
-        /// </summary>
-        public string NoiCt { get; set; }
 
         /// <summary>
         /// Mã Xã/Phường/Thị Trấn/Quận/Huyện/Thị xã/Thành phố. Ghi MaDvhc trong bảng DM_DVHC
@@ -70,6 +62,17 @@ namespace Ttlaixe.DTO.request
 
         public string DuongDanAnh { get; set; }
         // ====== Danh sách giấy tờ kèm theo hồ sơ ======
+
+        /// <summary>
+        /// Số năm lái xe
+        /// </summary>
+        public int? SoNamLx { get; set; }
+
+        /// <summary>
+        /// Số Km lái xe an toàn
+        /// </summary>
+        public int? SoKmLxanToan { get; set; }
+
         public List<NguoiLxhsCreateRequest> GiayTos { get; set; } = new List<NguoiLxhsCreateRequest>();
     }
 

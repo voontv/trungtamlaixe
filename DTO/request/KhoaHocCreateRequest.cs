@@ -18,7 +18,14 @@ namespace Ttlaixe.DTO.request
         public DateTime? NgayBg { get; set; }
         public string MucTieuDt { get; set; }
 
-        public int? ThoiGianDt { get; set; }               // ví dụ: 60
+        public int? TongSoHv { get; set; }
+
+        /// <summary>
+        /// Ngày thi
+        /// </summary>
+        public DateTime? NgayThi { get; set; }
+
+        public DateTime? NgaySh { get; set; }
         public string GhiChu { get; set; }                 // optional
     }
 

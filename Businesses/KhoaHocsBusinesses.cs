@@ -21,6 +21,8 @@ namespace Ttlaixe.Businesses
         Task<KhoaHocResponse> PostKhoaHoc(KhoaHocCreateRequest khoaHoc);
 
         Task<List<KhoaHocResponse>> GetListKhoaHocsTheoTg(MocThoiGian dk);
+
+        Task<object> GetThongTinKhoaHoc(string MaKhoaHoc);
     }
 
     public class KhoaHocsBusinesses: ControllerBase, IKhoaHocsBusinesses
@@ -37,6 +39,7 @@ namespace Ttlaixe.Businesses
 
         public async Task<KhoaHocResponse> PostKhoaHoc(KhoaHocCreateRequest khoaHocRq)
         {
+            var thoiGiandt = await _context.DmHangDts.FindAsync(khoaHocRq.HangDt);
             var time = DateTime.Now;
             var maKh = Constants.MaCSDT+"K"+time.Year.ToString()[^2..];//lấy 2 ký tự cuối của năm hiện tại
             maKh+= Regex.Replace(khoaHocRq.HangDt, @"[^\w\s]", "");
@@ -49,7 +52,7 @@ namespace Ttlaixe.Businesses
             khoaHoc.NgayTao = time;
             khoaHoc.NgaySua = khoaHoc.NgayTao;
             khoaHoc.MaKh = maKh;
-
+            khoaHoc.ThoiGianDt = thoiGiandt.ThoiGianDaoTao;
             _context.KhoaHocs.Add(khoaHoc);
             try
             {
@@ -90,10 +93,19 @@ namespace Ttlaixe.Businesses
 
             return khoaHocRess;
         }
+        
 
         private bool KhoaHocExists(string id)
         {
             return _context.KhoaHocs.Any(e => e.MaKh == id);
+        }
+
+        public async Task<object> GetThongTinKhoaHoc(string MaKhoaHoc)
+        {
+            var khoaHoc = await _context.KhoaHocs.FindAsync(MaKhoaHoc);
+            var result = new KhoaHocResponse();
+            khoaHoc.Patch(result);
+            return result;
         }
     }
 }

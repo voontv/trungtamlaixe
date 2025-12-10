@@ -30,16 +30,16 @@ namespace Ttlaixe.Controllers
             return await _business.GetDmDonViHanhChinh();
         }
 
-        [HttpGet("ma-hang-dao-dao")]
+        [HttpGet("ma-hang-gplx")]
         public async Task<List<string>> GetMaHangDaoTao()
         {
-            return await _business.GetMaHangDaoTao();
+            return await _business.GetHangGPLX();
         }
 
-        [HttpGet("loai-hinh-dao-dao")]
-        public async Task<List<string>> GetDmLoaiHinhDaoTao(string maHangDaoTao)
+        [HttpGet("loai-hinh-dao-tao/{maGplx}")]
+        public async Task<List<string>> GetDmLoaiHinhDaoTao(string maGplx)
         {
-            return await _business.GetDmLoaiHinhDaoTao(maHangDaoTao);
+            return await _business.GetHangDaoTao(maGplx);
         }
 
         [HttpGet("loai-ho-so")]
@@ -52,6 +52,12 @@ namespace Ttlaixe.Controllers
         public async Task<List<DmLoaiHsoGiayToResponse>> GetDmLoaiHsoGiayTo(string maHangGPLX)
         {
             return await _business.GetDmLoaiHsoGiayTo(maHangGPLX);
-        } 
+        }
+
+        [HttpGet("loai-quoc-tich")]
+        public async Task<List<DmQuocTich>> GetDMQuocTich()
+        {
+            return await _business.GetDMQuocTich();
+        }
     }
 }

@@ -108,6 +108,8 @@ public partial class NguoiLx
 
     public int? HosoDvcc4 { get; set; }
 
+    public virtual DmQuocTich MaQuocTichNavigation { get; set; }
+
     public virtual NguoiLxHoSo NguoiLxHoSo { get; set; }
 
     public virtual DmDvhc NoiCtMaDv { get; set; }

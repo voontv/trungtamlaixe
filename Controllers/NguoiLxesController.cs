@@ -23,6 +23,18 @@ namespace Ttlaixe.Controllers
             _business = business;
         }
 
+        [HttpGet("danh-sach-hoc-vien/{maKH}")]
+        public async Task<List<NguoiLxCoBanResponse>> GetThongTinCoBanByKhoaHocAsync(string maKH)
+        {
+            return await _business.GetThongTinCoBanByKhoaHocAsync(maKH);
+        }
+
+        [HttpGet("danh-sach-hoc-vien-sat-hach/{MaSatHach}")]
+        public async Task<List<NguoiLxThiResponse>> GetThongTinThiSinhCoTheThiAsync(string MaSatHach)
+        {
+            return await _business.GetDanhSachSatHach(MaSatHach);
+        }
+
         [HttpGet("thong-tin-nguoi-lai-xe/{maDK}")]
         public async Task<NguoiLxResponse> GetThongTinNguoiLx(string maDK)
         {

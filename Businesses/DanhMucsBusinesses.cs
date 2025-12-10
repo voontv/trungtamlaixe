@@ -17,10 +17,12 @@ namespace Ttlaixe.Businesses
         Task<List<DmDiemSatHach>> GetDmDiemSatHach(string hang);
         Task<List<DmDvhcResponse>> GetDmDonViHanhChinh();
         Task<List<DmHangDaoTaoResponse>> GetDmThongTinHangDaoTao();
-        Task<List<string>> GetMaHangDaoTao();
-        Task<List<string>> GetDmLoaiHinhDaoTao(string maHangDt);
+        Task<List<string>> GetHangGPLX();
+        Task<List<string>> GetHangDaoTao(string maHangGplx);
         Task<List<DmLoaiHsoResponse>> GetDmLoaiHso();
         Task<List<DmLoaiHsoGiayToResponse>> GetDmLoaiHsoGiayTo(string maHangGPLX);
+
+        Task<List<DmQuocTich>> GetDMQuocTich();
     }
     public class DanhMucsBusinesses : ControllerBase, IDanhMucsBusinesses
     {
@@ -79,14 +81,14 @@ namespace Ttlaixe.Businesses
                 .ToListAsync();
         }
 
-        public async Task<List<string>> GetMaHangDaoTao()
+        public async Task<List<string>> GetHangGPLX()
         {
-            return await _context.DmHangDts.Where(x => x.TrangThai == true).Select(x => x.MaHangDt).ToListAsync();
+            return await _context.DmHangGplxes.Where(x => x.TrangThai == true).Select(x => x.MaHangMoi).ToListAsync();
         }
 
-        public async Task<List<string>> GetDmLoaiHinhDaoTao(string maHangDt)
+        public async Task<List<string>> GetHangDaoTao(string maHangGplx)
         {
-            return await _context.DmHangDts.Where(x => x.HangGplx == maHangDt).Select(x => x.TenHangDt).ToListAsync();
+            return await _context.DmHangDts.Where(x => x.HangGplx == maHangGplx).Select(x => x.TenHangDt).ToListAsync();
         }
 
         public async Task<List<DmLoaiHsoResponse>> GetDmLoaiHso()
@@ -95,6 +97,16 @@ namespace Ttlaixe.Businesses
             var result = await _context.DmLoaiHsos.Where(x => x.TrangThai == true).ToListAsync();
             result.Patch(hsos);
             return hsos;
+        }
+
+        public async Task<DmHangDt> GetMaHangDaoTao(string MaHangDT)
+        {
+            return await _context.DmHangDts.FindAsync(MaHangDT);
+        }
+
+        public async Task<List<DmQuocTich>> GetDMQuocTich()
+        {
+            return await _context.DmQuocTiches.Where(x => x.TrangThai == true).ToListAsync();
         }
     }
 }

@@ -33,6 +33,12 @@ public partial class GplxCsdtContext : DbContext
 
     public virtual DbSet<DmLoaiHsoGiayTo> DmLoaiHsoGiayTos { get; set; }
 
+    public virtual DbSet<DmPhanThiTkn> DmPhanThiTkns { get; set; }
+
+    public virtual DbSet<DmQuocTich> DmQuocTiches { get; set; }
+
+    public virtual DbSet<DmthiSatHachQuyTacTkn> DmthiSatHachQuyTacTkns { get; set; }
+
     public virtual DbSet<KhoaHoc> KhoaHocs { get; set; }
 
     public virtual DbSet<NguoiLx> NguoiLxes { get; set; }
@@ -40,6 +46,10 @@ public partial class GplxCsdtContext : DbContext
     public virtual DbSet<NguoiLxHoSo> NguoiLxHoSos { get; set; }
 
     public virtual DbSet<NguoiLxhsGiayTo> NguoiLxhsGiayTos { get; set; }
+
+    public virtual DbSet<ThiSatHachKetQuaChiTietTkn> ThiSatHachKetQuaChiTietTkns { get; set; }
+
+    public virtual DbSet<ThiSatHachKetQuaPhanThiTkn> ThiSatHachKetQuaPhanThiTkns { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -377,6 +387,68 @@ public partial class GplxCsdtContext : DbContext
                 .HasDefaultValueSql("((1))");
         });
 
+        modelBuilder.Entity<DmPhanThiTkn>(entity =>
+        {
+            entity.HasKey(e => e.MaPhanThi);
+
+            entity.ToTable("DmPhanThiTkn");
+
+            entity.Property(e => e.HangDaoTao)
+                .IsRequired()
+                .HasMaxLength(20)
+                .IsUnicode(false);
+            entity.Property(e => e.TenPhanThi)
+                .IsRequired()
+                .HasMaxLength(100);
+        });
+
+        modelBuilder.Entity<DmQuocTich>(entity =>
+        {
+            entity.HasKey(e => e.Ma);
+
+            entity.ToTable("DM_QuocTich");
+
+            entity.Property(e => e.Ma)
+                .HasMaxLength(3)
+                .IsUnicode(false);
+            entity.Property(e => e.GhiChu).HasMaxLength(300);
+            entity.Property(e => e.NgaySua)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.NgayTao)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.NguoiSua).HasMaxLength(30);
+            entity.Property(e => e.NguoiTao).HasMaxLength(30);
+            entity.Property(e => e.TenEn)
+                .IsRequired()
+                .HasMaxLength(200)
+                .HasColumnName("TenEN");
+            entity.Property(e => e.TenVn)
+                .HasMaxLength(200)
+                .HasColumnName("TenVN");
+            entity.Property(e => e.TrangThai)
+                .IsRequired()
+                .HasDefaultValueSql("((1))")
+                .HasComment("0 = khong hieu luc; 1 = co hieu luc; mac dinh la 1;");
+        });
+
+        modelBuilder.Entity<DmthiSatHachQuyTacTkn>(entity =>
+        {
+            entity.HasKey(e => e.IdQuyTac).HasName("PK__DMThiSat__9F0652C32766EBD3");
+
+            entity.ToTable("DMThiSatHach_QuyTacTkn");
+
+            entity.Property(e => e.NoiDung)
+                .IsRequired()
+                .HasMaxLength(500);
+
+            entity.HasOne(d => d.MaPhanThiNavigation).WithMany(p => p.DmthiSatHachQuyTacTkns)
+                .HasForeignKey(d => d.MaPhanThi)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_DMThiSatHach_QuyTacTkn_DmPhanThiTkn");
+        });
+
         modelBuilder.Entity<KhoaHoc>(entity =>
         {
             entity.HasKey(e => e.MaKh);
@@ -596,6 +668,11 @@ public partial class GplxCsdtContext : DbContext
                 .IsRequired()
                 .HasDefaultValueSql("((1))")
                 .HasComment("0 = khong hieu luc; 1 = co hieu luc; mac dinh la 1;");
+
+            entity.HasOne(d => d.MaQuocTichNavigation).WithMany(p => p.NguoiLxes)
+                .HasForeignKey(d => d.MaQuocTich)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_NguoiLX_DM_QuocTich");
 
             entity.HasOne(d => d.NoiCtMaDv).WithMany(p => p.NguoiLxNoiCtMaDvs)
                 .HasForeignKey(d => new { d.NoiCtMaDvhc, d.NoiCtMaDvql })
@@ -985,6 +1062,57 @@ public partial class GplxCsdtContext : DbContext
                 .HasForeignKey(d => d.MaGt)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_NguoiLXHS_GiayTo_DM_GiayTo");
+        });
+
+        modelBuilder.Entity<ThiSatHachKetQuaChiTietTkn>(entity =>
+        {
+            entity.HasKey(e => new { e.MaKySh, e.MaDk, e.MaPhanThi, e.IdQuyTac });
+
+            entity.ToTable("ThiSatHach_KetQuaChiTietTkn");
+
+            entity.Property(e => e.MaKySh)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.MaDk)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+
+            entity.HasOne(d => d.IdQuyTacNavigation).WithMany(p => p.ThiSatHachKetQuaChiTietTkns)
+                .HasForeignKey(d => d.IdQuyTac)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__ThiSatHac__IdQuy__704434BB");
+
+            entity.HasOne(d => d.MaPhanThiNavigation).WithMany(p => p.ThiSatHachKetQuaChiTietTkns)
+                .HasForeignKey(d => d.MaPhanThi)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__ThiSatHac__MaPha__713858F4");
+        });
+
+        modelBuilder.Entity<ThiSatHachKetQuaPhanThiTkn>(entity =>
+        {
+            entity.HasKey(e => new { e.MaKySh, e.MaDk, e.MaPhanThi });
+
+            entity.ToTable("ThiSatHach_KetQuaPhanThiTkn");
+
+            entity.Property(e => e.MaKySh)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.MaDk)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.GhiChu).HasMaxLength(500);
+            entity.Property(e => e.HangDaoTao)
+                .IsRequired()
+                .HasMaxLength(20)
+                .IsUnicode(false);
+            entity.Property(e => e.MaNguoiCham)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+
+            entity.HasOne(d => d.MaPhanThiNavigation).WithMany(p => p.ThiSatHachKetQuaPhanThiTkns)
+                .HasForeignKey(d => d.MaPhanThi)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__ThiSatHac__MaPha__75FD0E11");
         });
 
         OnModelCreatingPartial(modelBuilder);
