@@ -31,13 +31,13 @@ namespace Ttlaixe.Controllers
         }
 
         [HttpGet("ma-hang-gplx")]
-        public async Task<List<string>> GetMaHangDaoTao()
+        public async Task<List<HangGplxDto>> GetMaHangDaoTao()
         {
             return await _business.GetHangGPLX();
         }
 
         [HttpGet("loai-hinh-dao-tao/{maGplx}")]
-        public async Task<List<string>> GetDmLoaiHinhDaoTao(string maGplx)
+        public async Task<List<HangDaoTaoReponse>> GetDmLoaiHinhDaoTao(string maGplx)
         {
             return await _business.GetHangDaoTao(maGplx);
         }

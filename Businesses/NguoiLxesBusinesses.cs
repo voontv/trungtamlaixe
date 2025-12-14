@@ -74,7 +74,6 @@ namespace Ttlaixe.Businesses
             
 
             // Thường trú
-            nguoi.NoiTt = rq.NoiTt;
             nguoi.NoiTtMaDvhc = rq.NoiTtMaDvhc;
             nguoi.NoiTtMaDvql = rq.NoiTtMaDvql;
 
@@ -97,6 +96,8 @@ namespace Ttlaixe.Businesses
             nguoi.NgayTao = now;
             nguoi.NgaySua = now;
             nguoi.HosoDvcc4 = 0;
+            nguoi.NoiCt = "";
+            nguoi.NoiTt = "";
             var ttxuly = string.IsNullOrEmpty(rq.DuongDanAnh) ? "01" : "03";
             // ============= 2. Sinh SoHoSo (001, 002, ..., 029, ...) =============
             var lastSoHoSo = await _context.NguoiLxHoSos
@@ -116,14 +117,13 @@ namespace Ttlaixe.Businesses
             // ============= 3. Tạo NguoiLxHoSo =============
             // ===== Update NguoiLxHoSo =====
             var maLoaiHs = 2;
-            if (rq.HangGplx == "A.01"
-    || rq.HangGplx == "A.02"
-    || rq.HangGplx == "A.03"
-    || rq.HangGplx == "A1m"
-    || rq.HangGplx == "Am")
+            string[] motoCodes = { "A01", "A02", "A1", "A1m", "A2" };
+
+            if (motoCodes.Contains(rq.HangGplx))
             {
                 maLoaiHs = 1;
             }
+
             var maHeThongCap = "CM_VN";
             if (nguoi.MaQuocTich != "VNM")
             {
@@ -221,7 +221,13 @@ namespace Ttlaixe.Businesses
             var blockStatuses = new[] { "05", "11", "12", "13" };
             if (!string.IsNullOrEmpty(hoSo.TtXuLy) && blockStatuses.Contains(hoSo.TtXuLy))
                 throw new Exception($"Không được phép chỉnh sửa hồ sơ khi TT_XuLy = {hoSo.TtXuLy}");
+            var maLoaiHs = 2;
+            string[] motoCodes = { "A01", "A02", "A1", "A1m", "A2" };
 
+            if (motoCodes.Contains(rq.HangGplx))
+            {
+                maLoaiHs = 1;
+            }
             // ===== Update NguoiLx =====
             nguoi.HoDemNlx = rq.HoDemNlx?.Trim();
             nguoi.TenNlx = rq.TenNlx?.Trim();
@@ -230,7 +236,6 @@ namespace Ttlaixe.Businesses
 
             nguoi.MaQuocTich = string.IsNullOrWhiteSpace(rq.MaQuocTich) ? "VNM" : rq.MaQuocTich;
             nguoi.NgaySinh = rq.NgaySinh;
-            nguoi.NoiTt = rq.NoiTt;
             nguoi.NoiTtMaDvhc = rq.NoiTtMaDvhc;
             nguoi.NoiTtMaDvql = rq.NoiTtMaDvql;
             nguoi.NoiCtMaDvhc = rq.NoiCtMaDvhc;
@@ -246,7 +251,7 @@ namespace Ttlaixe.Businesses
 
            
 
-            hoSo.MaLoaiHs = rq.MaLoaiHs;
+            hoSo.MaLoaiHs = maLoaiHs;
             hoSo.MaCsdt = rq.MaCsdt;
             hoSo.NamHocLx = rq.NamHocLx;
             hoSo.HangGplx = rq.HangGplx;

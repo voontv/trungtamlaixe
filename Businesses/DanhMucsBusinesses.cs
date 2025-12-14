@@ -17,8 +17,8 @@ namespace Ttlaixe.Businesses
         Task<List<DmDiemSatHach>> GetDmDiemSatHach(string hang);
         Task<List<DmDvhcResponse>> GetDmDonViHanhChinh();
         Task<List<DmHangDaoTaoResponse>> GetDmThongTinHangDaoTao();
-        Task<List<string>> GetHangGPLX();
-        Task<List<string>> GetHangDaoTao(string maHangGplx);
+        Task<List<HangGplxDto>> GetHangGPLX();
+        Task<List<HangDaoTaoReponse>> GetHangDaoTao(string maHangGplx);
         Task<List<DmLoaiHsoResponse>> GetDmLoaiHso();
         Task<List<DmLoaiHsoGiayToResponse>> GetDmLoaiHsoGiayTo(string maHangGPLX);
 
@@ -81,14 +81,26 @@ namespace Ttlaixe.Businesses
                 .ToListAsync();
         }
 
-        public async Task<List<string>> GetHangGPLX()
+        public async Task<List<HangGplxDto>> GetHangGPLX()
         {
-            return await _context.DmHangGplxes.Where(x => x.TrangThai == true).Select(x => x.MaHangMoi).ToListAsync();
+            return await _context.DmHangGplxes
+                .Where(x => x.TrangThai == true)
+                .Select(x => new HangGplxDto
+                {
+                    hangGplx = x.MaHang,
+                    MaHangGplxMoi = x.MaHangMoi
+                })
+                .ToListAsync();
         }
 
-        public async Task<List<string>> GetHangDaoTao(string maHangGplx)
+        public async Task<List<HangDaoTaoReponse>> GetHangDaoTao(string maHangGplx)
         {
-            return await _context.DmHangDts.Where(x => x.HangGplx == maHangGplx).Select(x => x.TenHangDt).ToListAsync();
+            return await _context.DmHangDts.Where(x => x.HangGplx == maHangGplx)
+               .Select(x => new HangDaoTaoReponse
+               {
+                    MaHangDt = x.MaHangDt,
+                   TenHangDt =x.TenHangDt
+               }).ToListAsync();
         }
 
         public async Task<List<DmLoaiHsoResponse>> GetDmLoaiHso()

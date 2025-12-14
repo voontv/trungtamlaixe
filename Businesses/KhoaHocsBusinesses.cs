@@ -78,22 +78,46 @@ namespace Ttlaixe.Businesses
         public async Task<List<KhoaHocResponse>> GetListKhoaHocsTheoTg(MocThoiGian dk)
         {
             var result = _context.KhoaHocs.AsQueryable();
-            if(dk.NgayBatDau.HasValue)
+
+            // Lọc từ ngày
+            if (dk.NgayBatDau.HasValue)
             {
                 result = result.Where(x => x.NgayKg >= dk.NgayBatDau.Value);
             }
 
-            if (dk.NgayBatDau.HasValue)
+            // Lọc đến ngày (bao gồm cả NgayKetThuc → < NgayKetThuc + 1)
+            if (dk.NgayKetThuc.HasValue)
             {
-                result = result.Where(x => x.NgayKg < dk.NgayKetThuc.Value.AddDays(1));
+                var toDatePlus1 = dk.NgayKetThuc.Value.AddDays(1);
+                result = result.Where(x => x.NgayKg < toDatePlus1);
             }
-            var khoaHocs = await result.OrderByDescending(x => x.NgayKg).ToListAsync();
+
+            // Các TT_XuLy hợp lệ
+            var trangThaiHopLe = new[] { "01", "02", "03", "04" };
+
+            // Loại KHÓA HỌC nào mà trong NguoiLx_HoSo có:
+            // MaKhoaHoc trùng
+            //   và (MaBC1 != null hoặc MaBC2 != null
+            //        hoặc TT_XuLy không thuộc 01,02,03,04)
+            result = result.Where(k => !_context.NguoiLxHoSos.Any(h =>
+                h.MaKhoaHoc == k.MaKh &&
+                (
+                    h.MaBc1 != null ||                 // hoặc h.MaBC1 tùy tên entity
+                    h.MaBc2 != null ||                 // hoặc h.MaBC2
+                    !trangThaiHopLe.Contains(h.TtXuLy) // TT_XuLy != 01,02,03,04
+                )));
+
+            var khoaHocs = await result
+                .OrderByDescending(x => x.NgayKg)
+                .ToListAsync();
+
             var khoaHocRess = new List<KhoaHocResponse>();
             khoaHocs.Patch(khoaHocRess);
 
             return khoaHocRess;
         }
-        
+
+
 
         private bool KhoaHocExists(string id)
         {

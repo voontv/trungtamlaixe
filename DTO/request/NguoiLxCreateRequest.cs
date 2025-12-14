@@ -14,7 +14,6 @@ namespace Ttlaixe.DTO.request
 
         public string MaQuocTich { get; set; }      // nếu null sẽ default = "VNM"
         public string NgaySinh { get; set; }        // "YYYYMMDD"
-        public string NoiTt { get; set; }
         public string SoCmt { get; set; }
         public DateTime? NgayCapCmt { get; set; }
         public string NoiCapCmt { get; set; }
