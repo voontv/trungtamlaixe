@@ -1,16 +1,7 @@
-﻿using BusinessLogic.Providers;
-using Ttlaixe.AutoConfig;
-using Ttlaixe.DTO.request;
-using Ttlaixe.DTO.response;
-using Ttlaixe.Exceptions;
+﻿using Ttlaixe.AutoConfig;
 using Ttlaixe.Models;
-using Ttlaixe.OracleBusinesses;
 using Ttlaixe.Providers;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Ttlaixe.Businesses
 {

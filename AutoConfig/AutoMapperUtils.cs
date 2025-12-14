@@ -52,7 +52,13 @@ namespace Ttlaixe.AutoConfig
             x.CreateMap<NguoiLx, NguoiLxCreateRequest>();
             x.CreateMap<NguoiLxResponse, NguoiLxCreateRequest>();
             x.CreateMap<NguoiLxCreateRequest, NguoiLxResponse>();
-            
+
+            x.CreateMap<UserTkn, UserTknCreateRequest>();
+            x.CreateMap<UserTknCreateRequest, UserTkn>();
+            x.CreateMap<UserTkn, UserTknLoginResponse>();
+            x.CreateMap<UserTknLoginResponse, UserTkn>();
+            x.CreateMap<UserTkn, UserTknUpdateRequest>();
+            x.CreateMap<UserTknUpdateRequest, UserTkn>();
         });
 
         private static readonly IMapper mapper = mapperConfiguration.CreateMapper();

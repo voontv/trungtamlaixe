@@ -33,6 +33,8 @@ public partial class DmDvhc
 
     public byte[] RowVersion { get; set; }
 
+    public virtual ICollection<GiaoVien> GiaoViens { get; set; } = new List<GiaoVien>();
+
     public virtual ICollection<NguoiLx> NguoiLxNoiCtMaDvs { get; set; } = new List<NguoiLx>();
 
     public virtual ICollection<NguoiLx> NguoiLxNoiTtMaDvs { get; set; } = new List<NguoiLx>();

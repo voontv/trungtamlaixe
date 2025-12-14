@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using Ttlaixe.AutoConfig;
 using Ttlaixe.DTO.request;
 using Ttlaixe.Models;
-using Ttlaixe.OracleBusinesses;
 using Ttlaixe.Providers;
 using Ttlaixe.LibsStartup;
 using System.Text.RegularExpressions;

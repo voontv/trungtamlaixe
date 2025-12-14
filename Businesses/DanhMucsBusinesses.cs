@@ -2,7 +2,6 @@
 using Ttlaixe.AutoConfig;
 using Ttlaixe.DTO.response;
 using Ttlaixe.Models;
-using Ttlaixe.OracleBusinesses;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;

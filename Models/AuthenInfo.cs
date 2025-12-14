@@ -3,7 +3,7 @@ using Ttlaixe.AutoConfig;
 using Ttlaixe.Models;
 using System.Security.Claims;
 
-namespace Ttlaixe.OracleBusinesses
+namespace Ttlaixe.Models
 {
     [ImplementBy(typeof(AuthenInfo))]
     public interface IAuthenInfo
@@ -33,20 +33,20 @@ namespace Ttlaixe.OracleBusinesses
                 return null;
             }
 
-            var maNhanVienClaim = userPrincipal.FindFirst(ClaimTypes.Name);
+            var userName = userPrincipal.FindFirst(ClaimTypes.Name);
 
-            if (maNhanVienClaim != null)
+            if (userName != null)
             {
                 return new LoggedInUser
                 {
-                    IdHs = maNhanVienClaim.Value,
+                    UserName = userName.Value,
                 };
             }
             //if (context.HttpContext.User is UserClaimsPrincipal user)
             //{
             //    return new LoggedInUser
             //    {
-            //        IdHs = user.IDHoSoNhanVien,
+            //        UserName = user.IDHoSoNhanVien,
             //    };
             //}
 

@@ -15,6 +15,10 @@ public partial class GplxCsdtContext : DbContext
     {
     }
 
+    public virtual DbSet<BaoCaoI> BaoCaoIs { get; set; }
+
+    public virtual DbSet<BaoCaoIi> BaoCaoIis { get; set; }
+
     public virtual DbSet<DmDiemSatHach> DmDiemSatHaches { get; set; }
 
     public virtual DbSet<DmDvhc> DmDvhcs { get; set; }
@@ -39,6 +43,8 @@ public partial class GplxCsdtContext : DbContext
 
     public virtual DbSet<DmthiSatHachQuyTacTkn> DmthiSatHachQuyTacTkns { get; set; }
 
+    public virtual DbSet<GiaoVien> GiaoViens { get; set; }
+
     public virtual DbSet<KhoaHoc> KhoaHocs { get; set; }
 
     public virtual DbSet<NguoiLx> NguoiLxes { get; set; }
@@ -51,8 +57,131 @@ public partial class GplxCsdtContext : DbContext
 
     public virtual DbSet<ThiSatHachKetQuaPhanThiTkn> ThiSatHachKetQuaPhanThiTkns { get; set; }
 
+    public virtual DbSet<UserTkn> UserTkns { get; set; }
+
+    public virtual DbSet<XeTap> XeTaps { get; set; }
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
+        => optionsBuilder.UseSqlServer("Data Source=200.201.222.67,1433;Initial Catalog=GPLX_CSDT;User Id=sa;Password=Dawaco@57#;MultipleActiveResultSets=True;TrustServerCertificate=True;");
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<BaoCaoI>(entity =>
+        {
+            entity.HasKey(e => e.MaBci);
+
+            entity.ToTable("BaoCaoI");
+
+            entity.HasIndex(e => e.SoBaoCao, "UK_BaoCaoI").IsUnique();
+
+            entity.Property(e => e.MaBci)
+                .HasMaxLength(18)
+                .IsUnicode(false)
+                .HasComment("Mã Báo cáo 1 = <Mã Khóa học><BCI>")
+                .HasColumnName("MaBCI");
+            entity.Property(e => e.BoTriHocVienXeTap).HasComment("Kiểm tra bố trí học viên/xe tập lái tương ứng với 1 giáo viên giảng dạy thực hành/xe: 10 học viên/xe hạng B2; 16 học viên/xe hạng C; 10 học viên/xe nâng hạng 1 cấp; 20 học viên/xe nâng hạng 2 cấp.");
+            entity.Property(e => e.GhiChu).HasMaxLength(255);
+            entity.Property(e => e.LuuLuong).HasComment("Kiểm soát lưu lượng. Tại thời điểm khai giảng khóa đào tạo mới không vượt quá lưu lượng giấy phép.");
+            entity.Property(e => e.LuuLuongGp).HasColumnName("LuuLuongGP");
+            entity.Property(e => e.MaCsdt)
+                .IsRequired()
+                .HasMaxLength(6)
+                .IsUnicode(false)
+                .HasComment("Mã CSĐT. Ghi mã CSĐT trong bảng DM_DonViGTVT")
+                .HasColumnName("MaCSDT");
+            entity.Property(e => e.MaKh)
+                .IsRequired()
+                .HasMaxLength(13)
+                .IsUnicode(false)
+                .HasComment("Mã Khóa học. Ghi mã Khóa học trong bảng dbo.KhoaHoc")
+                .HasColumnName("MaKH");
+            entity.Property(e => e.NgayBaoCao)
+                .HasComment("Ngày gửi báo cáo 1")
+                .HasColumnType("datetime");
+            entity.Property(e => e.NgayBg)
+                .HasColumnType("datetime")
+                .HasColumnName("NgayBG");
+            entity.Property(e => e.NgayCapGp)
+                .HasComment("Ngày cấp giấy phép đào tạo lái xe của CSĐT")
+                .HasColumnType("datetime")
+                .HasColumnName("NgayCapGP");
+            entity.Property(e => e.NgayKg)
+                .HasColumnType("datetime")
+                .HasColumnName("NgayKG");
+            entity.Property(e => e.NgaySua)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.NgayTao)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.NgayTiepNhan)
+                .HasComment("Ngày tiếp nhận BC1")
+                .HasColumnType("datetime");
+            entity.Property(e => e.NguoiSua).HasMaxLength(30);
+            entity.Property(e => e.NguoiTao).HasMaxLength(30);
+            entity.Property(e => e.NguoiTiepNhan)
+                .HasMaxLength(50)
+                .HasComment("Người tiếp nhận BC1");
+            entity.Property(e => e.SoBaoCao)
+                .HasMaxLength(20)
+                .HasComment("Số công văn của Báo cáo 1. Ví dụ: 084/LX-T31");
+            entity.Property(e => e.SoGp)
+                .HasMaxLength(20)
+                .HasComment("Số Giấy phép đào tạo lái xe của CSĐT. Ví dụ: 51/CĐBVN-QLPT&NL")
+                .HasColumnName("SoGP");
+            entity.Property(e => e.SoHscanhBao).HasColumnName("SoHSCanhBao");
+            entity.Property(e => e.ThoiGianDaoTao).HasComment("Kiểm tra thời gian đào tạo  (Khai giảng - Bế giảng). 86 ngày hạng B1; 90 ngày hạng B2; 136 ngày hạng C; 30 ngày nâng hạng cấp 1; 52 ngày nâng hạng cấp 2.");
+            entity.Property(e => e.ThoiGianTiepNhan).HasComment("Kiểm tra thời gian tiếp nhận BC1 so với ngày khai giảng. Không quá 07 ngày đối với các hạng B1, B2, nâng hạng D, E; Không quá 15 ngày đối với hạng C");
+            entity.Property(e => e.TrangThai).HasComment("Đã cập nhật kết quả = 1; Chưa cập nhật kết quả= 0; Giá trị mặc định = 0");
+            entity.Property(e => e.TtXuly).HasColumnName("TT_Xuly");
+        });
+
+        modelBuilder.Entity<BaoCaoIi>(entity =>
+        {
+            entity.HasKey(e => e.MaBcii);
+
+            entity.ToTable("BaoCaoII");
+
+            entity.Property(e => e.MaBcii)
+                .HasMaxLength(13)
+                .IsUnicode(false)
+                .HasComment("Mã Báo Cáo II = <Mã CSĐT><BCII><YY><01-99>")
+                .HasColumnName("MaBCII");
+            entity.Property(e => e.GhiChu).HasMaxLength(255);
+            entity.Property(e => e.MaBci)
+                .HasMaxLength(18)
+                .IsUnicode(false)
+                .HasColumnName("MaBCI");
+            entity.Property(e => e.MaCsdt)
+                .IsRequired()
+                .HasMaxLength(6)
+                .IsUnicode(false)
+                .HasColumnName("MaCSDT");
+            entity.Property(e => e.NgayBaoCao)
+                .HasComment("Ngày công văn của Báo cáo II")
+                .HasColumnType("datetime");
+            entity.Property(e => e.NgaySua)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.NgayTao)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.NguoiSua).HasMaxLength(30);
+            entity.Property(e => e.NguoiTao).HasMaxLength(30);
+            entity.Property(e => e.SoBaoCao)
+                .HasMaxLength(20)
+                .HasComment("Số công văn của Báo cáo II. Ví dụ: 123/BC-TTĐT&TNCG");
+            entity.Property(e => e.TongSoThiSinh).HasComment("Số thí sinh có trong Báo Cáo II");
+            entity.Property(e => e.TrangThai).HasComment("Đã cập nhật kết quả = 1; Chưa cập nhật kết quả= 0; Giá trị mặc định = 0");
+            entity.Property(e => e.TtXuly).HasColumnName("TT_Xuly");
+
+            entity.HasOne(d => d.MaBciNavigation).WithMany(p => p.BaoCaoIis)
+                .HasForeignKey(d => d.MaBci)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_BaoCaoII_BaoCaoI");
+        });
+
         modelBuilder.Entity<DmDiemSatHach>(entity =>
         {
             entity.HasKey(e => e.Stt);
@@ -447,6 +576,165 @@ public partial class GplxCsdtContext : DbContext
                 .HasForeignKey(d => d.MaPhanThi)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_DMThiSatHach_QuyTacTkn_DmPhanThiTkn");
+        });
+
+        modelBuilder.Entity<GiaoVien>(entity =>
+        {
+            entity.HasKey(e => e.MaGv);
+
+            entity.ToTable("GiaoVien");
+
+            entity.HasIndex(e => new { e.MaGv, e.MaCsdt, e.MaSoGtvt }, "UK_GiaoVien").IsUnique();
+
+            entity.Property(e => e.MaGv)
+                .HasMaxLength(8)
+                .IsUnicode(false)
+                .HasComment("Mã Giáo viên = <MaCSDT><Số tự tăng có giá trị từ 001-999>")
+                .HasColumnName("MaGV");
+            entity.Property(e => e.AnhCd)
+                .HasMaxLength(150)
+                .HasComment("Đường dẫn tới ảnh chân dung của Giáo viên")
+                .HasColumnName("AnhCD");
+            entity.Property(e => e.CacHangGplxduocDt)
+                .HasMaxLength(50)
+                .HasColumnName("CacHangGPLXDuocDT");
+            entity.Property(e => e.CauTaoSuaChua)
+                .HasMaxLength(1)
+                .IsUnicode(false)
+                .IsFixedLength();
+            entity.Property(e => e.DaoDucLaixe)
+                .HasMaxLength(1)
+                .IsUnicode(false)
+                .IsFixedLength();
+            entity.Property(e => e.DienThoai)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasComment("Số điện thoại");
+            entity.Property(e => e.GhiChu).HasMaxLength(255);
+            entity.Property(e => e.GioiTinh)
+                .HasMaxLength(1)
+                .IsUnicode(false)
+                .IsFixedLength()
+                .HasComment("Giới tính của Giáo viên. U=Không xác định; M=Nam; F=Nữ");
+            entity.Property(e => e.HangGplx)
+                .IsRequired()
+                .HasMaxLength(3)
+                .IsUnicode(false)
+                .HasComment("Hạng GPLX của Giáo viên. Được lưu theo định dạng: A1|A2|A3|...")
+                .HasColumnName("HangGPLX");
+            entity.Property(e => e.HinhThucTuyenDung)
+                .HasMaxLength(2)
+                .IsUnicode(false)
+                .HasComment("Hình thức tuyển dụng. CT=Chính thức; HD=Hợp đồng")
+                .HasColumnName("HinhThuc_TuyenDung");
+            entity.Property(e => e.HoTenDem)
+                .IsRequired()
+                .HasMaxLength(50)
+                .HasComment("Họ và tên đệm của Giáo viên. ");
+            entity.Property(e => e.KyThuatLaixe)
+                .HasMaxLength(1)
+                .IsUnicode(false)
+                .IsFixedLength();
+            entity.Property(e => e.LoaiHinhDaoTao)
+                .HasMaxLength(2)
+                .IsUnicode(false)
+                .HasComment("Loại hình đào tạo. LT=Lý thuyết; TH=Thực hànhl;LH = Cả hai")
+                .HasColumnName("LoaiHinh_DaoTao");
+            entity.Property(e => e.LuatGtdb)
+                .HasMaxLength(1)
+                .IsUnicode(false)
+                .IsFixedLength()
+                .HasColumnName("LuatGTDB");
+            entity.Property(e => e.MaCsdt)
+                .IsRequired()
+                .HasMaxLength(6)
+                .IsUnicode(false)
+                .HasComment("Cơ quan quản lý Giáo viên")
+                .HasColumnName("MaCSDT");
+            entity.Property(e => e.MaSoGtvt)
+                .IsRequired()
+                .HasMaxLength(6)
+                .IsUnicode(false)
+                .HasColumnName("MaSoGTVT");
+            entity.Property(e => e.NgayCapGplx)
+                .HasComment("Ngày cấp GPLX của Giáo viên. ")
+                .HasColumnType("datetime")
+                .HasColumnName("NgayCapGPLX");
+            entity.Property(e => e.NgayQdGcn)
+                .HasComment("Ngày quyết định cấp giấy chứng nhận")
+                .HasColumnType("datetime")
+                .HasColumnName("NgayQD_GCN");
+            entity.Property(e => e.NgaySinh)
+                .IsRequired()
+                .HasMaxLength(8)
+                .IsUnicode(false)
+                .HasComment("Ngày sinh của Giáo viên. Ghi theo định dạng: YYYYMMDD");
+            entity.Property(e => e.NgaySua)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.NgayTao)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.NghiepVuVanTai)
+                .HasMaxLength(1)
+                .IsUnicode(false)
+                .IsFixedLength();
+            entity.Property(e => e.NguoiSua).HasMaxLength(30);
+            entity.Property(e => e.NguoiTao).HasMaxLength(30);
+            entity.Property(e => e.NoiCt)
+                .HasMaxLength(50)
+                .HasColumnName("NoiCT");
+            entity.Property(e => e.NoiCtMaDvhc)
+                .HasMaxLength(5)
+                .IsUnicode(false)
+                .HasColumnName("NoiCT_MaDVHC");
+            entity.Property(e => e.NoiCtMaDvql)
+                .HasMaxLength(5)
+                .IsUnicode(false)
+                .HasColumnName("NoiCT_MaDVQL");
+            entity.Property(e => e.SoCmt)
+                .IsRequired()
+                .HasMaxLength(20)
+                .IsUnicode(false)
+                .HasComment("Số Chứng minh thư của Giáo viên.")
+                .HasColumnName("SoCMT");
+            entity.Property(e => e.SoQdGcn)
+                .HasMaxLength(30)
+                .HasComment("Số quyết định cấp giấy chứng nhận")
+                .HasColumnName("SoQD_GCN");
+            entity.Property(e => e.TenGv)
+                .IsRequired()
+                .HasMaxLength(50)
+                .HasComment("Tên của Giáo viên")
+                .HasColumnName("TenGV");
+            entity.Property(e => e.ThamNienLaiXe)
+                .HasComment("Thâm niên lái xe. Tính theo năm")
+                .HasColumnName("ThamNien_LaiXe");
+            entity.Property(e => e.TrangThai)
+                .IsRequired()
+                .HasDefaultValueSql("((1))")
+                .HasComment("0 = khong hieu luc; 1 = co hieu luc; mac dinh la 1;");
+            entity.Property(e => e.TrinhDoChuyenMon)
+                .HasMaxLength(50)
+                .HasComment("Trình độ chuyên môn")
+                .HasColumnName("TrinhDo_ChuyenMon");
+            entity.Property(e => e.TrinhDoSuPham)
+                .HasMaxLength(50)
+                .HasComment("Trình độ sư phạm")
+                .HasColumnName("TrinhDo_SuPham");
+            entity.Property(e => e.TrinhDoVanHoa)
+                .HasMaxLength(50)
+                .HasComment("Trình độ văn hóa")
+                .HasColumnName("TrinhDo_VanHoa");
+
+            entity.HasOne(d => d.HangGplxNavigation).WithMany(p => p.GiaoViens)
+                .HasForeignKey(d => d.HangGplx)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_GiaoVien_DM_HangGPLX");
+
+            entity.HasOne(d => d.NoiCtMaDv).WithMany(p => p.GiaoViens)
+                .HasForeignKey(d => new { d.NoiCtMaDvhc, d.NoiCtMaDvql })
+                .HasConstraintName("FK_GiaoVien_DM_DVHC");
         });
 
         modelBuilder.Entity<KhoaHoc>(entity =>
@@ -1113,6 +1401,137 @@ public partial class GplxCsdtContext : DbContext
                 .HasForeignKey(d => d.MaPhanThi)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__ThiSatHac__MaPha__75FD0E11");
+        });
+
+        modelBuilder.Entity<UserTkn>(entity =>
+        {
+            entity.HasKey(e => e.UserName);
+
+            entity.ToTable("UserTkn");
+
+            entity.Property(e => e.UserName).HasMaxLength(100);
+            entity.Property(e => e.GioiTinh)
+                .IsRequired()
+                .HasMaxLength(1)
+                .IsUnicode(false)
+                .IsFixedLength();
+            entity.Property(e => e.HoTen)
+                .IsRequired()
+                .HasMaxLength(150);
+            entity.Property(e => e.MaNguoiChinhSua).HasMaxLength(100);
+            entity.Property(e => e.MaNguoiNhap).HasMaxLength(100);
+            entity.Property(e => e.NgayChinhSuaCuoiCung).HasPrecision(0);
+            entity.Property(e => e.NgayKhoiTao)
+                .HasPrecision(0)
+                .HasDefaultValueSql("(sysdatetime())");
+            entity.Property(e => e.PasswordHash)
+                .IsRequired()
+                .HasMaxLength(256);
+            entity.Property(e => e.SoDienThoai)
+                .HasMaxLength(10)
+                .IsUnicode(false);
+            entity.Property(e => e.TenNguoiChinhSua).HasMaxLength(150);
+            entity.Property(e => e.TenNguoiNhap).HasMaxLength(150);
+        });
+
+        modelBuilder.Entity<XeTap>(entity =>
+        {
+            entity.HasKey(e => e.BienSoXe);
+
+            entity.ToTable("XeTap");
+
+            entity.Property(e => e.BienSoXe)
+                .HasMaxLength(10)
+                .IsUnicode(false)
+                .HasComment("Biển số xe. Là khóa chính của bảng XeTap");
+            entity.Property(e => e.BaoHiem)
+                .HasDefaultValueSql("((1))")
+                .HasComment("Bảo hiểm trách nhiệm dân sự còn hiệu lực. 0=Không còn hiệu lực; 1=Còn hiệu lực");
+            entity.Property(e => e.ChatLuong)
+                .HasMaxLength(50)
+                .HasComment("Chất lượng");
+            entity.Property(e => e.CoQuanCapGpxtl)
+                .HasMaxLength(50)
+                .HasComment("Cơ quan cấp Giấy phép xe tập lái")
+                .HasColumnName("CoQuanCapGPXTL");
+            entity.Property(e => e.DuongDanAnh).HasMaxLength(150);
+            entity.Property(e => e.GhiChu)
+                .HasMaxLength(255)
+                .HasComment("Ghi chú");
+            entity.Property(e => e.GiayPhepXtl)
+                .HasDefaultValueSql("((1))")
+                .HasComment("Giấy phép xe tập lái (Có/Không). 0=Không; 1=Có")
+                .HasColumnName("GiayPhepXTL");
+            entity.Property(e => e.HangXe).HasMaxLength(50);
+            entity.Property(e => e.HeThongPp)
+                .HasDefaultValueSql("((1))")
+                .HasComment("Hệ thống phanh phụ (Có/Không). 1=Có; 0=Không.")
+                .HasColumnName("HeThongPP");
+            entity.Property(e => e.LoaiXe).HasMaxLength(50);
+            entity.Property(e => e.MaCsdt)
+                .IsRequired()
+                .HasMaxLength(6)
+                .IsUnicode(false)
+                .HasComment("Mã CSĐT. Tham chiếu đến bảng DM_DonViGTVT")
+                .HasColumnName("MaCSDT");
+            entity.Property(e => e.MaSoGtvt)
+                .IsRequired()
+                .HasMaxLength(6)
+                .IsUnicode(false)
+                .HasComment("Mã Sở GTVT. Tham chiếu đến DM_DonViGTVT")
+                .HasColumnName("MaSoGTVT");
+            entity.Property(e => e.MacXe).HasMaxLength(50);
+            entity.Property(e => e.MauXe).HasMaxLength(50);
+            entity.Property(e => e.NamSx)
+                .HasComment("Năm sản xuất xe")
+                .HasColumnName("NamSX");
+            entity.Property(e => e.NgayCapGcnkd)
+                .HasComment("Ngày cấp Giấy chứng nhận kiểm định ATKT & BVMT")
+                .HasColumnType("datetime")
+                .HasColumnName("NgayCapGCNKD");
+            entity.Property(e => e.NgayCapGpxtl)
+                .HasComment("Ngày, tháng, năm cấp giấy phép xe tập lái")
+                .HasColumnType("datetime")
+                .HasColumnName("NgayCapGPXTL");
+            entity.Property(e => e.NgayHhgcnkd)
+                .HasComment("Ngày hết hạn Giấy chứng nhận kiểm định ATKT & BVMT")
+                .HasColumnType("datetime")
+                .HasColumnName("NgayHHGCNKD");
+            entity.Property(e => e.NgayHhgpxtl)
+                .HasComment("Ngày hết hạn Giấy phép xe tập lái")
+                .HasColumnType("datetime")
+                .HasColumnName("NgayHHGPXTL");
+            entity.Property(e => e.NgaySua)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.NgayTao)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.NguoiSua).HasMaxLength(30);
+            entity.Property(e => e.NguoiTao).HasMaxLength(30);
+            entity.Property(e => e.NhanHieu).HasMaxLength(50);
+            entity.Property(e => e.SoDk)
+                .HasMaxLength(50)
+                .HasComment("Số giấy đăng ký xe")
+                .HasColumnName("SoDK");
+            entity.Property(e => e.SoDongCo)
+                .HasMaxLength(20)
+                .IsUnicode(false);
+            entity.Property(e => e.SoGpxtl)
+                .HasMaxLength(30)
+                .HasComment("Số giấy phép xe tập lái")
+                .HasColumnName("SoGPXTL");
+            entity.Property(e => e.SoHuu).HasComment("Xe hợp đồng hay xe của CSĐT. 0='Chính chủ'; 1='Hợp đồng'. Mặc định = 0");
+            entity.Property(e => e.SoKhung)
+                .HasMaxLength(20)
+                .IsUnicode(false);
+            entity.Property(e => e.TrangThai)
+                .IsRequired()
+                .HasDefaultValueSql("((1))")
+                .HasComment("0 = khong hieu luc; 1 = co hieu luc; mac dinh la 1;");
+            entity.Property(e => e.TuyenDuong)
+                .HasMaxLength(50)
+                .HasComment("Tuyến đường tập lái");
         });
 
         OnModelCreatingPartial(modelBuilder);
