@@ -18,6 +18,7 @@ using System.Xml;
 using System.Xml.Linq;
 using System.Globalization;
 using System.Drawing;
+using Microsoft.AspNetCore.Http;
 
 namespace Ttlaixe.LibsStartup
 {
@@ -126,6 +127,67 @@ namespace Ttlaixe.LibsStartup
             }
             return json;
         }
+
+        public static async Task<string> SaveToRelativePathAsync(
+        IFormFile file,
+        string relativePath,                 // ví dụ: @"abc\xyz.png" hoặc "abc/xyz.png"
+        string rootDir = @"E:\thumuc\image"   // thư mục cứng trên server
+    )
+        {
+            if (file == null || file.Length == 0)
+                throw new Exception("File rỗng.");
+
+            if (string.IsNullOrWhiteSpace(relativePath))
+                throw new Exception("relativePath rỗng.");
+
+            // Chuẩn hoá slash và chặn path traversal (../)
+            relativePath = relativePath.Replace('/', Path.DirectorySeparatorChar)
+                                       .Replace('\\', Path.DirectorySeparatorChar)
+                                       .TrimStart(Path.DirectorySeparatorChar);
+
+            if (relativePath.Contains(".."))
+                throw new Exception("Đường dẫn không hợp lệ.");
+
+            var fullPath = Path.GetFullPath(Path.Combine(rootDir, relativePath));
+            var rootFull = Path.GetFullPath(rootDir);
+
+            // đảm bảo vẫn nằm trong rootDir
+            if (!fullPath.StartsWith(rootFull, StringComparison.OrdinalIgnoreCase))
+                throw new Exception("Đường dẫn vượt ra ngoài thư mục gốc.");
+
+            // tạo thư mục cha nếu chưa có
+            var dir = Path.GetDirectoryName(fullPath)!;
+            Directory.CreateDirectory(dir);
+
+            // lưu file
+            await using var fs = new FileStream(fullPath, FileMode.Create, FileAccess.Write, FileShare.None);
+            await file.CopyToAsync(fs);
+
+            return fullPath; // trả ra path đã lưu
+        }
+
+        public static string? GetExtFromContentType(string? contentType)
+        {
+            if (string.IsNullOrWhiteSpace(contentType)) return null;
+
+            contentType = contentType.ToLowerInvariant();
+
+            return contentType switch
+            {
+                "image/jpeg" => ".jpg",
+                "image/jpg" => ".jpg",
+                "image/png" => ".png",
+                "image/gif" => ".gif",
+                "image/webp" => ".webp",
+                "image/bmp" => ".bmp",
+                "image/tiff" => ".tif",
+                "image/jp2" => ".jp2",                 // nếu client set đúng
+                "image/jpx" => ".jpx",
+                "application/octet-stream" => null,     // không đoán bừa
+                _ => null
+            };
+        }
+
     }
-    
+
 }

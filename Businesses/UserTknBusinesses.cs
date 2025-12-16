@@ -43,23 +43,23 @@ namespace Ttlaixe.Businesses
 
         public async Task<UserTknLoginResponse> LoginAsync(UserTknLoginRequest request)
         {
-            if (request == null) throw new Exception("Request không hợp lệ.");
+            if (request == null) throw new BadRequestException("Request không hợp lệ.");
 
             var userName = (request.UserName ?? "").Trim();
             var password = request.Password ?? "";
 
             if (string.IsNullOrWhiteSpace(userName))
-                throw new Exception("UserName không được trống.");
+                throw new BadRequestException("UserName không được trống.");
 
             if (string.IsNullOrWhiteSpace(password))
-                throw new Exception("Password không được trống.");
+                throw new BadRequestException("Password không được trống.");
 
             var passHash = Utils.MD5Hash(password);
 
             var user = await _context.UserTkns
                 .AsNoTracking()
                 .FirstOrDefaultAsync(x => x.UserName == userName && x.PasswordHash == passHash)
-                ?? throw new Exception("Thông tin đăng nhập bị lỗi, vui lòng kiểm tra lại tên đăng nhập");
+                ?? throw new BadRequestException("Thông tin đăng nhập bị lỗi, vui lòng kiểm tra lại tên đăng nhập");
 
             var token = _tokenGenerator.GenerateToken(user.UserName).Token;
 
@@ -113,11 +113,11 @@ namespace Ttlaixe.Businesses
         public async Task<UserTknResponse> GetByUserNameAsync(string userName)
         {
             userName = (userName ?? "").Trim();
-            if (string.IsNullOrWhiteSpace(userName)) throw new Exception("UserName không hợp lệ.");
+            if (string.IsNullOrWhiteSpace(userName)) throw new BadRequestException("UserName không hợp lệ.");
 
             var x = await _context.UserTkns.AsNoTracking()
                 .FirstOrDefaultAsync(u => u.UserName == userName)
-                ?? throw new Exception("Không tìm thấy user.");
+                ?? throw new BadRequestException("Không tìm thấy user.");
 
             return new UserTknResponse
             {
@@ -144,19 +144,19 @@ namespace Ttlaixe.Businesses
 
         public async Task<UserTknResponse> CreateAsync(UserTknCreateRequest request)
         {
-            if (request == null) throw new Exception("Request không hợp lệ.");
+            if (request == null) throw new BadRequestException("Request không hợp lệ.");
 
             request.UserName = (request.UserName ?? "").Trim();
-            if (string.IsNullOrWhiteSpace(request.UserName)) throw new Exception("UserName không được trống.");
-            if (string.IsNullOrWhiteSpace(request.Pass)) throw new Exception("Pass không được trống.");
-            if (string.IsNullOrWhiteSpace(request.HoTen)) throw new Exception("Họ tên không được trống.");
-            if (request.GioiTinh != "M" && request.GioiTinh != "F") throw new Exception("Giới tính chỉ nhận M hoặc F.");
+            if (string.IsNullOrWhiteSpace(request.UserName)) throw new BadRequestException("UserName không được trống.");
+            if (string.IsNullOrWhiteSpace(request.Pass)) throw new BadRequestException("Pass không được trống.");
+            if (string.IsNullOrWhiteSpace(request.HoTen)) throw new BadRequestException("Họ tên không được trống.");
+            if (request.GioiTinh != "M" && request.GioiTinh != "F") throw new BadRequestException("Giới tính chỉ nhận M hoặc F.");
 
             if (!string.IsNullOrWhiteSpace(request.SoDienThoai) && request.SoDienThoai.Length != 10)
-                throw new Exception("Số điện thoại phải đúng 10 ký tự (VARCHAR(10)).");
+                throw new BadRequestException("Số điện thoại phải đúng 10 ký tự (VARCHAR(10)).");
 
             var exists = await _context.UserTkns.AnyAsync(x => x.UserName == request.UserName);
-            if (exists) throw new Exception("User đã tồn tại, vui lòng tạo user name khác.");
+            if (exists) throw new BadRequestException("User đã tồn tại, vui lòng tạo user name khác.");
 
             var logged = _authenInfo.Get();
             var actor = await _context.UserTkns.FindAsync(logged.UserName);
@@ -218,17 +218,17 @@ namespace Ttlaixe.Businesses
         public async Task<UserTknResponse> UpdateAsync(string userName, UserTknUpdateRequest request)
         {
             userName = (userName ?? "").Trim();
-            if (string.IsNullOrWhiteSpace(userName)) throw new Exception("UserName không hợp lệ.");
-            if (request == null) throw new Exception("Request không hợp lệ.");
+            if (string.IsNullOrWhiteSpace(userName)) throw new BadRequestException("UserName không hợp lệ.");
+            if (request == null) throw new BadRequestException("Request không hợp lệ.");
 
-            if (string.IsNullOrWhiteSpace(request.HoTen)) throw new Exception("Họ tên không được trống.");
-            if (request.GioiTinh != "M" && request.GioiTinh != "F") throw new Exception("Giới tính chỉ nhận M hoặc F.");
+            if (string.IsNullOrWhiteSpace(request.HoTen)) throw new BadRequestException("Họ tên không được trống.");
+            if (request.GioiTinh != "M" && request.GioiTinh != "F") throw new BadRequestException("Giới tính chỉ nhận M hoặc F.");
 
             if (!string.IsNullOrWhiteSpace(request.SoDienThoai) && request.SoDienThoai.Length != 10)
-                throw new Exception("Số điện thoại phải đúng 10 ký tự (VARCHAR(10)).");
+                throw new BadRequestException("Số điện thoại phải đúng 10 ký tự (VARCHAR(10)).");
 
             var entity = await _context.UserTkns.FirstOrDefaultAsync(x => x.UserName == userName)
-                ?? throw new Exception("Không tìm thấy user.");
+                ?? throw new BadRequestException("Không tìm thấy user.");
 
             var logged = _authenInfo.Get();
             var actor = logged == null ? null : await _context.UserTkns.FindAsync(logged.UserName);

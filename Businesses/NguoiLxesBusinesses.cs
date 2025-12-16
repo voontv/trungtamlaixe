@@ -12,6 +12,9 @@ using Ttlaixe.DTO.response;
 using Ttlaixe.Exceptions;
 using System.Collections.Generic;
 using Ttlaixe.DTO.request.Ttlaixe.DTO.request;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Options;
+using System.IO;
 namespace Ttlaixe.Businesses
 {
     [ImplementBy(typeof(NguoiLxesBusinesses))]
@@ -26,6 +29,8 @@ namespace Ttlaixe.Businesses
         Task<List<NguoiLxThiResponse>> GetDanhSachSatHach(string MaSatHach);
 
         Task<NguoiLxResponse> GetThongTinNguoiLx(string maDk);
+
+        Task<string> SaveToRelativePathAsync(IFormFile file, string relativePath);
     }
 
     public class NguoiLxesBusinesses : ControllerBase, INguoiLxesBusinesses
@@ -33,17 +38,24 @@ namespace Ttlaixe.Businesses
         private readonly GplxCsdtContext _context;
         private readonly ITokenGenerator _tokenGenerator;
         private readonly IAuthenInfo _authenInfo;
-        public NguoiLxesBusinesses(GplxCsdtContext context, ITokenGenerator tokenGenerator, IAuthenInfo authenInfo)
+        private readonly UploadOptions _opt;
+        public NguoiLxesBusinesses(GplxCsdtContext context, ITokenGenerator tokenGenerator, IAuthenInfo authenInfo, IOptions<UploadOptions> opt)
         {
             _context = context;
             _tokenGenerator = tokenGenerator;
             _authenInfo = authenInfo;
+            _opt = opt.Value;
         }
 
         public async Task<NguoiLxResponse> CreateAsync(NguoiLxCreateRequest rq)
         {
             var now = DateTime.Now;
-            //var user = _authenInfo.Get();
+            var logged = _authenInfo.Get();
+            var actor = await _context.UserTkns.FindAsync(logged.UserName);
+            if (!actor.QuyenAdmin && !actor.QuyenNhapLieu)
+            {
+                throw new BadRequestException("Bạn không có quyền thực hiện tính năng này. ");
+            }
 
             if (await ExistsSoCmtInKhoaHocAsync(rq.MaCsdt, rq.MaKhoaHoc, rq.SoCmt))
             {
@@ -54,48 +66,15 @@ namespace Ttlaixe.Businesses
             var maDk = $"{Constants.MaCSDT}-{now:yyyyMMddHHmmssfff}";
 
             // ============= 1. Tạo NguoiLx =============
-            var nguoi = new NguoiLx
-            {
-                MaDk = maDk,
-                DonViNhanHso = rq.MaCsdt,
-                HoDemNlx = rq.HoDemNlx?.Trim(),
-                TenNlx = rq.TenNlx?.Trim()
-            };
-
-            nguoi.HoVaTen = $"{nguoi.HoDemNlx} {nguoi.TenNlx}".Trim();
-            nguoi.HoVaTenIn = nguoi.HoVaTen.ToUpper();
-
-            nguoi.MaQuocTich = string.IsNullOrWhiteSpace(rq.MaQuocTich)
-                ? "VNM"
-                : rq.MaQuocTich;
-            nguoi.NgaySinh = rq.NgaySinh;   // "YYYYMMDD"
-            
-
-            // Thường trú
-            nguoi.NoiTtMaDvhc = rq.NoiTtMaDvhc;
-            nguoi.NoiTtMaDvql = rq.NoiTtMaDvql;
-
-            nguoi.NoiCtMaDvhc = rq.NoiCtMaDvhc;
-            nguoi.NoiCtMaDvql = rq.NoiCtMaDvql;
-
-            // CMT/CCCD
-            nguoi.SoCmt = rq.SoCmt;
-            nguoi.NgayCapCmt = rq.NgayCapCmt;
-            nguoi.NoiCapCmt = rq.NoiCapCmt;
-
-            nguoi.GhiChu = rq.GhiChu;
-            nguoi.GioiTinh = rq.GioiTinh;
-            nguoi.SoCmndCu = rq.SoCmndCu;
-
-            // Metadata
-            nguoi.TrangThai = true;
-            //nguoi.NguoiTao = user?.UserId;
-            //nguoi.NguoiSua = user?.UserId;
-            nguoi.NgayTao = now;
-            nguoi.NgaySua = now;
-            nguoi.HosoDvcc4 = 0;
+            var nguoi = new NguoiLx();
+            rq.Patch(nguoi);
+            nguoi.MaDk = maDk;                 // set lại sau Patch để không bị đè null
+            nguoi.DonViNhanHso = rq.MaCsdt;
+            nguoi.HoVaTen = $"{nguoi.HoDemNlx} {nguoi.TenNlx}";
+            nguoi.HoVaTenIn = nguoi.HoVaTen;
             nguoi.NoiCt = "";
             nguoi.NoiTt = "";
+
             var ttxuly = string.IsNullOrEmpty(rq.DuongDanAnh) ? "01" : "03";
             // ============= 2. Sinh SoHoSo (001, 002, ..., 029, ...) =============
             var lastSoHoSo = await _context.NguoiLxHoSos
@@ -129,35 +108,26 @@ namespace Ttlaixe.Businesses
             }
             var hoSo = new NguoiLxHoSo
             {
-                MaDk = maDk,
-                SoHoSo = soHoSo,
                 MaCsdt = Constants.MaCSDT,
                 MaSoGtvt = Constants.MaSoGTVT,
                 MaDvnhanHso = Constants.MaCSDT,
-
                 NgayNhanHso = now,
                 MaLoaiHs = maLoaiHs,
-
                 TtXuLy = ttxuly,
-
-            DonViHocLx = rq.MaCsdt,
-                NamHocLx = rq.NamHocLx,
-                HangGplx = rq.HangGplx,     // hạng đề nghị cấp
-                HangDaoTao = rq.HangDaoTao,   // hạng đào tạo
-                MaKhoaHoc = rq.MaKhoaHoc,
-
+                ChonInGplx = 2,
                 GiayCnsk = false,
                 TransferFlag = 0,
                 HosoDvcc4 = 0,
                 TrangThai = true,
                 MaHtcap = maHeThongCap,
-                //NguoiTao = user?.UserId,
-                //NguoiSua = user?.UserId,
                 NgayTao = now,
                 NgaySua = now
             };
 
-            // ============= 4. Tạo list giấy tờ NguoiLxhsGiayTo từ request =============
+            rq.Patch(hoSo);
+            hoSo.MaDk = maDk;                  // <<< BẮT BUỘC
+            hoSo.SoHoSo = soHoSo;              // <<< nên set luôn
+
             if (rq.GiayTos != null && rq.GiayTos.Count > 0)
             {
                 foreach (var gt in rq.GiayTos)
@@ -184,11 +154,11 @@ namespace Ttlaixe.Businesses
             {
                 await _context.SaveChangesAsync();
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 throw new BadRequestException("Error found is " + ex.Message);
             }
-            
+
             var nguoiLaiXeRes = new NguoiLxResponse();
             rq.Patch(nguoiLaiXeRes);
             nguoiLaiXeRes.MaDk = maDk;
@@ -199,7 +169,12 @@ namespace Ttlaixe.Businesses
         public async Task<bool> UpdateAsync(NguoiLxResponse rq)
         {
             var now = DateTime.Now;
-            var user = _authenInfo.Get();
+            var logged = _authenInfo.Get();
+            var actor = await _context.UserTkns.FindAsync(logged.UserName);
+            if (!actor.QuyenAdmin && !actor.QuyenNhapLieu)
+            {
+                throw new BadRequestException("Bạn không có quyền thực hiện tính năng này. ");
+            }
 
             if (string.IsNullOrWhiteSpace(rq.MaDk))
                 throw new Exception("MaDk không được để trống khi cập nhật");
@@ -215,6 +190,7 @@ namespace Ttlaixe.Businesses
                 .FirstOrDefaultAsync(x => x.MaDk == maDk);
             if (hoSo == null)
                 throw new Exception($"Không tìm thấy hồ sơ với MaDK = {maDk}");
+            rq.Patch(hoSo);
 
             var blockStatuses = new[] { "05", "11", "12", "13" };
             if (!string.IsNullOrEmpty(hoSo.TtXuLy) && blockStatuses.Contains(hoSo.TtXuLy))
@@ -226,35 +202,14 @@ namespace Ttlaixe.Businesses
             {
                 maLoaiHs = 1;
             }
-            // ===== Update NguoiLx =====
-            nguoi.HoDemNlx = rq.HoDemNlx?.Trim();
-            nguoi.TenNlx = rq.TenNlx?.Trim();
-            nguoi.HoVaTen = $"{nguoi.HoDemNlx} {nguoi.TenNlx}".Trim();
-            nguoi.HoVaTenIn = nguoi.HoVaTen.ToUpper();
-
-            nguoi.MaQuocTich = string.IsNullOrWhiteSpace(rq.MaQuocTich) ? "VNM" : rq.MaQuocTich;
-            nguoi.NgaySinh = rq.NgaySinh;
-            nguoi.NoiTtMaDvhc = rq.NoiTtMaDvhc;
-            nguoi.NoiTtMaDvql = rq.NoiTtMaDvql;
-            nguoi.NoiCtMaDvhc = rq.NoiCtMaDvhc;
-            nguoi.NoiCtMaDvql = rq.NoiCtMaDvql;
-            nguoi.SoCmt = rq.SoCmt;
-            nguoi.NgayCapCmt = rq.NgayCapCmt;
-            nguoi.NoiCapCmt = rq.NoiCapCmt;
-            nguoi.GhiChu = rq.GhiChu;
-            nguoi.GioiTinh = rq.GioiTinh;
-            nguoi.SoCmndCu = rq.SoCmndCu;
+            rq.Patch(nguoi);
             nguoi.TrangThai = nguoi.TrangThai ?? true;
             nguoi.NgaySua = now;
+            nguoi.MaQuocTich = string.IsNullOrWhiteSpace(rq.MaQuocTich) ? "VNM" : rq.MaQuocTich;
 
-           
 
             hoSo.MaLoaiHs = maLoaiHs;
-            hoSo.MaCsdt = rq.MaCsdt;
-            hoSo.NamHocLx = rq.NamHocLx;
-            hoSo.HangGplx = rq.HangGplx;
-            hoSo.HangDaoTao = rq.HangDaoTao;
-            hoSo.MaKhoaHoc = rq.MaKhoaHoc;
+
             hoSo.NgaySua = now;
 
             var soHoSo = hoSo.SoHoSo;
@@ -645,6 +600,25 @@ namespace Ttlaixe.Businesses
             return existing;
         }
 
+        public async Task<string> SaveToRelativePathAsync(IFormFile file, string maDk)
+        {
+            var nguoiLx = await _context.NguoiLxHoSos.FindAsync(maDk)
+        ?? throw new BadRequestException("Không có thông tin người này");
 
+            // Lấy đuôi từ file upload (".png", ".jpg", ".jp2"...)
+            var ext = Path.GetExtension(file.FileName);
+
+            // fallback nếu không có ext
+            if (string.IsNullOrWhiteSpace(ext))
+                ext = Utils.GetExtFromContentType(file.ContentType) ?? ".bin";
+
+            // normalize ext
+            if (!ext.StartsWith(".")) ext = "." + ext;
+
+            // relativePath đầy đủ gồm cả tên file
+            var relativePath = Path.Combine(nguoiLx.MaKhoaHoc, maDk + ext);
+
+            return await Utils.SaveToRelativePathAsync(file, relativePath, _opt.ImageRoot);
+        }
     }
 }

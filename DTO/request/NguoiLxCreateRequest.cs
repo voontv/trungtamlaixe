@@ -72,6 +72,47 @@ namespace Ttlaixe.DTO.request
         /// </summary>
         public int? SoKmLxanToan { get; set; }
 
+        /// <summary>
+        /// Số GPLX hiện có của người lái xe.
+        /// </summary>
+        public string SoGplxdaCo { get; set; }
+
+        /// <summary>
+        /// Hạng GPLX hiện có của Người lái xe
+        /// </summary>
+        public string HangGplxdaCo { get; set; }
+
+        /// <summary>
+        /// Đơn vị cấp GPLX hiện có của Người lái xe
+        /// </summary>
+        public string DonViCapGplxdaCo { get; set; }
+
+        public string NoiCapGplxdaCo { get; set; }
+
+        /// <summary>
+        /// Ngày cấp giấy phép lái xe hiện có của người lái xe
+        /// </summary>
+        public string NgayCapGplxdaCo { get; set; }
+
+        /// <summary>
+        /// Ngày hết hạn GPLX hiện có của NGười lái xe
+        /// </summary>
+        public string NgayHhgplxdaCo { get; set; }
+
+        public string NgayTtgplxdaCo { get; set; }
+
+        /// <summary>
+        /// Nơi học lái xe trước đây. Ghi mã CSĐT trong bảng DM_DonViGTVT
+        /// </summary>
+        public string DonViHocLx { get; set; }
+
+        /// <summary>
+        /// Đơn vị cấp GPLX hiện có của Người lái xe
+        /// </summary>
+        public string DonViCapGplxdaCo { get; set; }
+
+        public string NoiCapGplxdaCo { get; set; }
+
         public List<NguoiLxhsCreateRequest> GiayTos { get; set; } = new List<NguoiLxhsCreateRequest>();
     }
 

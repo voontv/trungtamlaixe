@@ -17,6 +17,7 @@ using System;
 using System.Text;
 using System.Text.Json.Serialization;
 using Ttlaixe.Models;
+using Ttlaixe.DTO.request;
 
 namespace Ttlaixe
 {
@@ -37,6 +38,7 @@ namespace Ttlaixe
             //services.ConfigSecurity(Providers<SecuritySettings>(services));
             services.ConfigSecurity(Config<SecuritySettings>(services));
             //services.AddAuthorization();
+            services.Configure<UploadOptions>(Configuration.GetSection("Upload"));
 
             services.Configure<WebConfig>(Configuration.GetSection("WebConfig"));
             services.AddDbContext<GplxCsdtContext>(options => options.UseSqlServer(Configuration.GetConnectionString("Ttlaixe")));

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -42,16 +43,24 @@ namespace Ttlaixe.Controllers
         }
 
         [HttpPost]
+        [Authorize]
         public async Task<NguoiLxResponse> CreateAsync(NguoiLxCreateRequest request)
         {
             return await _business.CreateAsync(request);
         }
 
         [HttpPut]
+        [Authorize]
         public async Task<bool> UpdateAsync(NguoiLxResponse request)
         {
             return await _business.UpdateAsync(request);
         }
 
+        [HttpPost("upload-hinh-the/{maDk}")]
+        //[Authorize]
+        public async Task<string> Upload(IFormFile file,string maDk)
+        {
+            return await _business.SaveToRelativePathAsync(file, maDk);
+        }
     }
 }
