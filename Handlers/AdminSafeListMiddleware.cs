@@ -22,9 +22,9 @@ namespace Ttlaixe.Handlers
         public async Task Invoke(HttpContext context)
         {
             /*
-            if (context.Request.Method != HttpMethod.Get.Method)
+            if (context.ThongTinNguoiHocLai.Method != HttpMethod.Get.Method)
             {
-                var realP = context.Request.Headers["X-Real-IP"];
+                var realP = context.ThongTinNguoiHocLai.Headers["X-Real-IP"];
                 log.Info("AdminSafeListMiddleware IP may nhan ra tai Invoke la    X_Real_IP " + realP);
                 var badIp = true;
                 foreach (var address in _safelist)

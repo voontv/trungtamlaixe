@@ -44,23 +44,25 @@ namespace Ttlaixe.Controllers
 
         [HttpPost]
         [Authorize]
-        public async Task<NguoiLxResponse> CreateAsync(NguoiLxCreateRequest request)
+        [Consumes("multipart/form-data")]
+        public async Task<NguoiLxResponse> CreateAsync([FromForm] NguoiLxCreateRequest request)
         {
             return await _business.CreateAsync(request);
         }
 
         [HttpPut]
         [Authorize]
-        public async Task<bool> UpdateAsync(NguoiLxResponse request)
+        [Consumes("multipart/form-data")]
+        public async Task<bool> UpdateAsync([FromForm] NguoiLxResponse request)
         {
             return await _business.UpdateAsync(request);
         }
 
         [HttpPost("upload-hinh-the/{maDk}")]
-        //[Authorize]
-        public async Task<string> Upload(IFormFile file,string maDk)
+        [Authorize]
+        public async Task Upload(IFormFile file,string maDk)
         {
-            return await _business.SaveToRelativePathAsync(file, maDk);
+             await _business.UpdateHinhThe(file, maDk);
         }
     }
 }

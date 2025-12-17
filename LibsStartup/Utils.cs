@@ -131,7 +131,7 @@ namespace Ttlaixe.LibsStartup
         public static async Task<string> SaveToRelativePathAsync(
         IFormFile file,
         string relativePath,                 // ví dụ: @"abc\xyz.png" hoặc "abc/xyz.png"
-        string rootDir = @"E:\thumuc\image"   // thư mục cứng trên server
+        string rootDir
     )
         {
             if (file == null || file.Length == 0)

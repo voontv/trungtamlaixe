@@ -43,7 +43,7 @@ namespace Ttlaixe.Businesses
 
         public async Task<UserTknLoginResponse> LoginAsync(UserTknLoginRequest request)
         {
-            if (request == null) throw new BadRequestException("Request không hợp lệ.");
+            if (request == null) throw new BadRequestException("ThongTinNguoiHocLai không hợp lệ.");
 
             var userName = (request.UserName ?? "").Trim();
             var password = request.Password ?? "";
@@ -144,7 +144,7 @@ namespace Ttlaixe.Businesses
 
         public async Task<UserTknResponse> CreateAsync(UserTknCreateRequest request)
         {
-            if (request == null) throw new BadRequestException("Request không hợp lệ.");
+            if (request == null) throw new BadRequestException("ThongTinNguoiHocLai không hợp lệ.");
 
             request.UserName = (request.UserName ?? "").Trim();
             if (string.IsNullOrWhiteSpace(request.UserName)) throw new BadRequestException("UserName không được trống.");
@@ -219,7 +219,7 @@ namespace Ttlaixe.Businesses
         {
             userName = (userName ?? "").Trim();
             if (string.IsNullOrWhiteSpace(userName)) throw new BadRequestException("UserName không hợp lệ.");
-            if (request == null) throw new BadRequestException("Request không hợp lệ.");
+            if (request == null) throw new BadRequestException("ThongTinNguoiHocLai không hợp lệ.");
 
             if (string.IsNullOrWhiteSpace(request.HoTen)) throw new BadRequestException("Họ tên không được trống.");
             if (request.GioiTinh != "M" && request.GioiTinh != "F") throw new BadRequestException("Giới tính chỉ nhận M hoặc F.");

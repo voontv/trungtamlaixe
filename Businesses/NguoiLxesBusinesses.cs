@@ -15,6 +15,7 @@ using Ttlaixe.DTO.request.Ttlaixe.DTO.request;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using System.IO;
+using Microsoft.Extensions.Hosting;
 namespace Ttlaixe.Businesses
 {
     [ImplementBy(typeof(NguoiLxesBusinesses))]
@@ -29,8 +30,7 @@ namespace Ttlaixe.Businesses
         Task<List<NguoiLxThiResponse>> GetDanhSachSatHach(string MaSatHach);
 
         Task<NguoiLxResponse> GetThongTinNguoiLx(string maDk);
-
-        Task<string> SaveToRelativePathAsync(IFormFile file, string relativePath);
+        Task UpdateHinhThe(IFormFile file, string maDk);
     }
 
     public class NguoiLxesBusinesses : ControllerBase, INguoiLxesBusinesses
@@ -49,6 +49,7 @@ namespace Ttlaixe.Businesses
 
         public async Task<NguoiLxResponse> CreateAsync(NguoiLxCreateRequest rq)
         {
+            var file = rq.File;
             var now = DateTime.Now;
             var logged = _authenInfo.Get();
             var actor = await _context.UserTkns.FindAsync(logged.UserName);
@@ -75,7 +76,6 @@ namespace Ttlaixe.Businesses
             nguoi.NoiCt = "";
             nguoi.NoiTt = "";
 
-            var ttxuly = string.IsNullOrEmpty(rq.DuongDanAnh) ? "01" : "03";
             // ============= 2. Sinh SoHoSo (001, 002, ..., 029, ...) =============
             var lastSoHoSo = await _context.NguoiLxHoSos
                 .Where(x => x.MaCsdt == Constants.MaCSDT && x.MaKhoaHoc == rq.MaKhoaHoc)
@@ -113,7 +113,7 @@ namespace Ttlaixe.Businesses
                 MaDvnhanHso = Constants.MaCSDT,
                 NgayNhanHso = now,
                 MaLoaiHs = maLoaiHs,
-                TtXuLy = ttxuly,
+                TtXuLy = "01",
                 ChonInGplx = 2,
                 GiayCnsk = false,
                 TransferFlag = 0,
@@ -162,12 +162,25 @@ namespace Ttlaixe.Businesses
             var nguoiLaiXeRes = new NguoiLxResponse();
             rq.Patch(nguoiLaiXeRes);
             nguoiLaiXeRes.MaDk = maDk;
+            if (file != null && file.Length > 0)
+            {
+                var savedPath = await SaveToRelativePathAsync(file, hoSo.MaDk);
+
+                // Update đường dẫn ảnh vào hồ sơ
+                hoSo.DuongDanAnh = savedPath.Replace(_opt.ImageRoot,_opt.ImageSaveDatabase);
+
+                // Nếu bạn muốn TT_XuLy đổi theo có ảnh:
+                hoSo.TtXuLy = "03";
+                
+                await _context.SaveChangesAsync();
+            }
 
             return nguoiLaiXeRes;
         }
 
         public async Task<bool> UpdateAsync(NguoiLxResponse rq)
         {
+            var file = rq.File;
             var now = DateTime.Now;
             var logged = _authenInfo.Get();
             var actor = await _context.UserTkns.FindAsync(logged.UserName);
@@ -235,6 +248,13 @@ namespace Ttlaixe.Businesses
                         TrangThai = true
                     });
                 }
+            }
+            if (file != null && file.Length > 0)
+            {
+                var savedPath = await SaveToRelativePathAsync(file, maDk);
+                hoSo.DuongDanAnh = savedPath;
+                if (string.IsNullOrEmpty(hoSo.TtXuLy) || hoSo.TtXuLy == "01")
+                    hoSo.TtXuLy = "03";
             }
 
             await _context.SaveChangesAsync();
@@ -600,7 +620,27 @@ namespace Ttlaixe.Businesses
             return existing;
         }
 
-        public async Task<string> SaveToRelativePathAsync(IFormFile file, string maDk)
+        public async Task UpdateHinhThe(IFormFile file, string maDk)
+        {
+            var logged = _authenInfo.Get();
+            var actor = await _context.UserTkns.FindAsync(logged.UserName);
+            if (!actor.QuyenAdmin && !actor.QuyenNhapLieu)
+            {
+                throw new BadRequestException("Bạn không có quyền thực hiện tính năng này. ");
+            }
+
+            var hoSo = await _context.NguoiLxHoSos.FindAsync(maDk) ?? throw new BadRequestException("Không tìm thấy thông tin người học lái xe.");
+            var savedPath = await SaveToRelativePathAsync(file, hoSo.MaDk);
+
+            // Update đường dẫn ảnh vào hồ sơ
+            hoSo.DuongDanAnh = savedPath.Replace(_opt.ImageRoot, _opt.ImageSaveDatabase);
+
+            // Nếu bạn muốn TT_XuLy đổi theo có ảnh:
+            hoSo.TtXuLy = "03";
+
+            await _context.SaveChangesAsync();
+        }
+        private async Task<string> SaveToRelativePathAsync(IFormFile file, string maDk)
         {
             var nguoiLx = await _context.NguoiLxHoSos.FindAsync(maDk)
         ?? throw new BadRequestException("Không có thông tin người này");

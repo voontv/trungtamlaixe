@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Http;
+using System;
 using System.Collections.Generic;
 
 namespace Ttlaixe.DTO.request
@@ -25,7 +26,7 @@ namespace Ttlaixe.DTO.request
 
         public string SoCmndCu { get; set; }
 
-   
+
         /// <summary>Hạng GPLX đề nghị cấp (DM_HangGPLX), vd: B1, C…</summary>
         public string HangGplx { get; set; }
 
@@ -58,9 +59,6 @@ namespace Ttlaixe.DTO.request
         /// Mã Quận/Huyện/Thị xã/Thành phố Nơi cư trú. Ghi MaDVQL trong bảng DM_DVHC
         /// </summary>
         public string NoiCtMaDvql { get; set; }
-
-        public string DuongDanAnh { get; set; }
-        // ====== Danh sách giấy tờ kèm theo hồ sơ ======
 
         /// <summary>
         /// Số năm lái xe
@@ -106,14 +104,10 @@ namespace Ttlaixe.DTO.request
         /// </summary>
         public string DonViHocLx { get; set; }
 
-        /// <summary>
-        /// Đơn vị cấp GPLX hiện có của Người lái xe
-        /// </summary>
-        public string DonViCapGplxdaCo { get; set; }
-
-        public string NoiCapGplxdaCo { get; set; }
 
         public List<NguoiLxhsCreateRequest> GiayTos { get; set; } = new List<NguoiLxhsCreateRequest>();
+
+        public IFormFile? File { get; set; }
     }
 
 }
