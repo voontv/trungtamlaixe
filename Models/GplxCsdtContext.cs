@@ -53,17 +53,9 @@ public partial class GplxCsdtContext : DbContext
 
     public virtual DbSet<NguoiLxhsGiayTo> NguoiLxhsGiayTos { get; set; }
 
-    public virtual DbSet<ThiSatHachKetQuaChiTietTkn> ThiSatHachKetQuaChiTietTkns { get; set; }
-
-    public virtual DbSet<ThiSatHachKetQuaPhanThiTkn> ThiSatHachKetQuaPhanThiTkns { get; set; }
-
     public virtual DbSet<UserTkn> UserTkns { get; set; }
 
     public virtual DbSet<XeTap> XeTaps { get; set; }
-
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Data Source=200.201.222.67,1433;Initial Catalog=GPLX_CSDT;User Id=sa;Password=Dawaco@57#;MultipleActiveResultSets=True;TrustServerCertificate=True;");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -1350,57 +1342,6 @@ public partial class GplxCsdtContext : DbContext
                 .HasForeignKey(d => d.MaGt)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_NguoiLXHS_GiayTo_DM_GiayTo");
-        });
-
-        modelBuilder.Entity<ThiSatHachKetQuaChiTietTkn>(entity =>
-        {
-            entity.HasKey(e => new { e.MaKySh, e.MaDk, e.MaPhanThi, e.IdQuyTac });
-
-            entity.ToTable("ThiSatHach_KetQuaChiTietTkn");
-
-            entity.Property(e => e.MaKySh)
-                .HasMaxLength(50)
-                .IsUnicode(false);
-            entity.Property(e => e.MaDk)
-                .HasMaxLength(50)
-                .IsUnicode(false);
-
-            entity.HasOne(d => d.IdQuyTacNavigation).WithMany(p => p.ThiSatHachKetQuaChiTietTkns)
-                .HasForeignKey(d => d.IdQuyTac)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__ThiSatHac__IdQuy__704434BB");
-
-            entity.HasOne(d => d.MaPhanThiNavigation).WithMany(p => p.ThiSatHachKetQuaChiTietTkns)
-                .HasForeignKey(d => d.MaPhanThi)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__ThiSatHac__MaPha__713858F4");
-        });
-
-        modelBuilder.Entity<ThiSatHachKetQuaPhanThiTkn>(entity =>
-        {
-            entity.HasKey(e => new { e.MaKySh, e.MaDk, e.MaPhanThi });
-
-            entity.ToTable("ThiSatHach_KetQuaPhanThiTkn");
-
-            entity.Property(e => e.MaKySh)
-                .HasMaxLength(50)
-                .IsUnicode(false);
-            entity.Property(e => e.MaDk)
-                .HasMaxLength(50)
-                .IsUnicode(false);
-            entity.Property(e => e.GhiChu).HasMaxLength(500);
-            entity.Property(e => e.HangDaoTao)
-                .IsRequired()
-                .HasMaxLength(20)
-                .IsUnicode(false);
-            entity.Property(e => e.MaNguoiCham)
-                .HasMaxLength(50)
-                .IsUnicode(false);
-
-            entity.HasOne(d => d.MaPhanThiNavigation).WithMany(p => p.ThiSatHachKetQuaPhanThiTkns)
-                .HasForeignKey(d => d.MaPhanThi)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__ThiSatHac__MaPha__75FD0E11");
         });
 
         modelBuilder.Entity<UserTkn>(entity =>

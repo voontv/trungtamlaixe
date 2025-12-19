@@ -16,6 +16,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using System.IO;
 using Microsoft.Extensions.Hosting;
+using System.Xml;
+using Microsoft.AspNetCore.Server.IIS.Core;
 namespace Ttlaixe.Businesses
 {
     [ImplementBy(typeof(NguoiLxesBusinesses))]
@@ -30,7 +32,10 @@ namespace Ttlaixe.Businesses
         Task<List<NguoiLxThiResponse>> GetDanhSachSatHach(string MaSatHach);
 
         Task<NguoiLxResponse> GetThongTinNguoiLx(string maDk);
+
         Task UpdateHinhThe(IFormFile file, string maDk);
+
+        Task UpdateMaBcByMaDksAsync(IFormFile file);
     }
 
     public class NguoiLxesBusinesses : ControllerBase, INguoiLxesBusinesses
@@ -154,10 +159,18 @@ namespace Ttlaixe.Businesses
             {
                 await _context.SaveChangesAsync();
             }
+            catch (DbUpdateException ex)
+            {
+                var baseEx = ex.GetBaseException();
+                var detail = baseEx?.Message ?? ex.InnerException?.Message ?? ex.Message;
+
+                throw new BadRequestException("Error found is 1111 " + detail);
+            }
             catch (Exception ex)
             {
-                throw new BadRequestException("Error found is " + ex.Message);
+                throw new BadRequestException("Error found is 22222" + ex.Message);
             }
+
 
             var nguoiLaiXeRes = new NguoiLxResponse();
             rq.Patch(nguoiLaiXeRes);
@@ -171,8 +184,25 @@ namespace Ttlaixe.Businesses
 
                 // Nếu bạn muốn TT_XuLy đổi theo có ảnh:
                 hoSo.TtXuLy = "03";
-                
-                await _context.SaveChangesAsync();
+
+                try
+                {
+                    await _context.SaveChangesAsync();
+                }
+                catch (DbUpdateException ex)
+                {
+                    var baseEx = ex.GetBaseException(); // thường là SqlException
+                    var detail = baseEx?.Message ?? ex.Message;
+
+                    // Nếu muốn xem thêm stack (dev thôi):
+                    // detail += "\n" + ex.ToString();
+
+                    throw new BadRequestException("Error found is 3333" + detail);
+                }
+                catch (Exception ex)
+                {
+                    throw new BadRequestException("Error found is 4444" + ex.Message);
+                }
             }
 
             return nguoiLaiXeRes;
@@ -347,7 +377,11 @@ namespace Ttlaixe.Businesses
             return result;
         }
 
-        public async Task<bool> LuuKetQuaChiTietPhanThiAsync(
+        /*
+         * 
+         * 
+         * 
+         * public async Task<bool> LuuKetQuaChiTietPhanThiAsync(
     List<ThiSatHachKetQuaChiTietTknRequest> items)
         {
             if (items == null || items.Count == 0)
@@ -421,7 +455,7 @@ namespace Ttlaixe.Businesses
             await _context.SaveChangesAsync();
 
             return true;
-        }
+        }*/
 
         public async Task<List<string>> GetMaShatHach()
         {
@@ -496,129 +530,7 @@ namespace Ttlaixe.Businesses
             return result;
         }
 
-        public async Task<ThiSatHachKetQuaPhanThiTkn> TinhVaLuuKetQuaPhanThiAsync(TinhKetQuaPhanThiRequest rq)
-        {
-            // 1. Lấy danh sách quy tắc + ghép chi tiết lỗi của thí sinh
-            var query =
-                from q in _context.DmthiSatHachQuyTacTkns.AsNoTracking()
-                join p in _context.DmPhanThiTkns.AsNoTracking()
-                    on q.MaPhanThi equals p.MaPhanThi
-                join ct in _context.ThiSatHachKetQuaChiTietTkns.AsNoTracking()
-                    .Where(x => x.MaKySh == rq.MaKySh
-                                && x.MaDk == rq.MaDk
-                                && x.MaPhanThi == rq.MaPhanThi)
-                    on q.IdQuyTac equals ct.IdQuyTac into ctJoin
-                from ct in ctJoin.DefaultIfEmpty()
-                where q.MaPhanThi == rq.MaPhanThi
-                      && p.HangDaoTao == rq.HangDaoTao
-                select new
-                {
-                    QuyTac = q,
-                    SoLanPham = ct != null ? ct.SoLanPham : 0
-                };
-
-            var list = await query.ToListAsync();
-
-            // 2. Nếu không có quy tắc nào -> mặc định Đạt, 0 điểm trừ
-            if (list.Count == 0)
-            {
-                var upsertRq = new ThiSatHachKetQuaPhanThiTknUpdate
-                {
-                    MaKySh = rq.MaKySh,
-                    MaDk = rq.MaDk,
-                    MaPhanThi = rq.MaPhanThi,
-                    HangDaoTao = rq.HangDaoTao,
-                    MaNguoiCham = rq.MaNguoiCham,
-                    DiemToiDa = rq.DiemToiDa,
-                    TongDiemTru = 0,
-                    DiemConLai = rq.DiemToiDa,
-                    KetQua = true,
-                    GhiChu = null
-                };
-
-                return await UpsertKetQuaPhanThiAsync(upsertRq);
-            }
-
-            // 3. Check lỗi "rớt ngay"
-            bool hasRoiNgay = list.Any(x =>
-                x.QuyTac.IsRotNgay == true &&
-                x.SoLanPham > 0
-            );
-
-            // 4. Tính tổng điểm trừ
-            int tongDiemTru = list
-                .Where(x =>
-                    !x.QuyTac.IsRotNgay &&
-                    x.SoLanPham > 0 &&
-                    x.QuyTac.DonViDiemTru > 0)
-                .Sum(x => x.SoLanPham * x.QuyTac.DonViDiemTru);
-
-            int diemConLai = rq.DiemToiDa - tongDiemTru;
-            if (diemConLai < 0)
-                diemConLai = 0;
-
-            // 5. Kết quả
-            bool ketQua = !hasRoiNgay;
-
-            var request = new ThiSatHachKetQuaPhanThiTknUpdate
-            {
-                MaKySh = rq.MaKySh,
-                MaDk = rq.MaDk,
-                MaPhanThi = rq.MaPhanThi,
-                HangDaoTao = rq.HangDaoTao,
-                MaNguoiCham = rq.MaNguoiCham,
-                DiemToiDa = rq.DiemToiDa,
-                TongDiemTru = tongDiemTru,   // ✅ dùng đúng biến đã tính
-                DiemConLai = diemConLai,
-                KetQua = ketQua,
-                GhiChu = null
-            };
-
-            var ketQuaEntity = await UpsertKetQuaPhanThiAsync(request);
-
-            return ketQuaEntity;
-        }
-
-        private async Task<ThiSatHachKetQuaPhanThiTkn> UpsertKetQuaPhanThiAsync(ThiSatHachKetQuaPhanThiTknUpdate rq)
-        {
-            var existing = await _context.ThiSatHachKetQuaPhanThiTkns
-                .FirstOrDefaultAsync(x =>
-                    x.MaKySh == rq.MaKySh &&
-                    x.MaDk == rq.MaDk &&
-                    x.MaPhanThi == rq.MaPhanThi);
-
-            if (existing == null)
-            {
-                existing = new ThiSatHachKetQuaPhanThiTkn
-                {
-                    MaKySh = rq.MaKySh,
-                    MaDk = rq.MaDk,
-                    MaPhanThi = rq.MaPhanThi,
-                    HangDaoTao = rq.HangDaoTao,
-                    MaNguoiCham = rq.MaNguoiCham,
-                    DiemToiDa = rq.DiemToiDa,
-                    TongDiemTru = rq.TongDiemTru,
-                    DiemConLai = rq.DiemConLai,
-                    KetQua = rq.KetQua,
-                    GhiChu = rq.GhiChu
-                };
-
-                _context.ThiSatHachKetQuaPhanThiTkns.Add(existing);
-            }
-            else
-            {
-                existing.HangDaoTao = rq.HangDaoTao;
-                existing.MaNguoiCham = rq.MaNguoiCham;
-                existing.DiemToiDa = rq.DiemToiDa;
-                existing.TongDiemTru = rq.TongDiemTru;
-                existing.DiemConLai = rq.DiemConLai;
-                existing.KetQua = rq.KetQua;
-                // GhiChu tùy bạn có cho sửa theo rq.GhiChu hay không
-            }
-
-            await _context.SaveChangesAsync();
-            return existing;
-        }
+        
 
         public async Task UpdateHinhThe(IFormFile file, string maDk)
         {
@@ -660,5 +572,96 @@ namespace Ttlaixe.Businesses
 
             return await Utils.SaveToRelativePathAsync(file, relativePath, _opt.ImageRoot);
         }
+
+        public async Task UpdateMaBcByMaDksAsync(IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                throw new BadRequestException("Vui lòng chọn file XML.");
+
+            var ext = Path.GetExtension(file.FileName);
+            if (!string.Equals(ext, ".xml", StringComparison.OrdinalIgnoreCase))
+                throw new BadRequestException("Chỉ cho phép upload file .xml.");
+
+            DanhSachBc1 group;
+            await using (var ms = new MemoryStream())
+            {
+                await file.CopyToAsync(ms);
+                ms.Position = 0;
+
+                try
+                {
+                    group = Utils.DeserializeBaoCao1(ms);
+                }
+                catch (InvalidOperationException ex)
+                {
+                    throw new BadRequestException($"XML không đúng schema / không đọc được. Chi tiết: {ex.Message}");
+                }
+                catch (XmlException ex)
+                {
+                    throw new BadRequestException($"XML bị lỗi cú pháp. Chi tiết: {ex.Message}");
+                }
+            }
+
+            if (string.IsNullOrWhiteSpace(group.MaBci))
+                throw new BadRequestException("MA_BCI không tồn tại trong XML.");
+
+            if (group.MaDks == null || group.MaDks.Count == 0)
+                throw new BadRequestException("Không có MA_DK nào trong XML.");
+
+            if (group == null) throw new ArgumentNullException(nameof(group));
+            if (string.IsNullOrWhiteSpace(group.MaBci)) throw new BadRequestException("MaBci is required.");
+            if (group.MaDks == null || group.MaDks.Count == 0) throw new BadRequestException("Không có học viên nào trong xml.");
+
+            // Chuẩn hoá + loại trùng + bỏ rỗng
+            var maDks = group.MaDks
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Select(x => x.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            if (maDks.Count == 0)
+                throw new BadRequestException("Danh sách MaDks rỗng sau khi chuẩn hoá.");
+
+            // ========== 1) VALIDATE TRƯỚC (gặp lỗi -> throw) ==========
+            // để tránh query IN quá dài, chia chunk
+            const int chunkSize = 500;
+            var existed = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            for (int i = 0; i < maDks.Count; i += chunkSize)
+            {
+                var chunk = maDks.Skip(i).Take(chunkSize).ToList();
+
+                var found = await _context.NguoiLxHoSos
+                    .Where(x => chunk.Contains(x.MaDk))
+                    .Select(x => x.MaDk)
+                    .ToListAsync();
+
+                foreach (var f in found) existed.Add(f);
+            }
+
+            var notFound = maDks.Where(x => !existed.Contains(x)).ToList();
+            if (notFound.Count > 0)
+            {
+                // tránh trả message quá dài
+                var preview = string.Join(", ", notFound.Take(50));
+                var suffix = notFound.Count > 50 ? $" ... (+{notFound.Count - 50} mã khác)" : "";
+                throw new BadRequestException($"Có {notFound.Count} mã MA_DK không tồn tại: {preview}{suffix}");
+            }
+
+            // ========== 2) UPDATE BULK (nhanh) ==========
+            // EF Core 7+:
+            for (int i = 0; i < maDks.Count; i += chunkSize)
+            {
+                var chunk = maDks.Skip(i).Take(chunkSize).ToList();
+
+                await _context.NguoiLxHoSos
+                    .Where(x => chunk.Contains(x.MaDk))
+                    .ExecuteUpdateAsync(setters => setters
+                        .SetProperty(x => x.MaBc1, group.MaBci)
+                    );
+            }
+        }
+
+
     }
 }

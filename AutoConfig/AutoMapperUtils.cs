@@ -63,6 +63,8 @@ namespace Ttlaixe.AutoConfig
             x.CreateMap<UserTknLoginResponse, UserTkn>();
             x.CreateMap<UserTkn, UserTknUpdateRequest>();
             x.CreateMap<UserTknUpdateRequest, UserTkn>();
+            x.CreateMap<XeTapCreatedRequest, XeTap>();
+            x.CreateMap<XeTap, XeTapCreatedRequest>();
         });
 
         private static readonly IMapper mapper = mapperConfiguration.CreateMapper();

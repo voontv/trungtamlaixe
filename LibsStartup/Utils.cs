@@ -19,6 +19,8 @@ using System.Xml.Linq;
 using System.Globalization;
 using System.Drawing;
 using Microsoft.AspNetCore.Http;
+using System.Xml.Serialization;
+using Ttlaixe.DTO.response;
 
 namespace Ttlaixe.LibsStartup
 {
@@ -187,7 +189,83 @@ namespace Ttlaixe.LibsStartup
                 _ => null
             };
         }
+        public static DanhSachBc1 DeserializeBaoCao1(Stream xmlStream)
+        {
+            var serializer = new XmlSerializer(typeof(BaoCao1));
 
+            var settings = new XmlReaderSettings
+            {
+                DtdProcessing = DtdProcessing.Prohibit,
+                IgnoreComments = true,
+                IgnoreWhitespace = true,
+                CloseInput = false
+            };
+
+            using var reader = XmlReader.Create(xmlStream, settings);
+            var root = (BaoCao1)serializer.Deserialize(reader);
+
+            if (root == null)
+                throw new InvalidOperationException("Không deserialize được BAO_CAO1.");
+
+            var result = new DanhSachBc1
+            {
+                MaDvGui = root.Header?.MaDvGui,
+                MaBci = root.Data?.KhoaHoc?.MaBci,
+                MaDks = root.Data?.NguoiLxs?.NguoiLx?
+                    .Where(x => !string.IsNullOrWhiteSpace(x.MaDk))
+                    .Select(x => x.MaDk.Trim())
+                    .ToList()
+                    ?? new List<string>()
+            };
+
+            return result;
+        }
+
+
+
+        public static List<ThongTinTuanReponse> LayDanhSachTuanTheoNam(int nam)
+        {
+            var result = new List<ThongTinTuanReponse>();
+
+            var ngayDauNam = new DateTime(nam, 1, 1);
+            var ngayCuoiNam = new DateTime(nam, 12, 31);
+
+            // Thứ 2 đầu tiên của năm
+            int offset = ((int)DayOfWeek.Monday - (int)ngayDauNam.DayOfWeek + 7) % 7;
+            var thuHaiDauTien = ngayDauNam.AddDays(offset);
+
+            var batDau = thuHaiDauTien;
+            int soTuan = 1;
+
+            while (batDau <= ngayCuoiNam)
+            {
+                var ketThuc = batDau.AddDays(6);
+
+                // tuần cuối cắt tới 31/12 nếu vượt sang năm sau
+                if (ketThuc > ngayCuoiNam) ketThuc = ngayCuoiNam;
+
+                // ===== Tháng theo quy ước 4 tuần/tháng =====
+                // Tuần 1-4 => tháng 1, tuần 5-8 => tháng 2, tuần 9-12 => tháng 3...
+                int thang = ((soTuan - 1) / 4) + 1;
+                if (thang > 12) thang = 12; // dư tuần dồn tháng 12
+
+                int tuanTrongThang = ((soTuan - 1) % 4) + 1;
+
+                result.Add(new ThongTinTuanReponse
+                {
+                    TenTuan = $"Tuần {soTuan}",
+                    NgayBatDau = batDau,
+                    NgayKetThuc = ketThuc,
+                    Thang = thang,
+                    TuanTrongThang = tuanTrongThang
+                });
+
+                soTuan++;
+                batDau = batDau.AddDays(7);
+            }
+
+            return result;
+        }
     }
 
 }

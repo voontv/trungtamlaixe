@@ -16,6 +16,4 @@ public partial class DmthiSatHachQuyTacTkn
     public bool IsRotNgay { get; set; }
 
     public virtual DmPhanThiTkn MaPhanThiNavigation { get; set; }
-
-    public virtual ICollection<ThiSatHachKetQuaChiTietTkn> ThiSatHachKetQuaChiTietTkns { get; set; } = new List<ThiSatHachKetQuaChiTietTkn>();
 }

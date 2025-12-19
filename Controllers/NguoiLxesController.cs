@@ -60,9 +60,19 @@ namespace Ttlaixe.Controllers
 
         [HttpPost("upload-hinh-the/{maDk}")]
         [Authorize]
-        public async Task Upload(IFormFile file,string maDk)
+        public async Task Upload(IFormFile file, string maDk)
         {
-             await _business.UpdateHinhThe(file, maDk);
+            await _business.UpdateHinhThe(file, maDk);
         }
+
+        // POST: /api/BaoCao1/upload-xml
+        // form-data: file = (xml)
+        [Authorize]
+        [HttpPost("upload-xml")]
+        [RequestSizeLimit(50 * 1024 * 1024)]
+        public async Task UploadXmlAsync(IFormFile file)
+        {
+            await _business.UpdateMaBcByMaDksAsync(file);
+        }     
     }
 }
