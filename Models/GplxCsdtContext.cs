@@ -47,6 +47,8 @@ public partial class GplxCsdtContext : DbContext
 
     public virtual DbSet<KhoaHoc> KhoaHocs { get; set; }
 
+    public virtual DbSet<LichHoc> LichHocs { get; set; }
+
     public virtual DbSet<NguoiLx> NguoiLxes { get; set; }
 
     public virtual DbSet<NguoiLxHoSo> NguoiLxHoSos { get; set; }
@@ -831,6 +833,35 @@ public partial class GplxCsdtContext : DbContext
                 .HasForeignKey(d => d.HangGplx)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_KhoaHoc_DM_HangGPLX");
+        });
+
+        modelBuilder.Entity<LichHoc>(entity =>
+        {
+            entity.HasKey(e => e.MaLichHoc);
+
+            entity.ToTable("LichHoc");
+
+            entity.Property(e => e.DenNgay).HasColumnType("datetime");
+            entity.Property(e => e.GhiChu).HasMaxLength(255);
+            entity.Property(e => e.GiaiDoan)
+                .HasMaxLength(5)
+                .IsUnicode(false)
+                .IsFixedLength()
+                .HasComment("LT=Lý thuyết; TH=Thực hành hình; TD=Thực hành đường; KT=Thi kiểm tra; NG=Nghỉ; DU=Dự phòng; SH=Sát hạch");
+            entity.Property(e => e.KiemTra)
+                .HasMaxLength(2)
+                .IsUnicode(false)
+                .IsFixedLength();
+            entity.Property(e => e.MaKh)
+                .IsRequired()
+                .HasMaxLength(13)
+                .IsUnicode(false)
+                .HasColumnName("MaKH");
+            entity.Property(e => e.TuNgay).HasColumnType("datetime");
+
+            entity.HasOne(d => d.MaKhNavigation).WithMany(p => p.LichHocs)
+                .HasForeignKey(d => d.MaKh)
+                .HasConstraintName("FK_LichHoc_KhoaHoc");
         });
 
         modelBuilder.Entity<NguoiLx>(entity =>

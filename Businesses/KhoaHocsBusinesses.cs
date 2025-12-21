@@ -24,7 +24,7 @@ namespace Ttlaixe.Businesses
         Task<object> GetThongTinKhoaHoc(string MaKhoaHoc);
     }
 
-    public class KhoaHocsBusinesses: ControllerBase, IKhoaHocsBusinesses
+    public class KhoaHocsBusinesses : ControllerBase, IKhoaHocsBusinesses
     {
         private readonly GplxCsdtContext _context;
         private readonly ITokenGenerator _tokenGenerator;
@@ -40,8 +40,8 @@ namespace Ttlaixe.Businesses
         {
             var thoiGiandt = await _context.DmHangDts.FindAsync(khoaHocRq.HangDt);
             var time = DateTime.Now;
-            var maKh = Constants.MaCSDT+"K"+time.Year.ToString()[^2..];//lấy 2 ký tự cuối của năm hiện tại
-            maKh+= Regex.Replace(khoaHocRq.HangDt, @"[^\w\s]", "");
+            var maKh = Constants.MaCSDT + "K" + time.Year.ToString()[^2..];//lấy 2 ký tự cuối của năm hiện tại
+            maKh += Regex.Replace(khoaHocRq.HangDt, @"[^\w\s]", "");
             var soLopHienTaiDoiVoiHangDt = await _context.KhoaHocs
                 .Where(x => x.MaCsdt == Constants.MaCSDT && x.HangDt == khoaHocRq.HangDt && x.NgayKg.Value.Year == DateTime.Now.Year)
                 .CountAsync();
@@ -61,17 +61,17 @@ namespace Ttlaixe.Businesses
             {
                 if (KhoaHocExists(khoaHoc.MaKh))
                 {
-                     Conflict();
+                    Conflict();
                 }
                 else
                 {
-                    throw new BadRequestException("Error found is "+e.Message);
+                    throw new BadRequestException("Error found is " + e.Message);
                 }
             }
             var khoaHocRes = new KhoaHocResponse();
             khoaHoc.Patch(khoaHocRes);
 
-           return khoaHocRes;
+            return khoaHocRes;
         }
 
         public async Task<List<KhoaHocResponse>> GetListKhoaHocsTheoTg(MocThoiGian dk)
@@ -115,8 +115,6 @@ namespace Ttlaixe.Businesses
 
             return khoaHocRess;
         }
-
-
 
         private bool KhoaHocExists(string id)
         {

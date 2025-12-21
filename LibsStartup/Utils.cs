@@ -221,7 +221,26 @@ namespace Ttlaixe.LibsStartup
             return result;
         }
 
+        /// <summary>
+        /// Lấy Chủ nhật của tuần chứa ngày d (tuần tính Thứ 2 -> CN)
+        /// </summary>
+        public static DateTime GetSundayOfWeek(DateTime d)
+        {
+            // DayOfWeek: Sunday=0, Monday=1,... Saturday=6
+            // đổi về offset đến CN
+            int offsetToSunday = DayOfWeek.Sunday - d.DayOfWeek;
+            if (offsetToSunday < 0) offsetToSunday += 7;
+            return d.Date.AddDays(offsetToSunday);
+        }
 
+        /// <summary>
+        /// Lấy Thứ 2 của tuần chứa ngày d (tuần tính Thứ 2 -> CN)
+        /// </summary>
+        public static DateTime GetMondayOfWeek(DateTime d)
+        {
+            int diff = (7 + (int)d.DayOfWeek - (int)DayOfWeek.Monday) % 7;
+            return d.Date.AddDays(-diff);
+        }
 
         public static List<ThongTinTuanReponse> LayDanhSachTuanTheoNam(int nam)
         {

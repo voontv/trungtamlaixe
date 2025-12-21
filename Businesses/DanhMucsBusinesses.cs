@@ -22,6 +22,8 @@ namespace Ttlaixe.Businesses
         Task<List<DmLoaiHsoGiayToResponse>> GetDmLoaiHsoGiayTo(string maHangGPLX);
 
         Task<List<DmQuocTich>> GetDMQuocTich();
+
+        Task<List<DmTenKeHoachDaoTaoItem>> GetDanhMucKhdt();
     }
     public class DanhMucsBusinesses : ControllerBase, IDanhMucsBusinesses
     {
@@ -118,6 +120,29 @@ namespace Ttlaixe.Businesses
         public async Task<List<DmQuocTich>> GetDMQuocTich()
         {
             return await _context.DmQuocTiches.Where(x => x.TrangThai == true).ToListAsync();
+        }
+
+        public Task<List<DmTenKeHoachDaoTaoItem>> GetDanhMucKhdt()
+        {
+            /*var list = new List<DmTenKeHoachDaoTaoItem>
+            {  new DmTenKeHoachDaoTaoItem { MaDaoTao = "LT", TenDaoTao = "Lý thuyết" },
+                new DmTenKeHoachDaoTaoItem { MaDaoTao = "TH", TenDaoTao = "Thực hành hình" },
+                new DmTenKeHoachDaoTaoItem { MaDaoTao = "TD", TenDaoTao = "Thực hành đường" },
+                new DmTenKeHoachDaoTaoItem { MaDaoTao = "KT", TenDaoTao = "Thi kiểm tra" },
+                new DmTenKeHoachDaoTaoItem { MaDaoTao = "NG", TenDaoTao = "Nghỉ" },
+                new DmTenKeHoachDaoTaoItem { MaDaoTao = "DU", TenDaoTao = "Dự phòng" },
+                new DmTenKeHoachDaoTaoItem { MaDaoTao = "SH", TenDaoTao = "Sát hạch" },};*/
+
+            var list = new List<DmTenKeHoachDaoTaoItem>
+            {  new DmTenKeHoachDaoTaoItem { MaDaoTao = "L", TenDaoTao = "Lý thuyết" },
+                new DmTenKeHoachDaoTaoItem { MaDaoTao = "H", TenDaoTao = "Thực hành hình" },
+                new DmTenKeHoachDaoTaoItem { MaDaoTao = "D", TenDaoTao = "Thực hành đường" },
+                new DmTenKeHoachDaoTaoItem { MaDaoTao = "KT", TenDaoTao = "Thi kiểm tra" },
+                new DmTenKeHoachDaoTaoItem { MaDaoTao = "NG", TenDaoTao = "Nghỉ" },
+                new DmTenKeHoachDaoTaoItem { MaDaoTao = "DU", TenDaoTao = "Dự phòng" },
+                new DmTenKeHoachDaoTaoItem { MaDaoTao = "SH", TenDaoTao = "Sát hạch" }};
+
+            return Task.FromResult(list);
         }
     }
 }

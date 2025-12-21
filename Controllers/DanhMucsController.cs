@@ -59,5 +59,14 @@ namespace Ttlaixe.Controllers
         {
             return await _business.GetDMQuocTich();
         }
+
+        [HttpGet("ten-ke-hoach-dao-tao")]
+        public async Task<List<DmTenKeHoachDaoTaoItem>> GetDanhMucKhdt()
+        {
+            return await _business.GetDanhMucKhdt();
+        }
+
+
+
     }
 }

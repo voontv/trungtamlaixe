@@ -74,8 +74,8 @@ namespace Ttlaixe.Businesses
             // ============= 1. Tạo NguoiLx =============
             var nguoi = new NguoiLx();
             rq.Patch(nguoi);
-            nguoi.MaDk = maDk;                 // set lại sau Patch để không bị đè null
-            nguoi.DonViNhanHso = rq.MaCsdt;
+            nguoi.MaDk = maDk;// set lại sau Patch để không bị đè null
+            nguoi.DonViNhanHso = Constants.MaCSDT;
             nguoi.HoVaTen = $"{nguoi.HoDemNlx} {nguoi.TenNlx}";
             nguoi.HoVaTenIn = nguoi.HoVaTen;
             nguoi.NoiCt = "";
@@ -164,7 +164,7 @@ namespace Ttlaixe.Businesses
                 var baseEx = ex.GetBaseException();
                 var detail = baseEx?.Message ?? ex.InnerException?.Message ?? ex.Message;
 
-                throw new BadRequestException("Error found is 1111 " + detail);
+                throw new BadRequestException("Error found is 1111 " + detail +"  gioi tinh cho request"+rq.GioiTinh+"  cho nguoi "+nguoi.GioiTinh);
             }
             catch (Exception ex)
             {

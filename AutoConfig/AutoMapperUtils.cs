@@ -52,6 +52,12 @@ namespace Ttlaixe.AutoConfig
             x.CreateMap<DmDvhc, DmDvhcResponse>();
             x.CreateMap<DmLoaiHsoResponse, DmLoaiHso>();
             x.CreateMap<DmLoaiHso, DmLoaiHsoResponse>();
+
+            x.CreateMap<LichHoc, LichHocCreatedRequest>();
+            x.CreateMap<LichHocCreatedRequest, LichHoc>();
+
+
+
             x.CreateMap<NguoiLxCreateRequest, NguoiLx>();
             x.CreateMap<NguoiLx, NguoiLxCreateRequest>();
             x.CreateMap<NguoiLxResponse, NguoiLxCreateRequest>();
