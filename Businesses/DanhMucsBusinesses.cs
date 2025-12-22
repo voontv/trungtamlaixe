@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Ttlaixe.Exceptions;
 
 namespace Ttlaixe.Businesses
 {
@@ -16,14 +17,15 @@ namespace Ttlaixe.Businesses
         Task<List<DmDiemSatHach>> GetDmDiemSatHach(string hang);
         Task<List<DmDvhcResponse>> GetDmDonViHanhChinh();
         Task<List<DmHangDaoTaoResponse>> GetDmThongTinHangDaoTao();
-        Task<List<HangGplxDto>> GetHangGPLX();
-        Task<List<HangDaoTaoReponse>> GetHangDaoTao(string maHangGplx);
+        Task<List<string>> GetMaHangDaoTao();
+        Task<List<HangDaoTaoReponse>> GetLoaiHinhDaoTao(string maHangGplx);
         Task<List<DmLoaiHsoResponse>> GetDmLoaiHso();
         Task<List<DmLoaiHsoGiayToResponse>> GetDmLoaiHsoGiayTo(string maHangGPLX);
 
         Task<List<DmQuocTich>> GetDMQuocTich();
 
         Task<List<DmTenKeHoachDaoTaoItem>> GetDanhMucKhdt();
+
     }
     public class DanhMucsBusinesses : ControllerBase, IDanhMucsBusinesses
     {
@@ -82,27 +84,66 @@ namespace Ttlaixe.Businesses
                 .ToListAsync();
         }
 
-        public async Task<List<HangGplxDto>> GetHangGPLX()
+        public async Task<List<string>> GetMaHangDaoTao()
         {
-            return await _context.DmHangGplxes
+            return await _context.DmHangDts
                 .Where(x => x.TrangThai == true)
-                .Select(x => new HangGplxDto
-                {
-                    hangGplx = x.MaHang,
-                    MaHangGplxMoi = x.MaHangMoi
-                })
+                .Select(x => x.HangGplx).Distinct()
                 .ToListAsync();
         }
 
-        public async Task<List<HangDaoTaoReponse>> GetHangDaoTao(string maHangGplx)
+        public async Task<List<HangDaoTaoReponse>> GetLoaiHinhDaoTao(string maHangDaoTao)
         {
-            return await _context.DmHangDts.Where(x => x.HangGplx == maHangGplx)
-               .Select(x => new HangDaoTaoReponse
-               {
-                    MaHangDt = x.MaHangDt,
-                   TenHangDt =x.TenHangDt
-               }).ToListAsync();
+            maHangDaoTao = (maHangDaoTao ?? "").Trim();
+            if (string.IsNullOrEmpty(maHangDaoTao))
+                return new List<HangDaoTaoReponse>();
+
+            // Lấy tất cả hạng đào tạo theo HangGPLX (mã mới) đang active
+            var dts = await _context.DmHangDts
+                .Where(x => x.TrangThai == true && x.HangGplx == maHangDaoTao)
+                .Select(x => new { x.MaHangDt, x.TenHangDt, x.HangGplx })
+                .ToListAsync();
+
+            if (dts.Count == 0)
+                return new List<HangDaoTaoReponse>();
+
+            // Map HangGPLX (mã mới) -> 1 mã đích (MaHang) theo thứ tự ổn định (MaHang)
+            // (B -> lấy B1 vì B1 < B2 theo ORDER BY MaHang)
+            var hangMoiSet = dts.Select(x => x.HangGplx).Distinct().ToList();
+
+            var map = await _context.DmHangGplxes
+                .Where(g => hangMoiSet.Contains(g.MaHangMoi) || hangMoiSet.Contains(g.MaHang))
+                .Select(g => new { g.MaHangMoi, g.MaHang })
+                .ToListAsync();
+
+            // chọn 1 đích cho mỗi mã mới: Min/MaHang đầu tiên theo order
+            var dict = map
+                .GroupBy(x => x.MaHangMoi)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Select(x => x.MaHang).Where(x => !string.IsNullOrWhiteSpace(x)).Distinct().OrderBy(x => x).FirstOrDefault()
+                );
+
+            var result = new List<HangDaoTaoReponse>();
+
+            foreach (var dt in dts)
+            {
+                // Ưu tiên map theo MaHangMoi, nếu không có thì thử dt.HangGplx vốn đã là MaHang
+                dict.TryGetValue(dt.HangGplx, out var maDich);
+
+                if (string.IsNullOrWhiteSpace(maDich))
+                    maDich = dt.HangGplx; // fallback (tuỳ bạn có muốn hay không)
+
+                result.Add(new HangDaoTaoReponse
+                {
+                    MaGplx = maDich,
+                    TenHangDt = dt.TenHangDt
+                });
+            }
+
+            return result;
         }
+
 
         public async Task<List<DmLoaiHsoResponse>> GetDmLoaiHso()
         {
@@ -144,5 +185,6 @@ namespace Ttlaixe.Businesses
 
             return Task.FromResult(list);
         }
+
     }
 }
