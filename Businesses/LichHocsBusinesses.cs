@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Ttlaixe.AutoConfig;
 using Ttlaixe.DTO.request;
+using Ttlaixe.DTO.response;
 using Ttlaixe.Exceptions;
 using Ttlaixe.Models;
 
@@ -21,9 +22,13 @@ namespace Ttlaixe.Businesses
 
         Task<List<LichHoc>> SearchAsync(string maKh, int? thang, int? tuan, DateTime? fromDate, DateTime? toDate);
 
+        Task<List<LichHocCreatedRequest>> TaoMacDinhLichHoc(string maKhoaHoc);
+
+        Task<List<LichHocsResponse>> ThongTinLichHocFull(LichHocSearchRequest req);
+
         Task<bool> CreateManyAsync(List<LichHocCreatedRequest> rqs);
 
-        Task<bool> UpdateManyAsync(List<LichHocCreatedRequest> rqs);
+        Task<bool> UpdateManyAsync(List<LichHocGiaiDoanRequest> rqs);
 
         Task<bool> DeleteByMaKhAsync(string maKh);
     }
@@ -83,7 +88,6 @@ namespace Ttlaixe.Businesses
         {
             if (string.IsNullOrWhiteSpace(maKh))
                 throw new BadRequestException("MaKh không hợp lệ.");
-
             return await _context.LichHocs
                 .AsNoTracking()
                 .Where(x => x.MaKh == maKh)
@@ -142,7 +146,7 @@ namespace Ttlaixe.Businesses
                     throw new BadRequestException("DenNgay phải >= TuNgay.");
 
                 if (string.IsNullOrWhiteSpace(x.GiaiDoan))
-                    x.GiaiDoan = "LT";
+                    x.GiaiDoan = "L";
             }
 
             // chặn trùng trong DB theo (MaKh, Tuan)
@@ -180,64 +184,17 @@ namespace Ttlaixe.Businesses
             }
         }
 
-        public async Task<bool> UpdateManyAsync(List<LichHocCreatedRequest> rqs)
+        public async Task<bool> UpdateManyAsync(List<LichHocGiaiDoanRequest> rqs)
         {
             if (rqs == null || rqs.Count == 0)
                 throw new BadRequestException("Danh sách rỗng.");
 
-            var maKh = rqs[0]?.MaKh;
-            if (string.IsNullOrWhiteSpace(maKh))
-                throw new BadRequestException("MaKh không được để trống.");
-
-            if (rqs.Any(x => !string.Equals(x.MaKh, maKh, StringComparison.OrdinalIgnoreCase)))
-                throw new BadRequestException("Danh sách chỉ được chứa 1 MaKh duy nhất.");
-
-            // body không được trùng tuần
-            var dupTuanBody = rqs.GroupBy(x => x.Tuan).FirstOrDefault(g => g.Count() > 1);
-            if (dupTuanBody != null)
-                throw new BadRequestException($"Body bị trùng Tuan={dupTuanBody.Key}.");
-
-            foreach (var x in rqs)
-            {
-                if (x.Tuan <= 0)
-                    throw new BadRequestException("Tuan không hợp lệ.");
-
-                if (x.DenNgay < x.TuNgay)
-                    throw new BadRequestException("DenNgay phải >= TuNgay.");
-
-                if (string.IsNullOrWhiteSpace(x.GiaiDoan))
-                    x.GiaiDoan = "LT";
-            }
-
-            var tuans = rqs.Select(x => x.Tuan).Distinct().ToList();
-
-            // load record cần update theo (MaKh, Tuan)
-            var existing = await _context.LichHocs
-                .Where(x => x.MaKh == maKh && tuans.Contains(x.Tuan))
-                .ToListAsync();
-
-            // thiếu tuần nào trong DB => báo rõ
-            if (existing.Count != tuans.Count)
-            {
-                var found = existing.Select(x => x.Tuan).ToHashSet();
-                var missing = tuans.Where(t => !found.Contains(t)).ToList();
-                throw new NotFoundException($"Không tìm thấy lịch học để cập nhật (MaKh={maKh}), thiếu tuần: {string.Join(",", missing)}");
-            }
-
-            var map = existing.ToDictionary(x => x.Tuan);
-
-            // update
             foreach (var rq in rqs)
             {
-                var e = map[rq.Tuan];
+                var tuanHoc = await _context.LichHocs.FindAsync(rq.MaLichHoc)
+                    ?? throw new BadRequestException($"Không tìm thấy mã tuần học: {rq.MaLichHoc}");
 
-                // KHÓA: MaLichHoc giữ nguyên; MaKh giữ nguyên
-                e.Thang = rq.Thang;
-                e.TuNgay = rq.TuNgay;
-                e.DenNgay = rq.DenNgay;
-                e.GiaiDoan = rq.GiaiDoan;
-                e.KiemTra = rq.KiemTra;
-                e.GhiChu = rq.GhiChu;
+                tuanHoc.GiaiDoan = rq.GiaiDoan;
             }
 
             try
@@ -252,6 +209,7 @@ namespace Ttlaixe.Businesses
                 throw new BadRequestException("Error found is " + detail);
             }
         }
+
         public async Task<bool> DeleteByMaKhAsync(string maKh)
         {
             await EnsureCanEditAsync();
@@ -287,6 +245,123 @@ namespace Ttlaixe.Businesses
                 throw new BadRequestException("Error found is " + detail);
             }
         }
+
+        public async Task<List<LichHocCreatedRequest>> TaoMacDinhLichHoc(string maKhoaHoc)
+        {
+            if (string.IsNullOrWhiteSpace(maKhoaHoc))
+                throw new BadRequestException("Mã khóa học không hợp lệ.");
+
+            // Nếu đã có lịch thì không cho generate
+            if (await _context.LichHocs.AnyAsync(x => x.MaKh == maKhoaHoc))
+                throw new BadRequestException($"Mã {maKhoaHoc} này đã được tạo lịch. Vui lòng kiểm tra lại.");
+
+            var khoaHoc = await _context.KhoaHocs.FindAsync(maKhoaHoc)
+                ?? throw new BadRequestException("Không tìm thấy mã khóa học.");
+
+            if (!khoaHoc.NgayKg.HasValue || !khoaHoc.NgayBg.HasValue)
+                throw new BadRequestException("Khóa học chưa có ngày khai giảng hoặc ngày bế giảng.");
+
+            var start = khoaHoc.NgayKg.Value.Date;
+            var end = khoaHoc.NgayBg.Value.Date;
+
+            if (end < start)
+                throw new BadRequestException("Ngày bế giảng không được nhỏ hơn ngày khai giảng.");
+
+            // ===== Generate lịch tuần =====
+            var result = new List<LichHocCreatedRequest>();
+
+            var tuNgay = start;
+            var tuan = 1;
+
+            while (tuNgay <= end)
+            {
+                var denNgay = tuNgay.AddDays(6);
+                if (denNgay > end)
+                    denNgay = end;
+
+                result.Add(new LichHocCreatedRequest
+                {
+                    MaKh = maKhoaHoc,
+                    Thang = tuNgay.Month,
+                    Tuan = tuan,
+                    TuNgay = tuNgay,
+                    DenNgay = denNgay,
+
+                    // mặc định để FE chỉnh lại
+                    GiaiDoan = "L",
+                    KiemTra = null,
+                    GhiChu = null
+                });
+
+                tuan++;
+                tuNgay = denNgay.AddDays(1);
+            }
+
+            return result;
+        }
+
+        public async Task<List<LichHocsResponse>> ThongTinLichHocFull(LichHocSearchRequest req)
+        {
+            if (req.PageIndex <= 0) req.PageIndex = 1;
+            if (req.PageSize <= 0) req.PageSize = 10;
+
+            int skip = (req.PageIndex - 1) * req.PageSize;
+
+            // 1. Lấy danh sách MaKh theo thứ tự mới nhất
+            var maKhList = await _context.LichHocs
+                .AsNoTracking()
+                .GroupBy(x => x.MaKh)
+                .Select(g => new
+                {
+                    MaKh = g.Key,
+                    MaxTuNgay = g.Max(x => x.TuNgay)
+                })
+                .OrderByDescending(x => x.MaxTuNgay)
+                .Skip(skip)
+                .Take(req.PageSize)
+                .Select(x => x.MaKh)
+                .ToListAsync();
+
+            if (!maKhList.Any())
+                return new List<LichHocsResponse>();
+
+            // 2. Lấy toàn bộ lịch của các MaKh trong page
+            var lichHocs = await _context.LichHocs
+                .AsNoTracking()
+                .Where(x => maKhList.Contains(x.MaKh))
+                .OrderBy(x => x.MaKh)
+                .ThenBy(x => x.Tuan)
+                .ToListAsync();
+
+            // 3. Group lại cho response
+            var result = lichHocs
+                .GroupBy(x => x.MaKh)
+                .Select(g => new LichHocsResponse
+                {
+                    MaKh = g.Key,
+                    thongTinChiTiets = g.Select(x => new LichHocCoBan
+                    {
+                        MaLichHoc = x.MaLichHoc,
+                        Thang = x.Thang,
+                        Tuan = x.Tuan,
+                        TuNgay = x.TuNgay,
+                        DenNgay = x.DenNgay,
+                        GiaiDoan = x.GiaiDoan,
+                        KiemTra = x.KiemTra,
+                        GhiChu = x.GhiChu
+                    })
+                    .OrderBy(x => x.Tuan)
+                    .ToList()
+                })
+                // đảm bảo đúng thứ tự page (mới nhất trước)
+                .OrderByDescending(x =>
+                    x.thongTinChiTiets.Max(l => l.TuNgay)
+                )
+                .ToList();
+
+            return result;
+        }
+
 
     }
 }

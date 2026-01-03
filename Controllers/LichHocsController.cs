@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Ttlaixe.Businesses;
 using Ttlaixe.DTO.request;
+using Ttlaixe.DTO.response;
 using Ttlaixe.Models;
 
 namespace Ttlaixe.Controllers
@@ -44,6 +45,20 @@ namespace Ttlaixe.Controllers
         )
             => _business.SearchAsync(maKh, thang, tuan, fromDate, toDate);
 
+        [HttpPost("tao-lich-hoc-mac-dinh")]
+        [Authorize]
+        public async Task<List<LichHocCreatedRequest>> TaoMacDinhLichHoc(string maKhoaHoc)
+        {
+            return await _business.TaoMacDinhLichHoc(maKhoaHoc);
+        }
+
+        [HttpPost("lich-hoc-toan-trung-tam")]
+        [Authorize]
+        public async Task<List<LichHocsResponse>> ThongTinLichHocFull(LichHocSearchRequest search)
+        {
+            return await _business.ThongTinLichHocFull(search);
+        }
+
         [HttpPost("create-many")]
         [Authorize]
         public async Task<bool> CreateManyAsync([FromBody] List<LichHocCreatedRequest> rqs)
@@ -54,7 +69,7 @@ namespace Ttlaixe.Controllers
         // PUT: api/LichHocs/update-many
         [HttpPut("update-many")]
         [Authorize]
-        public async Task<bool> UpdateManyAsync([FromBody] List<LichHocCreatedRequest> rqs)
+        public async Task<bool> UpdateManyAsync([FromBody] List<LichHocGiaiDoanRequest> rqs)
         {
             return await _business.UpdateManyAsync(rqs);
         }

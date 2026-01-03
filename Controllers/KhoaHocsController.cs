@@ -39,6 +39,14 @@ namespace Ttlaixe.Controllers
             return await _bs.GetListKhoaHocsTheoTg(dk);
         }
 
+        // POST: api/KhoaHocs
+        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [HttpPost("danh-sach-khoa-hoc-chua-co-lich-hoc")]
+        public async Task<List<KhoaHocResponse>> KhoaHocChuaTaoLichHoc(MocThoiGian dk)
+        {
+            return await _bs.KhoaHocChuaTaoLichHoc();
+        }
+
         //// DELETE: api/KhoaHocs/5
         //[HttpDelete("{id}")]
         //public async Task<IActionResult> DeleteKhoaHoc(string id)

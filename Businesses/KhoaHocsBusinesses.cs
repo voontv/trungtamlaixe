@@ -21,6 +21,8 @@ namespace Ttlaixe.Businesses
 
         Task<List<KhoaHocResponse>> GetListKhoaHocsTheoTg(MocThoiGian dk);
 
+        Task<List<KhoaHocResponse>> KhoaHocChuaTaoLichHoc();
+
         Task<object> GetThongTinKhoaHoc(string MaKhoaHoc);
     }
 
@@ -128,5 +130,23 @@ namespace Ttlaixe.Businesses
             khoaHoc.Patch(result);
             return result;
         }
+
+        public async Task<List<KhoaHocResponse>> KhoaHocChuaTaoLichHoc()
+        {
+            // cheat để test
+            var now = DateTime.Now.AddYears(-1);
+
+            var khoaHocs = await _context.KhoaHocs
+                .AsNoTracking()
+                .Where(kh => kh.NgayKg <= now)
+                .Where(kh => !_context.LichHocs.Any(lh => lh.MaKh == kh.MaKh))
+                .ToListAsync();
+
+            var result = new List<KhoaHocResponse>();
+            khoaHocs.Patch(result);
+
+            return result;
+        }
+
     }
 }
