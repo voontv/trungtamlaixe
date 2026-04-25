@@ -134,11 +134,11 @@ namespace Ttlaixe.Businesses
         public async Task<List<KhoaHocResponse>> KhoaHocChuaTaoLichHoc()
         {
             // cheat để test
-            var now = DateTime.Now.AddYears(-1);
+            //var now = DateTime.Now.AddYears(-1);
 
             var khoaHocs = await _context.KhoaHocs
                 .AsNoTracking()
-                .Where(kh => kh.NgayKg <= now)
+                //.Where(kh => kh.NgayKg <= now)//chỗ này để sau check các khóa chưa có lịch
                 .Where(kh => !_context.LichHocs.Any(lh => lh.MaKh == kh.MaKh))
                 .ToListAsync();
 

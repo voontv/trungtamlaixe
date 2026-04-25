@@ -58,154 +58,131 @@ namespace Ttlaixe.Businesses
             var now = DateTime.Now;
             var logged = _authenInfo.Get();
             var actor = await _context.UserTkns.FindAsync(logged.UserName);
+
             if (!actor.QuyenAdmin && !actor.QuyenNhapLieu)
-            {
-                throw new BadRequestException("Bạn không có quyền thực hiện tính năng này. ");
-            }
+                throw new BadRequestException("Bạn không có quyền thực hiện tính năng này.");
 
             if (await ExistsSoCmtInKhoaHocAsync(rq.MaCsdt, rq.MaKhoaHoc, rq.SoCmt))
-            {
                 throw new BadRequestException("Số CMT này đã tồn tại trong khóa học này.");
-            }
-            // ============= 0. Sinh MaDK = <MaCSDT>-<yyyyMMddHHmmssfff> =============
-            // Ví dụ: 48012-20250419150455500
-            var maDk = $"{Constants.MaCSDT}-{now:yyyyMMddHHmmssfff}";
 
-            // ============= 1. Tạo NguoiLx =============
-            var nguoi = new NguoiLx();
-            rq.Patch(nguoi);
-            nguoi.MaDk = maDk;// set lại sau Patch để không bị đè null
-            nguoi.DonViNhanHso = Constants.MaCSDT;
-            nguoi.HoVaTen = $"{nguoi.HoDemNlx} {nguoi.TenNlx}";
-            nguoi.HoVaTenIn = nguoi.HoVaTen;
-            nguoi.NoiCt = "";
-            nguoi.NoiTt = "";
+            string maDk;
+            int retry = 0;
 
-            // ============= 2. Sinh SoHoSo (001, 002, ..., 029, ...) =============
-            var lastSoHoSo = await _context.NguoiLxHoSos
-                .Where(x => x.MaCsdt == Constants.MaCSDT && x.MaKhoaHoc == rq.MaKhoaHoc)
-                .OrderByDescending(x => x.SoHoSo)
-                .Select(x => x.SoHoSo)
-                .FirstOrDefaultAsync();
-
-            int nextSoHoSoNumber = 1;
-            if (!string.IsNullOrEmpty(lastSoHoSo) && int.TryParse(lastSoHoSo, out var parsed))
+            while (true)
             {
-                nextSoHoSoNumber = parsed + 1;
-            }
+                retry++;
+                if (retry > 5)
+                    throw new BadRequestException("Không thể sinh MaDK duy nhất, vui lòng thử lại.");
 
-            var soHoSo = nextSoHoSoNumber.ToString("D3"); // ví dụ "029"
+                maDk = $"{Constants.MaCSDT}-{DateTime.Now:yyyyMMdd-HHmmss}";
 
-            // ============= 3. Tạo NguoiLxHoSo =============
-            // ===== Update NguoiLxHoSo =====
-            var maLoaiHs = 2;
-            string[] motoCodes = { "A01", "A02", "A1", "A1m", "A2" };
-
-            if (motoCodes.Contains(rq.HangGplx))
-            {
-                maLoaiHs = 1;
-            }
-
-            var maHeThongCap = "CM_VN";
-            if (nguoi.MaQuocTich != "VNM")
-            {
-                maHeThongCap = "CM_EN";
-            }
-            var hoSo = new NguoiLxHoSo
-            {
-                MaCsdt = Constants.MaCSDT,
-                MaSoGtvt = Constants.MaSoGTVT,
-                MaDvnhanHso = Constants.MaCSDT,
-                NgayNhanHso = now,
-                MaLoaiHs = maLoaiHs,
-                TtXuLy = "01",
-                ChonInGplx = 2,
-                GiayCnsk = false,
-                TransferFlag = 0,
-                HosoDvcc4 = 0,
-                TrangThai = true,
-                MaHtcap = maHeThongCap,
-                NgayTao = now,
-                NgaySua = now
-            };
-
-            rq.Patch(hoSo);
-            hoSo.MaDk = maDk;                  // <<< BẮT BUỘC
-            hoSo.SoHoSo = soHoSo;              // <<< nên set luôn
-
-            if (rq.GiayTos != null && rq.GiayTos.Count > 0)
-            {
-                foreach (var gt in rq.GiayTos)
+                if (await _context.NguoiLxes.AnyAsync(x => x.MaDk == maDk))
                 {
-                    var gtHoSo = new NguoiLxhsGiayTo
-                    {
-                        MaGt = gt.MaGt,
-                        MaDk = maDk,
-                        SoHoSo = soHoSo,
-                        TenGt = gt.TenGt,
-                        TrangThai = true
-                    };
-
-                    _context.NguoiLxhsGiayTos.Add(gtHoSo);
+                    await Task.Delay(1100);
+                    continue;
                 }
 
+                var nguoi = new NguoiLx();
+                rq.Patch(nguoi);
+                nguoi.MaDk = maDk;
+                nguoi.DonViNhanHso = Constants.MaCSDT;
+                nguoi.HoVaTen = $"{nguoi.HoDemNlx} {nguoi.TenNlx}";
+                nguoi.HoVaTenIn = nguoi.HoVaTen;
+                nguoi.NoiCt = "";
+                nguoi.NoiTt = "";
 
-            }
+                var lastSoHoSo = await _context.NguoiLxHoSos
+                    .Where(x => x.MaCsdt == Constants.MaCSDT && x.MaKhoaHoc == rq.MaKhoaHoc)
+                    .OrderByDescending(x => x.SoHoSo)
+                    .Select(x => x.SoHoSo)
+                    .FirstOrDefaultAsync();
 
-            // ============= 5. Lưu tất cả vào DB =============
-            _context.NguoiLxes.Add(nguoi);
-            _context.NguoiLxHoSos.Add(hoSo);
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateException ex)
-            {
-                var baseEx = ex.GetBaseException();
-                var detail = baseEx?.Message ?? ex.InnerException?.Message ?? ex.Message;
+                int nextSoHoSoNumber = 1;
+                if (!string.IsNullOrEmpty(lastSoHoSo) && int.TryParse(lastSoHoSo, out var parsed))
+                    nextSoHoSoNumber = parsed + 1;
 
-                throw new BadRequestException("Error found is 1111 " + detail +"  gioi tinh cho request"+rq.GioiTinh+"  cho nguoi "+nguoi.GioiTinh);
-            }
-            catch (Exception ex)
-            {
-                throw new BadRequestException("Error found is 22222" + ex.Message);
-            }
+                var soHoSo = nextSoHoSoNumber.ToString("D3");
 
+                var maLoaiHs = 2;
+                string[] motoCodes = { "A01", "A02", "A1", "A1m", "A2" };
+                if (motoCodes.Contains(rq.HangGplx))
+                    maLoaiHs = 1;
 
-            var nguoiLaiXeRes = new NguoiLxResponse();
-            rq.Patch(nguoiLaiXeRes);
-            nguoiLaiXeRes.MaDk = maDk;
-            if (file != null && file.Length > 0)
-            {
-                var savedPath = await SaveToRelativePathAsync(file, hoSo.MaDk);
+                var maHeThongCap = nguoi.MaQuocTich != "VNM" ? "CM_EN" : "CM_VN";
 
-                // Update đường dẫn ảnh vào hồ sơ
-                hoSo.DuongDanAnh = savedPath.Replace(_opt.ImageRoot,_opt.ImageSaveDatabase);
+                var hoSo = new NguoiLxHoSo
+                {
+                    MaCsdt = Constants.MaCSDT,
+                    MaSoGtvt = Constants.MaSoGTVT,
+                    MaDvnhanHso = Constants.MaCSDT,
+                    NgayNhanHso = now,
+                    MaLoaiHs = maLoaiHs,
+                    TtXuLy = "01",
+                    ChonInGplx = 2,
+                    GiayCnsk = false,
+                    TransferFlag = 0,
+                    HosoDvcc4 = 0,
+                    TrangThai = true,
+                    MaHtcap = maHeThongCap,
+                    NgayTao = now,
+                    NgaySua = now
+                };
 
-                // Nếu bạn muốn TT_XuLy đổi theo có ảnh:
-                hoSo.TtXuLy = "03";
+                rq.Patch(hoSo);
+                hoSo.MaDk = maDk;
+                hoSo.SoHoSo = soHoSo;
+
+                if (rq.GiayTos != null && rq.GiayTos.Count > 0)
+                {
+                    foreach (var gt in rq.GiayTos)
+                    {
+                        _context.NguoiLxhsGiayTos.Add(new NguoiLxhsGiayTo
+                        {
+                            MaGt = gt.MaGt,
+                            MaDk = maDk,
+                            SoHoSo = soHoSo,
+                            TenGt = gt.TenGt,
+                            TrangThai = true
+                        });
+                    }
+                }
+
+                _context.NguoiLxes.Add(nguoi);
+                _context.NguoiLxHoSos.Add(hoSo);
 
                 try
                 {
                     await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateException ex)
-                {
-                    var baseEx = ex.GetBaseException(); // thường là SqlException
-                    var detail = baseEx?.Message ?? ex.Message;
 
-                    // Nếu muốn xem thêm stack (dev thôi):
-                    // detail += "\n" + ex.ToString();
+                    var res = new NguoiLxResponse();
+                    rq.Patch(res);
+                    res.MaDk = maDk;
 
-                    throw new BadRequestException("Error found is 3333" + detail);
+                    if (file != null && file.Length > 0)
+                    {
+                        var savedPath = await SaveToRelativePathAsync(file, hoSo.MaDk);
+                        hoSo.DuongDanAnh = savedPath.Replace(_opt.ImageRoot, _opt.ImageSaveDatabase);
+                        hoSo.TtXuLy = "03";
+                        await _context.SaveChangesAsync();
+                    }
+
+                    return res;
                 }
-                catch (Exception ex)
+                catch (DbUpdateException ex) when (IsDuplicateKey(ex))
                 {
-                    throw new BadRequestException("Error found is 4444" + ex.Message);
+                    _context.ChangeTracker.Clear();
+                    await Task.Delay(1100);
+                    continue;
                 }
             }
+        }
 
-            return nguoiLaiXeRes;
+        private static bool IsDuplicateKey(DbUpdateException ex)
+        {
+            var msg = ex.GetBaseException().Message;
+            return msg.Contains("PRIMARY KEY", StringComparison.OrdinalIgnoreCase)
+                || msg.Contains("UNIQUE KEY", StringComparison.OrdinalIgnoreCase)
+                || msg.Contains("duplicate", StringComparison.OrdinalIgnoreCase);
         }
 
         public async Task<bool> UpdateAsync(NguoiLxResponse rq)
