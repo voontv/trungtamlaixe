@@ -42,6 +42,7 @@ namespace Ttlaixe
 
             services.Configure<WebConfig>(Configuration.GetSection("WebConfig"));
             services.AddDbContext<GplxCsdtContext>(options => options.UseSqlServer(Configuration.GetConnectionString("Ttlaixe")));
+            services.AddDbContext<TeknovaContext>(options => options.UseSqlServer(Configuration.GetConnectionString("Teknova")));
             //services.AddScoped<ISFTPFileService, SFTPFileService>();
             services.RegisterDI();
             services.AddMvc(FilterHelper.Register).AddJsonOptions(ConfigJson);

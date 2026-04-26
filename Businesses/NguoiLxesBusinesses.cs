@@ -11,13 +11,10 @@ using Ttlaixe.LibsStartup;
 using Ttlaixe.DTO.response;
 using Ttlaixe.Exceptions;
 using System.Collections.Generic;
-using Ttlaixe.DTO.request.Ttlaixe.DTO.request;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using System.IO;
-using Microsoft.Extensions.Hosting;
 using System.Xml;
-using Microsoft.AspNetCore.Server.IIS.Core;
 namespace Ttlaixe.Businesses
 {
     [ImplementBy(typeof(NguoiLxesBusinesses))]
