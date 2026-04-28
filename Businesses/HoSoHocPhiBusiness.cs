@@ -5,6 +5,7 @@ using Ttlaixe.AutoConfig;
 using Ttlaixe.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
+using System.Net.WebSockets;
 
 namespace Ttlaixe.Businesses
 {
@@ -18,6 +19,7 @@ namespace Ttlaixe.Businesses
         Task<List<HoSoHocPhi>> GetChuaHoanThanhByMaKhoaHocsAsync(List<string> maKhoaHocs);
         Task<List<HoSoHocPhi>> GetDaHoanThanhByMaKhoaHocsAsync(List<string> maKhoaHocs);
         Task<HoSoHocPhi> CreateAsync(HoSoHocPhi model);
+        Task<List<HoSoHocPhi>> CreateByKhoaHocAsync(string maKhoaHoc, string MahangGplx);
         Task<bool> UpdateAsync(string maDK, HoSoHocPhi model);
         Task<bool> UpdateTrangThaiThanhToanAsync(string maDK);
         Task<bool> BoHocAsync(string maDK);
@@ -26,10 +28,11 @@ namespace Ttlaixe.Businesses
     public class HoSoHocPhiBusiness : IHoSoHocPhiBusiness
     {
         private readonly TeknovaContext _context;
-
-        public HoSoHocPhiBusiness(TeknovaContext context)
+        private readonly INguoiLxesBusinesses _nguoiLxes;
+        public HoSoHocPhiBusiness(TeknovaContext context, INguoiLxesBusinesses nguoiLxes)
         {
             _context = context;
+            _nguoiLxes = nguoiLxes;
         }
 
         public async Task<List<HoSoHocPhi>> GetAllAsync()
@@ -59,7 +62,7 @@ namespace Ttlaixe.Businesses
                 .ToListAsync();
         }
 
-        public async Task<HoSoHocPhi> CreateAsync(HoSoHocPhi model)
+        private async Task<HoSoHocPhi> BuildAsync(HoSoHocPhi model)
         {
             var existed = await _context.HoSoHocPhis
                 .AnyAsync(x => x.MaDk == model.MaDk);
@@ -80,12 +83,18 @@ namespace Ttlaixe.Businesses
             model.NgayKhoiTao = DateTime.Now;
             model.NgayChinhSuaCuoiCung = null;
 
-            _context.HoSoHocPhis.Add(model);
-            await _context.SaveChangesAsync();
-
             return model;
         }
 
+        public async Task<HoSoHocPhi> CreateAsync(HoSoHocPhi model)
+        {
+            var entity = await BuildAsync(model);
+
+            _context.HoSoHocPhis.Add(entity);
+            await _context.SaveChangesAsync();
+
+            return entity;
+        }
         public async Task<bool> UpdateAsync(string maDK, HoSoHocPhi model)
         {
             var existing = await _context.HoSoHocPhis
@@ -202,6 +211,27 @@ namespace Ttlaixe.Businesses
                     maKhoaHocs.Contains(x.MaKhoaHoc))
                 .OrderByDescending(x => x.NgayKhoiTao)
                 .ToListAsync();
+        }
+
+        public async Task<List<HoSoHocPhi>> CreateByKhoaHocAsync(string maKhoaHoc, string MahangGplx)
+        {
+            var dsHocViens = await _nguoiLxes.GetThongTinCoBanByKhoaHocAsync(maKhoaHoc);
+
+            var list = new List<HoSoHocPhi>();
+
+            foreach (var d in dsHocViens)
+            {
+                var model = new HoSoHocPhi();
+                d.Patch(model);
+
+                var entity = await BuildAsync(model);
+                list.Add(entity);
+            }
+
+            _context.HoSoHocPhis.AddRange(list);
+            await _context.SaveChangesAsync();
+
+            return list;
         }
     }
 }

@@ -42,6 +42,9 @@ namespace Ttlaixe.AutoConfig
             x.CreateMap<NguoiLxHoSo, NguoiLxCreateRequest>();
             x.CreateMap<NguoiLxCreateRequest, NguoiLxhsGiayTo>();
             x.CreateMap<NguoiLxhsGiayTo, NguoiLxCreateRequest> ();
+            x.CreateMap<NguoiLxCoBanResponse, HoSoHocPhi>();
+            x.CreateMap<HoSoHocPhi, NguoiLxCoBanResponse>();
+
             x.CreateMap<NguoiLxResponse, NguoiLxHoSo>();
             x.CreateMap<NguoiLxHoSo, NguoiLxResponse>();
             x.CreateMap<KhoaHocResponse, KhoaHoc>();

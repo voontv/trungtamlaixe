@@ -1,4 +1,12 @@
-﻿namespace Ttlaixe.Businesses
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
+using System;
+using Ttlaixe.AutoConfig;
+using Ttlaixe.Models;
+using Microsoft.EntityFrameworkCore;
+using System.Linq;
+
+namespace Ttlaixe.Businesses
 {
     [ImplementBy(typeof(LichSuNopHocPhiBusiness))]
     public interface ILichSuNopHocPhiBusiness
@@ -10,9 +18,9 @@
 
     public class LichSuNopHocPhiBusiness : ILichSuNopHocPhiBusiness
     {
-        private readonly AppDbContext _context;
+        private readonly TeknovaContext _context;
 
-        public LichSuNopHocPhiBusiness(AppDbContext context)
+        public LichSuNopHocPhiBusiness(TeknovaContext context)
         {
             _context = context;
         }
@@ -21,7 +29,7 @@
         {
             return await _context.LichSuNopHocPhis
                 .AsNoTracking()
-                .Where(x => x.MaDK == maDK)
+                .Where(x => x.MaDk == maDK)
                 .OrderByDescending(x => x.NgayNop)
                 .ThenByDescending(x => x.IdNopTien)
                 .ToListAsync();
@@ -30,7 +38,7 @@
         public async Task<LichSuNopHocPhi> CreateAsync(LichSuNopHocPhi model)
         {
             var hoSo = await _context.HoSoHocPhis
-                .FirstOrDefaultAsync(x => x.MaDK == model.MaDK && !x.BoHoc);
+                .FirstOrDefaultAsync(x => x.MaDk == model.MaDk && (bool) !x.BoHoc);
 
             if (hoSo == null)
                 throw new Exception("Không tìm thấy hồ sơ học phí.");
@@ -39,7 +47,7 @@
                 throw new Exception("Số tiền nộp phải lớn hơn 0.");
 
             var tongDaNopTruoc = await _context.LichSuNopHocPhis
-                .Where(x => x.MaDK == model.MaDK)
+                .Where(x => x.MaDk == model.MaDk)
                 .SumAsync(x => (decimal?)x.SoTienNop) ?? 0;
 
             var tongSauLanNopNay = tongDaNopTruoc + model.SoTienNop;
@@ -68,18 +76,18 @@
             if (item == null)
                 return false;
 
-            var maDK = item.MaDK;
+            var maDK = item.MaDk;
 
             _context.LichSuNopHocPhis.Remove(item);
             await _context.SaveChangesAsync();
 
             var hoSo = await _context.HoSoHocPhis
-                .FirstOrDefaultAsync(x => x.MaDK == maDK);
+                .FirstOrDefaultAsync(x => x.MaDk == maDK);
 
             if (hoSo != null)
             {
                 var tongDaNop = await _context.LichSuNopHocPhis
-                    .Where(x => x.MaDK == maDK)
+                    .Where(x => x.MaDk == maDK)
                     .SumAsync(x => (decimal?)x.SoTienNop) ?? 0;
 
                 hoSo.DaHoanThanhHp = tongDaNop >= hoSo.HocPhi;

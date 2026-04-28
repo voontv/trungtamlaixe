@@ -18,6 +18,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using Ttlaixe.Models;
 using Ttlaixe.DTO.request;
+using Ttlaixe.Businesses;
 
 namespace Ttlaixe
 {
@@ -56,6 +57,9 @@ namespace Ttlaixe
 
                 return new IpLaiXe(Configuration.GetSection("AdminSafeList").GetSection("Vnpt").Value);
             });
+
+            services.AddScoped<INguoiLxesBusinesses, NguoiLxesBusinesses>();
+            services.AddScoped<IHoSoHocPhiBusiness, HoSoHocPhiBusiness>();
         }
 
 

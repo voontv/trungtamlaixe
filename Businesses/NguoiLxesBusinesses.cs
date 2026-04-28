@@ -35,7 +35,7 @@ namespace Ttlaixe.Businesses
         Task UpdateMaBcByMaDksAsync(IFormFile file);
     }
 
-    public class NguoiLxesBusinesses : ControllerBase, INguoiLxesBusinesses
+    public class NguoiLxesBusinesses : INguoiLxesBusinesses
     {
         private readonly GplxCsdtContext _context;
         private readonly ITokenGenerator _tokenGenerator;

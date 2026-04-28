@@ -5,6 +5,7 @@
     using System.Collections.Generic;
     using System.Threading.Tasks;
     using Ttlaixe.Businesses;
+    using Ttlaixe.DTO.request;
     using Ttlaixe.Models;
 
     [Route("api/[controller]")]
@@ -22,6 +23,12 @@
         public async Task<List<HoSoHocPhi>> GetAll()
         {
             return await _business.GetAllAsync();
+        }
+
+        [HttpPost("danh-sach-hoc-phi-khoa-hoc")]
+        public async Task<List<HoSoHocPhi>> CreateByKhoaHocAsync([FromBody] DsHocPhiKhoaHocRequest dk)
+        {
+            return await _business.CreateByKhoaHocAsync(dk.MaKhoaHoc, dk.MaHangGplx);
         }
 
         [HttpPost("by-ma-khoa-hocs")]
