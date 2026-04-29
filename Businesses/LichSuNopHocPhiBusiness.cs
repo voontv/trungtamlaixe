@@ -5,14 +5,16 @@ using Ttlaixe.AutoConfig;
 using Ttlaixe.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
+using Ttlaixe.DTO.request;
+using Ttlaixe.DTO.response;
 
 namespace Ttlaixe.Businesses
 {
     [ImplementBy(typeof(LichSuNopHocPhiBusiness))]
     public interface ILichSuNopHocPhiBusiness
     {
-        Task<List<LichSuNopHocPhi>> GetByMaDKAsync(string maDK);
-        Task<LichSuNopHocPhi> CreateAsync(LichSuNopHocPhi model);
+        Task<List<LichSuNopHocPhiReponse>> GetByMaDKAsync(string maDK);
+        Task<LichSuNopHocPhiReponse> CreateAsync(LichSuNopHocPhiRequest model);
         Task<bool> DeleteAsync(int idNopTien);
     }
 
@@ -25,17 +27,22 @@ namespace Ttlaixe.Businesses
             _context = context;
         }
 
-        public async Task<List<LichSuNopHocPhi>> GetByMaDKAsync(string maDK)
+        public async Task<List<LichSuNopHocPhiReponse>> GetByMaDKAsync(string maDK)
         {
-            return await _context.LichSuNopHocPhis
+            var lichSuNopHocPhis =  await _context.LichSuNopHocPhis
                 .AsNoTracking()
                 .Where(x => x.MaDk == maDK)
                 .OrderByDescending(x => x.NgayNop)
                 .ThenByDescending(x => x.IdNopTien)
                 .ToListAsync();
+
+            var lichSuNopHocPhiReponses = new List<LichSuNopHocPhiReponse>();
+            lichSuNopHocPhis.Patch(lichSuNopHocPhiReponses);
+
+            return lichSuNopHocPhiReponses;
         }
 
-        public async Task<LichSuNopHocPhi> CreateAsync(LichSuNopHocPhi model)
+        public async Task<LichSuNopHocPhiReponse> CreateAsync(LichSuNopHocPhiRequest model)
         {
             var hoSo = await _context.HoSoHocPhis
                 .FirstOrDefaultAsync(x => x.MaDk == model.MaDk && (bool) !x.BoHoc);
@@ -56,16 +63,19 @@ namespace Ttlaixe.Businesses
                 throw new Exception("Số tiền nộp vượt quá học phí phải nộp.");
 
             model.NgayNop = model.NgayNop == default ? DateTime.Now : model.NgayNop;
-            model.NgayKhoiTao = DateTime.Now;
+            var lichSuNop = new LichSuNopHocPhi();
+            model.Patch(lichSuNop);
+            lichSuNop.NgayKhoiTao = DateTime.Now;
 
-            _context.LichSuNopHocPhis.Add(model);
+            _context.LichSuNopHocPhis.Add(lichSuNop);
 
             hoSo.DaHoanThanhHp = tongSauLanNopNay >= hoSo.HocPhi;
             hoSo.NgayChinhSuaCuoiCung = DateTime.Now;
 
             await _context.SaveChangesAsync();
-
-            return model;
+            var result = new LichSuNopHocPhiReponse();
+            lichSuNop.Patch(result);
+            return result;
         }
 
         public async Task<bool> DeleteAsync(int idNopTien)

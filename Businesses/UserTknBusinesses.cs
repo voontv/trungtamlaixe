@@ -30,11 +30,11 @@ namespace Ttlaixe.Businesses
 
     public class UserTknBusinesses : IUserTknBusinesses
     {
-        private readonly GplxCsdtContext _context;
+        private readonly TeknovaContext _context;
         private readonly ITokenGenerator _tokenGenerator;
         private readonly IAuthenInfo _authenInfo;
 
-        public UserTknBusinesses(GplxCsdtContext context, ITokenGenerator tokenGenerator, IAuthenInfo authenInfo)
+        public UserTknBusinesses(TeknovaContext context, ITokenGenerator tokenGenerator, IAuthenInfo authenInfo)
         {
             _context = context;
             _tokenGenerator = tokenGenerator;

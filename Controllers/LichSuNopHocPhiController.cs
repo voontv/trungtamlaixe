@@ -5,6 +5,8 @@
     using System.Collections.Generic;
     using System.Threading.Tasks;
     using Ttlaixe.Businesses;
+    using Ttlaixe.DTO.request;
+    using Ttlaixe.DTO.response;
     using Ttlaixe.Models;
 
     [Route("api/[controller]")]
@@ -19,14 +21,14 @@
         }
 
         [HttpGet("by-ma-dk/{maDK}")]
-        public async Task<List<LichSuNopHocPhi>> GetByMaDK(string maDK)
+        public async Task<List<LichSuNopHocPhiReponse>> GetByMaDK(string maDK)
         {
             return await _business.GetByMaDKAsync(maDK);
         }
 
         [Authorize]
         [HttpPost]
-        public async Task<LichSuNopHocPhi> Create([FromBody] LichSuNopHocPhi model)
+        public async Task<LichSuNopHocPhiReponse> Create([FromBody] LichSuNopHocPhiRequest model)
         {
             return await _business.CreateAsync(model);
         }

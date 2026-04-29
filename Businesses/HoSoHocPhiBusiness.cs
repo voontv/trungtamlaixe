@@ -223,7 +223,7 @@ namespace Ttlaixe.Businesses
             {
                 var model = new HoSoHocPhi();
                 d.Patch(model);
-
+                model.MaHangGplx = MahangGplx;
                 var entity = await BuildAsync(model);
                 list.Add(entity);
             }

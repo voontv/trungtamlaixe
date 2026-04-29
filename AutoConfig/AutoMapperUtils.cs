@@ -58,6 +58,10 @@ namespace Ttlaixe.AutoConfig
 
             x.CreateMap<LichHoc, LichHocCreatedRequest>();
             x.CreateMap<LichHocCreatedRequest, LichHoc>();
+            x.CreateMap<LichSuNopHocPhiRequest, LichSuNopHocPhi>();
+            x.CreateMap<LichSuNopHocPhi, LichSuNopHocPhiRequest>();
+            x.CreateMap<LichSuNopHocPhi, LichSuNopHocPhiReponse>();
+            x.CreateMap<LichSuNopHocPhiReponse, LichSuNopHocPhi>();
 
 
 
