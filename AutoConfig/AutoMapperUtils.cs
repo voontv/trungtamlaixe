@@ -70,6 +70,9 @@ namespace Ttlaixe.AutoConfig
             x.CreateMap<NguoiLxResponse, NguoiLxCreateRequest>();
             x.CreateMap<NguoiLxCreateRequest, NguoiLxResponse>();
 
+            x.CreateMap<NhatKyChungTu, NhatKyChungTuRequest>();
+            x.CreateMap<NhatKyChungTuRequest, NhatKyChungTu>();
+
             x.CreateMap<UserTkn, UserTknCreateRequest>();
             x.CreateMap<UserTknCreateRequest, UserTkn>();
             x.CreateMap<UserTkn, UserTknLoginResponse>();

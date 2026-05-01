@@ -135,7 +135,13 @@ public partial class GiaoVien
 
     public string KyThuatLaixe { get; set; }
 
-    public virtual DmHangGplx HangGplxNavigation { get; set; }
+    public string MaFileTiepNhanXml { get; set; }
+
+    public DateTime? ThoiGianTiepNhanXml { get; set; }
+
+    public DateTime? NgayHhgplx { get; set; }
+
+    public string NoiCapGcn { get; set; }
 
     public virtual DmDvhc NoiCtMaDv { get; set; }
 }

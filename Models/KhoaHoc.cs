@@ -109,6 +109,8 @@ public partial class KhoaHoc
 
     public int? TtXuly { get; set; }
 
+    public int? HtdaoTao { get; set; }
+
     public virtual DmHangDt HangDtNavigation { get; set; }
 
     public virtual DmHangGplx HangGplxNavigation { get; set; }

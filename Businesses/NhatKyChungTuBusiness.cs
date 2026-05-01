@@ -6,18 +6,20 @@ using Ttlaixe.Models;
 using Ttlaixe.DTO.response;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
+using Ttlaixe.DTO.request;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace Ttlaixe.Businesses
 {
     [ImplementBy(typeof(NhatKyChungTuBusiness))]
     public interface INhatKyChungTuBusiness
     {
-        Task<List<NhatKyChungTu>> GetAllAsync();
+        Task<List<NhatKyChungTuResponse>> GetAllAsync(DateTime? fromDate, DateTime? toDate);
         Task<NhatKyChungTu?> GetByIdAsync(int idChungTu);
-        Task<NhatKyChungTu> CreateAsync(NhatKyChungTu model);
+        Task CreateAsync(NhatKyChungTuRequest model);
         Task<bool> UpdateAsync(int idChungTu, NhatKyChungTu model);
         Task<bool> DeleteAsync(int idChungTu);
-
+        Task XoaChungTuTheoSoChungTu(string SoChungTu, decimal SoTien, DateTime NgayNop);
         Task<List<TongHopChungTuDto>> TongHopTheoTaiKhoanChiTietAsync();
         Task<List<TongHopChungTuDto>> TongHopTheoTaiKhoanChaAsync();
         Task<List<TongHopChungTuDto>> TongHopTheoTaiKhoanChiTietAsync(DateTime? fromDate, DateTime? toDate);
@@ -33,15 +35,33 @@ namespace Ttlaixe.Businesses
             _context = context;
         }
 
-        public async Task<List<NhatKyChungTu>> GetAllAsync()
+        public async Task<List<NhatKyChungTuResponse>> GetAllAsync(DateTime? fromDate, DateTime? toDate)
         {
-            return await _context.NhatKyChungTus
-                .AsNoTracking()
+            var query = _context.NhatKyChungTus.AsNoTracking().AsQueryable();
+
+            if (fromDate.HasValue)
+                query = query.Where(x => x.NgayLap >= fromDate.Value.Date);
+
+            if (toDate.HasValue)
+                query = query.Where(x => x.NgayLap <= toDate.Value.Date);
+            var nhatKyChungTus = await query
                 .OrderByDescending(x => x.NgayLap)
                 .ThenByDescending(x => x.IdChungTu)
                 .ToListAsync();
+            var results = new List<NhatKyChungTuResponse>();
+
+            nhatKyChungTus.Patch(results);
+
+            return results;
         }
 
+        public async Task XoaChungTuTheoSoChungTu(string SoChungTu, decimal SoTien, DateTime NgayNop)
+        {
+            var nhatKyChungTu = await _context.NhatKyChungTus
+                .Where(x => x.SoChungTu == SoChungTu && x.SoTien == SoTien && x.NgayLap.Equals(NgayNop)).FirstOrDefaultAsync();
+
+            await DeleteAsync(nhatKyChungTu.IdChungTu);
+        }
         public async Task<NhatKyChungTu?> GetByIdAsync(int idChungTu)
         {
             return await _context.NhatKyChungTus
@@ -49,7 +69,7 @@ namespace Ttlaixe.Businesses
                 .FirstOrDefaultAsync(x => x.IdChungTu == idChungTu);
         }
 
-        public async Task<NhatKyChungTu> CreateAsync(NhatKyChungTu model)
+        public async Task CreateAsync(NhatKyChungTuRequest model)
         {
             var tkNoExists = await _context.DmTaiKhoanKeToans
                 .AnyAsync(x => x.MaTaiKhoan == model.TaiKhoanNo);
@@ -66,12 +86,21 @@ namespace Ttlaixe.Businesses
             if (model.SoTien <= 0)
                 throw new Exception("Số tiền phải lớn hơn 0.");
 
-            model.NgayKhoiTao = DateTime.Now;
+            var nhatKyChungTu = new NhatKyChungTu();
+            model.Patch(nhatKyChungTu);
 
-            _context.NhatKyChungTus.Add(model);
-            await _context.SaveChangesAsync();
+            nhatKyChungTu.NgayKhoiTao = DateTime.Now;
 
-            return model;
+            try
+            {
+                _context.NhatKyChungTus.Add(nhatKyChungTu);
+                await _context.SaveChangesAsync();
+            }catch (Exception ex)
+            {
+                throw new Exception(ex.Message.ToString());
+            }
+            
+
         }
 
         public async Task<bool> UpdateAsync(int idChungTu, NhatKyChungTu model)

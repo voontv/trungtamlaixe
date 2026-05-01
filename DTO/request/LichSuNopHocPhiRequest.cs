@@ -15,5 +15,9 @@ namespace Ttlaixe.DTO.request
         public string SoBienLai { get; set; }
 
         public string GhiChu { get; set; }
+
+        public string TaiKhoanNo { get; set; }
+
+        public string TaiKhoanCo { get; set; }
     }
 }

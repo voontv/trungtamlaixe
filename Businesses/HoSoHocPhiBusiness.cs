@@ -213,25 +213,54 @@ namespace Ttlaixe.Businesses
                 .ToListAsync();
         }
 
-        public async Task<List<HoSoHocPhi>> CreateByKhoaHocAsync(string maKhoaHoc, string MahangGplx)
+        public async Task<List<HoSoHocPhi>> CreateByKhoaHocAsync(string maKhoaHoc, string maHangGplx)
         {
             var dsHocViens = await _nguoiLxes.GetThongTinCoBanByKhoaHocAsync(maKhoaHoc);
 
-            var list = new List<HoSoHocPhi>();
+            var maDks = dsHocViens.Select(x => x.MaDk).ToList();
+
+            // Lấy sẵn những hồ sơ đã tồn tại
+            var existedDict = await _context.HoSoHocPhis
+                .Where(x => maDks.Contains(x.MaDk))
+                .ToDictionaryAsync(x => x.MaDk);
+
+            var hocPhi = await _context.DmHocPhis
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.MaHangGplx == maHangGplx);
+
+            var result = new List<HoSoHocPhi>();
+            var toAdd = new List<HoSoHocPhi>();
 
             foreach (var d in dsHocViens)
             {
+                // ĐÃ CÓ → lấy ra dùng lại
+                if (existedDict.TryGetValue(d.MaDk, out var existed))
+                {
+                    result.Add(existed);
+                    continue;
+                }
+
+                // CHƯA CÓ → tạo mới
                 var model = new HoSoHocPhi();
                 d.Patch(model);
-                model.MaHangGplx = MahangGplx;
-                var entity = await BuildAsync(model);
-                list.Add(entity);
+
+                model.MaHangGplx = maHangGplx;
+                model.HocPhi = hocPhi.HocPhi;
+                model.DaHoanThanhHp = false;
+                model.BoHoc = false;
+                model.NgayKhoiTao = DateTime.Now;
+
+                toAdd.Add(model);
+                result.Add(model);
             }
 
-            _context.HoSoHocPhis.AddRange(list);
-            await _context.SaveChangesAsync();
+            if (toAdd.Any())
+            {
+                _context.HoSoHocPhis.AddRange(toAdd);
+                await _context.SaveChangesAsync();
+            }
 
-            return list;
+            return result;
         }
     }
 }

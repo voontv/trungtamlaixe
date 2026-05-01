@@ -38,12 +38,14 @@ namespace Ttlaixe.Businesses
     public class NguoiLxesBusinesses : INguoiLxesBusinesses
     {
         private readonly GplxCsdtContext _context;
+        private readonly TeknovaContext _Tkcontext;
         private readonly ITokenGenerator _tokenGenerator;
         private readonly IAuthenInfo _authenInfo;
         private readonly UploadOptions _opt;
-        public NguoiLxesBusinesses(GplxCsdtContext context, ITokenGenerator tokenGenerator, IAuthenInfo authenInfo, IOptions<UploadOptions> opt)
+        public NguoiLxesBusinesses(GplxCsdtContext context, TeknovaContext tkcontext,ITokenGenerator tokenGenerator, IAuthenInfo authenInfo, IOptions<UploadOptions> opt)
         {
             _context = context;
+            _Tkcontext = tkcontext;
             _tokenGenerator = tokenGenerator;
             _authenInfo = authenInfo;
             _opt = opt.Value;
@@ -54,7 +56,7 @@ namespace Ttlaixe.Businesses
             var file = rq.File;
             var now = DateTime.Now;
             var logged = _authenInfo.Get();
-            var actor = await _context.UserTkns.FindAsync(logged.UserName);
+            var actor = await _Tkcontext.UserTkns.FindAsync(logged.UserName);
 
             if (!actor.QuyenAdmin && !actor.QuyenNhapLieu)
                 throw new BadRequestException("Bạn không có quyền thực hiện tính năng này.");
@@ -118,7 +120,7 @@ namespace Ttlaixe.Businesses
                     ChonInGplx = 2,
                     GiayCnsk = false,
                     TransferFlag = 0,
-                    HosoDvcc4 = 0,
+                    //HosoDvcc4 = 0,
                     TrangThai = true,
                     MaHtcap = maHeThongCap,
                     NgayTao = now,
@@ -304,7 +306,7 @@ namespace Ttlaixe.Businesses
                     on n.NoiCtMaDvhc equals dvNoiCT.MaDvhc into dvNoiCTJoin
                 from dvNoiCT in dvNoiCTJoin.DefaultIfEmpty()
                 where h.MaCsdt == Constants.MaCSDT
-                      && h.MaKhoaHoc == maKhoaHoc
+                      && h.MaKhoaHoc == maKhoaHoc && h.TransferFlag != 1
                 select new NguoiLxCoBanResponse
                 {
                     MaDk = h.MaDk,

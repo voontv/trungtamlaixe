@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Ttlaixe.Businesses;
+using Ttlaixe.DTO.request;
 using Ttlaixe.DTO.response;
 using Ttlaixe.Models;
 
@@ -21,9 +22,11 @@ namespace Ttlaixe.Controllers
         }
 
         [HttpGet]
-        public async Task<List<NhatKyChungTu>> GetAll()
+        public async Task<List<NhatKyChungTuResponse>> GetAll(
+            [FromQuery] DateTime? fromDate,
+            [FromQuery] DateTime? toDate)
         {
-            return await _business.GetAllAsync();
+            return await _business.GetAllAsync(fromDate, toDate);
         }
 
         [HttpGet("{idChungTu}")]
@@ -34,9 +37,9 @@ namespace Ttlaixe.Controllers
 
         [Authorize]
         [HttpPost]
-        public async Task<NhatKyChungTu> Create([FromBody] NhatKyChungTu model)
+        public async Task Create([FromBody] NhatKyChungTuRequest model)
         {
-            return await _business.CreateAsync(model);
+            await _business.CreateAsync(model);
         }
 
         [Authorize]

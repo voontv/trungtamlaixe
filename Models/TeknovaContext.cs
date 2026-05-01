@@ -15,6 +15,8 @@ public partial class TeknovaContext : DbContext
     {
     }
 
+    public virtual DbSet<AuditLog> AuditLogs { get; set; }
+
     public virtual DbSet<DmHocPhi> DmHocPhis { get; set; }
 
     public virtual DbSet<DmTaiKhoanKeToan> DmTaiKhoanKeToans { get; set; }
@@ -25,12 +27,25 @@ public partial class TeknovaContext : DbContext
 
     public virtual DbSet<NhatKyChungTu> NhatKyChungTus { get; set; }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Data Source=200.201.222.67,1433;Initial Catalog=TEKNOVA;User Id=sa;Password=Dawaco@57#;MultipleActiveResultSets=True;TrustServerCertificate=True;");
+    public virtual DbSet<UserTkn> UserTkns { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<AuditLog>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__AuditLog__3214EC0751694ECE");
+
+            entity.ToTable("AuditLog");
+
+            entity.Property(e => e.ActionType).HasMaxLength(20);
+            entity.Property(e => e.KeyValue).HasMaxLength(500);
+            entity.Property(e => e.ModifiedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.ModifiedBy).HasMaxLength(200);
+            entity.Property(e => e.TableName).HasMaxLength(200);
+        });
+
         modelBuilder.Entity<DmHocPhi>(entity =>
         {
             entity.HasKey(e => e.MaHangGplx).HasName("PK__DmHocPhi__3E27F55A18E351E4");
@@ -197,7 +212,7 @@ public partial class TeknovaContext : DbContext
             entity.Property(e => e.NgayLap).HasColumnType("date");
             entity.Property(e => e.SoChungTu)
                 .IsRequired()
-                .HasMaxLength(20)
+                .HasMaxLength(50)
                 .IsUnicode(false);
             entity.Property(e => e.SoTien).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.TaiKhoanCo)
@@ -218,6 +233,37 @@ public partial class TeknovaContext : DbContext
                 .HasForeignKey(d => d.TaiKhoanNo)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_NhatKyChungTu_TaiKhoanNo");
+        });
+
+        modelBuilder.Entity<UserTkn>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToTable("UserTkn");
+
+            entity.Property(e => e.GioiTinh)
+                .IsRequired()
+                .HasMaxLength(1)
+                .IsUnicode(false)
+                .IsFixedLength();
+            entity.Property(e => e.HoTen)
+                .IsRequired()
+                .HasMaxLength(150);
+            entity.Property(e => e.MaNguoiChinhSua).HasMaxLength(100);
+            entity.Property(e => e.MaNguoiNhap).HasMaxLength(100);
+            entity.Property(e => e.NgayChinhSuaCuoiCung).HasPrecision(0);
+            entity.Property(e => e.NgayKhoiTao).HasPrecision(0);
+            entity.Property(e => e.PasswordHash)
+                .IsRequired()
+                .HasMaxLength(256);
+            entity.Property(e => e.SoDienThoai)
+                .HasMaxLength(10)
+                .IsUnicode(false);
+            entity.Property(e => e.TenNguoiChinhSua).HasMaxLength(150);
+            entity.Property(e => e.TenNguoiNhap).HasMaxLength(150);
+            entity.Property(e => e.UserName)
+                .IsRequired()
+                .HasMaxLength(100);
         });
 
         OnModelCreatingPartial(modelBuilder);

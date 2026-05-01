@@ -21,10 +21,12 @@ namespace Ttlaixe.Businesses
     public class LichSuNopHocPhiBusiness : ILichSuNopHocPhiBusiness
     {
         private readonly TeknovaContext _context;
+        private readonly INhatKyChungTuBusiness _nhatKyChungTu;
 
-        public LichSuNopHocPhiBusiness(TeknovaContext context)
+        public LichSuNopHocPhiBusiness(TeknovaContext context, INhatKyChungTuBusiness nhatKyChungTu)
         {
             _context = context;
+            _nhatKyChungTu = nhatKyChungTu;
         }
 
         public async Task<List<LichSuNopHocPhiReponse>> GetByMaDKAsync(string maDK)
@@ -75,6 +77,16 @@ namespace Ttlaixe.Businesses
             await _context.SaveChangesAsync();
             var result = new LichSuNopHocPhiReponse();
             lichSuNop.Patch(result);
+
+            var nhatKyChungTu = new NhatKyChungTuRequest();
+            nhatKyChungTu.SoChungTu = model.MaDk;
+            nhatKyChungTu.GhiChu = model.GhiChu;
+            nhatKyChungTu.NgayLap = model.NgayNop;
+            nhatKyChungTu.SoTien = model.SoTienNop;
+            nhatKyChungTu.DienGiai = "Học viên " + hoSo.HoVaTen + " nộp tiền học phí";
+            nhatKyChungTu.TaiKhoanCo = model.TaiKhoanCo;
+            nhatKyChungTu.TaiKhoanNo = model.TaiKhoanNo;
+            await _nhatKyChungTu.CreateAsync(nhatKyChungTu);
             return result;
         }
 
@@ -104,6 +116,8 @@ namespace Ttlaixe.Businesses
                 hoSo.NgayChinhSuaCuoiCung = DateTime.Now;
 
                 await _context.SaveChangesAsync();
+
+                await _nhatKyChungTu.XoaChungTuTheoSoChungTu(item.MaDk, item.SoTienNop, item.NgayNop);
             }
 
             return true;

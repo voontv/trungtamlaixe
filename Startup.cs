@@ -60,6 +60,7 @@ namespace Ttlaixe
 
             services.AddScoped<INguoiLxesBusinesses, NguoiLxesBusinesses>();
             services.AddScoped<IHoSoHocPhiBusiness, HoSoHocPhiBusiness>();
+            services.AddScoped<INhatKyChungTuBusiness, NhatKyChungTuBusiness>();
         }
 
 

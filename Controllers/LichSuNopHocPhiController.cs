@@ -25,15 +25,15 @@
         {
             return await _business.GetByMaDKAsync(maDK);
         }
-
-        [Authorize]
+        
+        //[Authorize]
         [HttpPost]
         public async Task<LichSuNopHocPhiReponse> Create([FromBody] LichSuNopHocPhiRequest model)
         {
             return await _business.CreateAsync(model);
         }
 
-        [Authorize]
+        //[Authorize]
         [HttpDelete("{idNopTien}")]
         public async Task<bool> Delete(int idNopTien)
         {

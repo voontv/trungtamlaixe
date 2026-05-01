@@ -45,8 +45,6 @@ public partial class DmHangGplx
 
     public DateTime NgaySua { get; set; }
 
-    public string HangDuocLai { get; set; }
-
     public string MaHangMoi { get; set; }
 
     public string TenHangMoi { get; set; }
@@ -57,7 +55,7 @@ public partial class DmHangGplx
 
     public string MoTaEncu { get; set; }
 
-    public virtual ICollection<GiaoVien> GiaoViens { get; set; } = new List<GiaoVien>();
+    public string HangDuocLai { get; set; }
 
     public virtual ICollection<KhoaHoc> KhoaHocs { get; set; } = new List<KhoaHoc>();
 

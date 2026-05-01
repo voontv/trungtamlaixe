@@ -340,7 +340,41 @@ public partial class NguoiLxHoSo
 
     public string NhanXetMoPhong { get; set; }
 
-    public int? HosoDvcc4 { get; set; }
+    public bool? KqlyThuyet { get; set; }
+
+    public bool? KqthucHanh { get; set; }
+
+    public double? TongQdthucHanh { get; set; }
+
+    public bool? KetLuanCsdt { get; set; }
+
+    public string GiaiTrinh { get; set; }
+
+    public double? DiemKqlyThuyet { get; set; }
+
+    public double? DiemKqthucHanh { get; set; }
+
+    public string TgbatDau { get; set; }
+
+    public string TgketThuc { get; set; }
+
+    public double? TgthucHanhHinh { get; set; }
+
+    public double? TgthucHanhDuong { get; set; }
+
+    public bool? KetQuaPdso { get; set; }
+
+    public string DatQdthucHanh { get; set; }
+
+    public string DatTgthucHanh { get; set; }
+
+    public bool? DatKqcuc { get; set; }
+
+    public string DatThoiGianLayKq { get; set; }
+
+    public string LyDoTuChoiKqdt { get; set; }
+
+    public double? QdthucHanhHinh { get; set; }
 
     public virtual DmHangDt HangDaoTaoNavigation { get; set; }
 

@@ -123,4 +123,10 @@ public partial class XeTap
     public DateTime NgaySua { get; set; }
 
     public string DuongDanAnh { get; set; }
+
+    public string HangGplxxe { get; set; }
+
+    public string MaFileTiepNhanXml { get; set; }
+
+    public DateTime? ThoiGianTiepNhanXml { get; set; }
 }
