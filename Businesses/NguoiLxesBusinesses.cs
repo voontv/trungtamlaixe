@@ -189,7 +189,7 @@ namespace Ttlaixe.Businesses
             var file = rq.File;
             var now = DateTime.Now;
             var logged = _authenInfo.Get();
-            var actor = await _context.UserTkns.FindAsync(logged.UserName);
+            var actor = await _Tkcontext.UserTkns.FindAsync(logged.UserName);
             if (!actor.QuyenAdmin && !actor.QuyenNhapLieu)
             {
                 throw new BadRequestException("Bạn không có quyền thực hiện tính năng này. ");
@@ -511,7 +511,7 @@ namespace Ttlaixe.Businesses
         public async Task UpdateHinhThe(IFormFile file, string maDk)
         {
             var logged = _authenInfo.Get();
-            var actor = await _context.UserTkns.FindAsync(logged.UserName);
+            var actor = await _Tkcontext.UserTkns.FindAsync(logged.UserName);
             if (!actor.QuyenAdmin && !actor.QuyenNhapLieu)
             {
                 throw new BadRequestException("Bạn không có quyền thực hiện tính năng này. ");

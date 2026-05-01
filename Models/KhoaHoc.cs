@@ -111,6 +111,8 @@ public partial class KhoaHoc
 
     public int? HtdaoTao { get; set; }
 
+    public virtual ICollection<BaoCaoI> BaoCaoIs { get; set; } = new List<BaoCaoI>();
+
     public virtual DmHangDt HangDtNavigation { get; set; }
 
     public virtual DmHangGplx HangGplxNavigation { get; set; }

@@ -380,6 +380,8 @@ public partial class NguoiLxHoSo
 
     public virtual DmHangGplx HangGplxNavigation { get; set; }
 
+    public virtual BaoCaoI MaBc1Navigation { get; set; }
+
     public virtual NguoiLx MaDkNavigation { get; set; }
 
     public virtual DmHtcapGplx MaHtcapNavigation { get; set; }

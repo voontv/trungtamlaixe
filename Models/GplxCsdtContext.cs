@@ -15,6 +15,10 @@ public partial class GplxCsdtContext : DbContext
     {
     }
 
+    public virtual DbSet<BaoCaoI> BaoCaoIs { get; set; }
+
+    public virtual DbSet<BaoCaoIi> BaoCaoIis { get; set; }
+
     public virtual DbSet<DmDiemSatHach> DmDiemSatHaches { get; set; }
 
     public virtual DbSet<DmDvhc> DmDvhcs { get; set; }
@@ -33,11 +37,7 @@ public partial class GplxCsdtContext : DbContext
 
     public virtual DbSet<DmLoaiHsoGiayTo> DmLoaiHsoGiayTos { get; set; }
 
-    public virtual DbSet<DmPhanThiTkn> DmPhanThiTkns { get; set; }
-
     public virtual DbSet<DmQuocTich> DmQuocTiches { get; set; }
-
-    public virtual DbSet<DmthiSatHachQuyTacTkn> DmthiSatHachQuyTacTkns { get; set; }
 
     public virtual DbSet<GiaoVien> GiaoViens { get; set; }
 
@@ -51,13 +51,124 @@ public partial class GplxCsdtContext : DbContext
 
     public virtual DbSet<NguoiLxhsGiayTo> NguoiLxhsGiayTos { get; set; }
 
-    public virtual DbSet<UserTkn> UserTkns { get; set; }
-
     public virtual DbSet<XeTap> XeTaps { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-           
+        modelBuilder.Entity<BaoCaoI>(entity =>
+        {
+            entity.HasKey(e => e.MaBci);
+
+            entity.ToTable("BaoCaoI");
+
+            entity.HasIndex(e => e.SoBaoCao, "UK_BaoCaoI").IsUnique();
+
+            entity.Property(e => e.MaBci)
+                .HasMaxLength(18)
+                .IsUnicode(false)
+                .HasComment("Mã Báo cáo 1 = <Mã Khóa học><BCI>")
+                .HasColumnName("MaBCI");
+            entity.Property(e => e.BoTriHocVienXeTap).HasComment("Kiểm tra bố trí học viên/xe tập lái tương ứng với 1 giáo viên giảng dạy thực hành/xe: 10 học viên/xe hạng B2; 16 học viên/xe hạng C; 10 học viên/xe nâng hạng 1 cấp; 20 học viên/xe nâng hạng 2 cấp.");
+            entity.Property(e => e.GhiChu).HasMaxLength(255);
+            entity.Property(e => e.LuuLuong).HasComment("Kiểm soát lưu lượng. Tại thời điểm khai giảng khóa đào tạo mới không vượt quá lưu lượng giấy phép.");
+            entity.Property(e => e.LuuLuongGp).HasColumnName("LuuLuongGP");
+            entity.Property(e => e.MaCsdt)
+                .IsRequired()
+                .HasMaxLength(6)
+                .IsUnicode(false)
+                .HasComment("Mã CSĐT. Ghi mã CSĐT trong bảng DM_DonViGTVT")
+                .HasColumnName("MaCSDT");
+            entity.Property(e => e.MaKh)
+                .IsRequired()
+                .HasMaxLength(13)
+                .IsUnicode(false)
+                .HasComment("Mã Khóa học. Ghi mã Khóa học trong bảng dbo.KhoaHoc")
+                .HasColumnName("MaKH");
+            entity.Property(e => e.NgayBaoCao)
+                .HasComment("Ngày gửi báo cáo 1")
+                .HasColumnType("datetime");
+            entity.Property(e => e.NgayBg)
+                .HasColumnType("datetime")
+                .HasColumnName("NgayBG");
+            entity.Property(e => e.NgayCapGp)
+                .HasComment("Ngày cấp giấy phép đào tạo lái xe của CSĐT")
+                .HasColumnType("datetime")
+                .HasColumnName("NgayCapGP");
+            entity.Property(e => e.NgayKg)
+                .HasColumnType("datetime")
+                .HasColumnName("NgayKG");
+            entity.Property(e => e.NgaySua)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.NgayTao)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.NgayTiepNhan)
+                .HasComment("Ngày tiếp nhận BC1")
+                .HasColumnType("datetime");
+            entity.Property(e => e.NguoiSua).HasMaxLength(30);
+            entity.Property(e => e.NguoiTao).HasMaxLength(30);
+            entity.Property(e => e.NguoiTiepNhan)
+                .HasMaxLength(50)
+                .HasComment("Người tiếp nhận BC1");
+            entity.Property(e => e.SoBaoCao)
+                .HasMaxLength(20)
+                .HasComment("Số công văn của Báo cáo 1. Ví dụ: 084/LX-T31");
+            entity.Property(e => e.SoGp)
+                .HasMaxLength(20)
+                .HasComment("Số Giấy phép đào tạo lái xe của CSĐT. Ví dụ: 51/CĐBVN-QLPT&NL")
+                .HasColumnName("SoGP");
+            entity.Property(e => e.SoHscanhBao).HasColumnName("SoHSCanhBao");
+            entity.Property(e => e.ThoiGianDaoTao).HasComment("Kiểm tra thời gian đào tạo  (Khai giảng - Bế giảng). 86 ngày hạng B1; 90 ngày hạng B2; 136 ngày hạng C; 30 ngày nâng hạng cấp 1; 52 ngày nâng hạng cấp 2.");
+            entity.Property(e => e.ThoiGianTiepNhan).HasComment("Kiểm tra thời gian tiếp nhận BC1 so với ngày khai giảng. Không quá 07 ngày đối với các hạng B1, B2, nâng hạng D, E; Không quá 15 ngày đối với hạng C");
+            entity.Property(e => e.TrangThai).HasComment("Đã cập nhật kết quả = 1; Chưa cập nhật kết quả= 0; Giá trị mặc định = 0");
+            entity.Property(e => e.TtXuly).HasColumnName("TT_Xuly");
+
+            entity.HasOne(d => d.MaKhNavigation).WithMany(p => p.BaoCaoIs)
+                .HasForeignKey(d => d.MaKh)
+                .HasConstraintName("FK_BaoCaoI_KhoaHoc");
+        });
+
+        modelBuilder.Entity<BaoCaoIi>(entity =>
+        {
+            entity.HasKey(e => e.MaBcii);
+
+            entity.ToTable("BaoCaoII");
+
+            entity.Property(e => e.MaBcii)
+                .HasMaxLength(13)
+                .IsUnicode(false)
+                .HasComment("Mã Báo Cáo II = <Mã CSĐT><BCII><YY><01-99>")
+                .HasColumnName("MaBCII");
+            entity.Property(e => e.GhiChu).HasMaxLength(255);
+            entity.Property(e => e.MaBci)
+                .HasMaxLength(18)
+                .IsUnicode(false)
+                .HasColumnName("MaBCI");
+            entity.Property(e => e.MaCsdt)
+                .IsRequired()
+                .HasMaxLength(6)
+                .IsUnicode(false)
+                .HasColumnName("MaCSDT");
+            entity.Property(e => e.NgayBaoCao)
+                .HasComment("Ngày công văn của Báo cáo II")
+                .HasColumnType("datetime");
+            entity.Property(e => e.NgaySua)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.NgayTao)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.NguoiSua).HasMaxLength(30);
+            entity.Property(e => e.NguoiTao).HasMaxLength(30);
+            entity.Property(e => e.SoBaoCao)
+                .HasMaxLength(20)
+                .HasComment("Số công văn của Báo cáo II. Ví dụ: 123/BC-TTĐT&TNCG");
+            entity.Property(e => e.TongSoThiSinh).HasComment("Số thí sinh có trong Báo Cáo II");
+            entity.Property(e => e.TrangThai).HasComment("Đã cập nhật kết quả = 1; Chưa cập nhật kết quả= 0; Giá trị mặc định = 0");
+            entity.Property(e => e.TtXuly).HasColumnName("TT_Xuly");
+        });
+
         modelBuilder.Entity<DmDiemSatHach>(entity =>
         {
             entity.HasKey(e => e.Stt);
@@ -105,7 +216,6 @@ public partial class GplxCsdtContext : DbContext
                 .HasColumnType("datetime");
             entity.Property(e => e.NguoiSua).HasMaxLength(30);
             entity.Property(e => e.NguoiTao).HasMaxLength(30);
-          
             entity.Property(e => e.TenDayDu).HasMaxLength(100);
             entity.Property(e => e.TenDvhc)
                 .IsRequired()
@@ -249,9 +359,7 @@ public partial class GplxCsdtContext : DbContext
                 .HasComment("Mã hạng GPLX");
             entity.Property(e => e.GhiChu).HasMaxLength(255);
             entity.Property(e => e.HanSuDung).HasComment("Hạn sử dụng GPLX tính theo năm. 0=Vô thời hạn");
-            entity.Property(e => e.HangDuocLai)
-                .HasMaxLength(150)
-                .IsUnicode(false);
+            entity.Property(e => e.HangDuocLai).HasMaxLength(150);
             entity.Property(e => e.MaHangMoi).HasMaxLength(5);
             entity.Property(e => e.MoTaEn)
                 .HasMaxLength(500)
@@ -389,21 +497,6 @@ public partial class GplxCsdtContext : DbContext
                 .HasDefaultValueSql("((1))");
         });
 
-        modelBuilder.Entity<DmPhanThiTkn>(entity =>
-        {
-            entity.HasKey(e => e.MaPhanThi);
-
-            entity.ToTable("DmPhanThiTkn");
-
-            entity.Property(e => e.HangDaoTao)
-                .IsRequired()
-                .HasMaxLength(20)
-                .IsUnicode(false);
-            entity.Property(e => e.TenPhanThi)
-                .IsRequired()
-                .HasMaxLength(100);
-        });
-
         modelBuilder.Entity<DmQuocTich>(entity =>
         {
             entity.HasKey(e => e.Ma);
@@ -433,22 +526,6 @@ public partial class GplxCsdtContext : DbContext
                 .IsRequired()
                 .HasDefaultValueSql("((1))")
                 .HasComment("0 = khong hieu luc; 1 = co hieu luc; mac dinh la 1;");
-        });
-
-        modelBuilder.Entity<DmthiSatHachQuyTacTkn>(entity =>
-        {
-            entity.HasKey(e => e.IdQuyTac).HasName("PK__DMThiSat__9F0652C32766EBD3");
-
-            entity.ToTable("DMThiSatHach_QuyTacTkn");
-
-            entity.Property(e => e.NoiDung)
-                .IsRequired()
-                .HasMaxLength(500);
-
-            entity.HasOne(d => d.MaPhanThiNavigation).WithMany(p => p.DmthiSatHachQuyTacTkns)
-                .HasForeignKey(d => d.MaPhanThi)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_DMThiSatHach_QuyTacTkn_DmPhanThiTkn");
         });
 
         modelBuilder.Entity<GiaoVien>(entity =>
@@ -524,6 +601,9 @@ public partial class GplxCsdtContext : DbContext
                 .IsUnicode(false)
                 .HasComment("Cơ quan quản lý Giáo viên")
                 .HasColumnName("MaCSDT");
+            entity.Property(e => e.MaFileTiepNhanXml)
+                .HasMaxLength(50)
+                .HasColumnName("MaFileTiepNhanXML");
             entity.Property(e => e.MaSoGtvt)
                 .IsRequired()
                 .HasMaxLength(6)
@@ -533,6 +613,9 @@ public partial class GplxCsdtContext : DbContext
                 .HasComment("Ngày cấp GPLX của Giáo viên. ")
                 .HasColumnType("datetime")
                 .HasColumnName("NgayCapGPLX");
+            entity.Property(e => e.NgayHhgplx)
+                .HasColumnType("datetime")
+                .HasColumnName("NgayHHGPLX");
             entity.Property(e => e.NgayQdGcn)
                 .HasComment("Ngày quyết định cấp giấy chứng nhận")
                 .HasColumnType("datetime")
@@ -554,6 +637,9 @@ public partial class GplxCsdtContext : DbContext
                 .IsFixedLength();
             entity.Property(e => e.NguoiSua).HasMaxLength(30);
             entity.Property(e => e.NguoiTao).HasMaxLength(30);
+            entity.Property(e => e.NoiCapGcn)
+                .HasMaxLength(500)
+                .HasColumnName("NoiCapGCN");
             entity.Property(e => e.NoiCt)
                 .HasMaxLength(50)
                 .HasColumnName("NoiCT");
@@ -583,6 +669,9 @@ public partial class GplxCsdtContext : DbContext
             entity.Property(e => e.ThamNienLaiXe)
                 .HasComment("Thâm niên lái xe. Tính theo năm")
                 .HasColumnName("ThamNien_LaiXe");
+            entity.Property(e => e.ThoiGianTiepNhanXml)
+                .HasColumnType("datetime")
+                .HasColumnName("ThoiGianTiepNhanXML");
             entity.Property(e => e.TrangThai)
                 .IsRequired()
                 .HasDefaultValueSql("((1))")
@@ -631,6 +720,7 @@ public partial class GplxCsdtContext : DbContext
                 .HasMaxLength(3)
                 .IsUnicode(false)
                 .HasColumnName("HangGPLX");
+            entity.Property(e => e.HtdaoTao).HasColumnName("HTDaoTao");
             entity.Property(e => e.MaCsdt)
                 .IsRequired()
                 .HasMaxLength(6)
@@ -773,7 +863,6 @@ public partial class GplxCsdtContext : DbContext
             entity.Property(e => e.HoVaTenIn)
                 .IsRequired()
                 .HasMaxLength(25);
-            
             entity.Property(e => e.MaQuocTich)
                 .IsRequired()
                 .HasMaxLength(3)
@@ -899,6 +988,21 @@ public partial class GplxCsdtContext : DbContext
                 .HasMaxLength(100)
                 .IsUnicode(false)
                 .HasColumnName("CoQuanQuanLyGPLX");
+            entity.Property(e => e.DatKqcuc).HasColumnName("DAT_KQCuc");
+            entity.Property(e => e.DatQdthucHanh)
+                .HasMaxLength(10)
+                .IsUnicode(false)
+                .HasColumnName("DAT_QDThucHanh");
+            entity.Property(e => e.DatTgthucHanh)
+                .HasMaxLength(10)
+                .IsUnicode(false)
+                .HasColumnName("DAT_TGThucHanh");
+            entity.Property(e => e.DatThoiGianLayKq)
+                .HasMaxLength(10)
+                .IsUnicode(false)
+                .HasColumnName("DAT_ThoiGianLayKQ");
+            entity.Property(e => e.DiemKqlyThuyet).HasColumnName("DiemKQLyThuyet");
+            entity.Property(e => e.DiemKqthucHanh).HasColumnName("DiemKQThucHanh");
             entity.Property(e => e.DonViCapGplxdaCo)
                 .HasMaxLength(100)
                 .IsUnicode(false)
@@ -914,6 +1018,7 @@ public partial class GplxCsdtContext : DbContext
             entity.Property(e => e.GhiChuKqdstw)
                 .HasMaxLength(255)
                 .HasColumnName("GhiChuKQDSTW");
+            entity.Property(e => e.GiaiTrinh).HasMaxLength(500);
             entity.Property(e => e.GiayCnsk)
                 .HasDefaultValueSql("((0))")
                 .HasComment("Giấy chứng nhận sức khỏe. Ghi 0=Không hợp lệ; 1=Hợp lệ. Mặc định = 0.")
@@ -936,6 +1041,7 @@ public partial class GplxCsdtContext : DbContext
             entity.Property(e => e.Ids)
                 .ValueGeneratedOnAdd()
                 .HasColumnName("IDs");
+            entity.Property(e => e.KetLuanCsdt).HasColumnName("KetLuanCSDT");
             entity.Property(e => e.KetQuaBc2).HasColumnName("KetQuaBC2");
             entity.Property(e => e.KetQuaDoiSanhTw)
                 .HasComment("Kết quả đối sánh với TW. 0=Hợp lệ; 1=Không hợp lệ")
@@ -952,6 +1058,7 @@ public partial class GplxCsdtContext : DbContext
                 .HasDefaultValueSql("((0))")
                 .HasComment("Kết quả sát hạch lý thuyết")
                 .HasColumnName("KetQua_LyThuyet");
+            entity.Property(e => e.KetQuaPdso).HasColumnName("KetQuaPDSo");
             entity.Property(e => e.KetQuaSh)
                 .HasMaxLength(2)
                 .IsUnicode(false)
@@ -965,6 +1072,8 @@ public partial class GplxCsdtContext : DbContext
             entity.Property(e => e.KqBc1GhiChu)
                 .HasMaxLength(50)
                 .HasColumnName("KQ_BC1_GhiChu");
+            entity.Property(e => e.KqlyThuyet).HasColumnName("KQLyThuyet");
+            entity.Property(e => e.KqthucHanh).HasColumnName("KQThucHanh");
             entity.Property(e => e.LanSh)
                 .HasDefaultValueSql("((1))")
                 .HasComment("Lần sát hạch thứ 1 hay thứ 2. Mặc định là 1")
@@ -972,6 +1081,9 @@ public partial class GplxCsdtContext : DbContext
             entity.Property(e => e.LyDoCapDoi)
                 .HasMaxLength(50)
                 .HasComment("Lý do cấp đổi, cấp lại GPLX");
+            entity.Property(e => e.LyDoTuChoiKqdt)
+                .HasMaxLength(500)
+                .HasColumnName("LyDoTuChoiKQDT");
             entity.Property(e => e.MaBc1)
                 .HasMaxLength(18)
                 .IsUnicode(false)
@@ -1123,6 +1235,7 @@ public partial class GplxCsdtContext : DbContext
             entity.Property(e => e.NoiDungSh)
                 .HasComment("Nội dung sát hạch. Ghi mã trong bảng DM_NoiDungSH")
                 .HasColumnName("NoiDungSH");
+            entity.Property(e => e.QdthucHanhHinh).HasColumnName("QDThucHanhHinh");
             entity.Property(e => e.SoBd)
                 .HasMaxLength(3)
                 .IsUnicode(false)
@@ -1133,7 +1246,7 @@ public partial class GplxCsdtContext : DbContext
                 .HasComment("Số chứng chỉ nghề")
                 .HasColumnName("SoCCN");
             entity.Property(e => e.SoGiayCntn)
-                .HasMaxLength(20)
+                .HasMaxLength(30)
                 .HasComment("Số giấy chứng nhận tốt nghiệp")
                 .HasColumnName("SoGiayCNTN");
             entity.Property(e => e.SoGplxdaCo)
@@ -1170,6 +1283,17 @@ public partial class GplxCsdtContext : DbContext
             entity.Property(e => e.SoSoTn)
                 .HasMaxLength(50)
                 .HasColumnName("SoSoTN");
+            entity.Property(e => e.TgbatDau)
+                .HasMaxLength(8)
+                .IsUnicode(false)
+                .HasColumnName("TGBatDau");
+            entity.Property(e => e.TgketThuc)
+                .HasMaxLength(8)
+                .IsUnicode(false)
+                .HasColumnName("TGKetThuc");
+            entity.Property(e => e.TgthucHanhDuong).HasColumnName("TGThucHanhDuong");
+            entity.Property(e => e.TgthucHanhHinh).HasColumnName("TGThucHanhHinh");
+            entity.Property(e => e.TongQdthucHanh).HasColumnName("TongQDThucHanh");
             entity.Property(e => e.TrangThai).HasDefaultValueSql("((0))");
             entity.Property(e => e.TransferFlag).HasColumnName("Transfer_flag");
             entity.Property(e => e.TtXuLy)
@@ -1195,6 +1319,10 @@ public partial class GplxCsdtContext : DbContext
                 .HasForeignKey(d => d.HangGplx)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_NguoiLX_HoSo_DM_HangGPLX");
+
+            entity.HasOne(d => d.MaBc1Navigation).WithMany(p => p.NguoiLxHoSos)
+                .HasForeignKey(d => d.MaBc1)
+                .HasConstraintName("FK_NguoiLX_HoSo_BaoCaoI");
 
             entity.HasOne(d => d.MaDkNavigation).WithOne(p => p.NguoiLxHoSo)
                 .HasForeignKey<NguoiLxHoSo>(d => d.MaDk)
@@ -1248,37 +1376,6 @@ public partial class GplxCsdtContext : DbContext
                 .HasConstraintName("FK_NguoiLXHS_GiayTo_DM_GiayTo");
         });
 
-        modelBuilder.Entity<UserTkn>(entity =>
-        {
-            entity.HasKey(e => e.UserName);
-
-            entity.ToTable("UserTkn");
-
-            entity.Property(e => e.UserName).HasMaxLength(100);
-            entity.Property(e => e.GioiTinh)
-                .IsRequired()
-                .HasMaxLength(1)
-                .IsUnicode(false)
-                .IsFixedLength();
-            entity.Property(e => e.HoTen)
-                .IsRequired()
-                .HasMaxLength(150);
-            entity.Property(e => e.MaNguoiChinhSua).HasMaxLength(100);
-            entity.Property(e => e.MaNguoiNhap).HasMaxLength(100);
-            entity.Property(e => e.NgayChinhSuaCuoiCung).HasPrecision(0);
-            entity.Property(e => e.NgayKhoiTao)
-                .HasPrecision(0)
-                .HasDefaultValueSql("(sysdatetime())");
-            entity.Property(e => e.PasswordHash)
-                .IsRequired()
-                .HasMaxLength(256);
-            entity.Property(e => e.SoDienThoai)
-                .HasMaxLength(10)
-                .IsUnicode(false);
-            entity.Property(e => e.TenNguoiChinhSua).HasMaxLength(150);
-            entity.Property(e => e.TenNguoiNhap).HasMaxLength(150);
-        });
-
         modelBuilder.Entity<XeTap>(entity =>
         {
             entity.HasKey(e => e.BienSoXe);
@@ -1307,6 +1404,10 @@ public partial class GplxCsdtContext : DbContext
                 .HasDefaultValueSql("((1))")
                 .HasComment("Giấy phép xe tập lái (Có/Không). 0=Không; 1=Có")
                 .HasColumnName("GiayPhepXTL");
+            entity.Property(e => e.HangGplxxe)
+                .HasMaxLength(10)
+                .IsUnicode(false)
+                .HasColumnName("HangGPLXXe");
             entity.Property(e => e.HangXe).HasMaxLength(50);
             entity.Property(e => e.HeThongPp)
                 .HasDefaultValueSql("((1))")
@@ -1319,6 +1420,9 @@ public partial class GplxCsdtContext : DbContext
                 .IsUnicode(false)
                 .HasComment("Mã CSĐT. Tham chiếu đến bảng DM_DonViGTVT")
                 .HasColumnName("MaCSDT");
+            entity.Property(e => e.MaFileTiepNhanXml)
+                .HasMaxLength(50)
+                .HasColumnName("MaFileTiepNhanXML");
             entity.Property(e => e.MaSoGtvt)
                 .IsRequired()
                 .HasMaxLength(6)
@@ -1370,6 +1474,9 @@ public partial class GplxCsdtContext : DbContext
             entity.Property(e => e.SoKhung)
                 .HasMaxLength(20)
                 .IsUnicode(false);
+            entity.Property(e => e.ThoiGianTiepNhanXml)
+                .HasColumnType("datetime")
+                .HasColumnName("ThoiGianTiepNhanXML");
             entity.Property(e => e.TrangThai)
                 .IsRequired()
                 .HasDefaultValueSql("((1))")

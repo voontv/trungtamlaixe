@@ -37,11 +37,12 @@ namespace Ttlaixe.Businesses
     {
         private readonly GplxCsdtContext _context;
         private readonly IAuthenInfo _authenInfo;
-
-        public LichHocsBusinesses(GplxCsdtContext context, IAuthenInfo authenInfo)
+        private readonly TeknovaContext _Tkcontext;
+        public LichHocsBusinesses(GplxCsdtContext context, IAuthenInfo authenInfo, TeknovaContext tkcontext)
         {
             _context = context;
             _authenInfo = authenInfo;
+            _Tkcontext = tkcontext;
         }
 
         private async Task EnsureCanEditAsync()
@@ -52,7 +53,7 @@ namespace Ttlaixe.Businesses
                 throw new BadRequestException("Bạn chưa đăng nhập.");
             }
 
-            var actor = await _context.UserTkns.FindAsync(logged.UserName);
+            var actor = await _Tkcontext.UserTkns.FindAsync(logged.UserName);
             if (actor == null)
             {
                 throw new BadRequestException("Không tìm thấy thông tin người dùng.");

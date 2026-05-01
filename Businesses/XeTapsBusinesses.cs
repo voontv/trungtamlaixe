@@ -29,11 +29,12 @@ namespace Ttlaixe.Businesses
     {
         private readonly GplxCsdtContext _context;
         private readonly IAuthenInfo _authenInfo;
-
-        public XeTapsBusinesses(GplxCsdtContext context, IAuthenInfo authenInfo)
+        private readonly TeknovaContext _Tkcontext;
+        public XeTapsBusinesses(GplxCsdtContext context, IAuthenInfo authenInfo, TeknovaContext tkkcontext)
         {
             _context = context;
             _authenInfo = authenInfo;
+            _Tkcontext = tkkcontext;
         }
 
         private async Task CheckQuyen()
@@ -42,7 +43,7 @@ namespace Ttlaixe.Businesses
             if (logged == null || string.IsNullOrWhiteSpace(logged.UserName))
                 throw new BadRequestException("Bạn chưa đăng nhập hoặc token không hợp lệ.");
 
-            var actor = await _context.UserTkns.FindAsync(logged.UserName);
+            var actor = await _Tkcontext.UserTkns.FindAsync(logged.UserName);
             if (actor == null)
                 throw new BadRequestException("Không tìm thấy thông tin người dùng.");
 
