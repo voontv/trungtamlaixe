@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -15,6 +14,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using System.IO;
 using System.Xml;
+using System.Text.Json;
+using log4net;
 namespace Ttlaixe.Businesses
 {
     [ImplementBy(typeof(NguoiLxesBusinesses))]
@@ -42,6 +43,8 @@ namespace Ttlaixe.Businesses
         private readonly ITokenGenerator _tokenGenerator;
         private readonly IAuthenInfo _authenInfo;
         private readonly UploadOptions _opt;
+        private static readonly log4net.ILog log
+            = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
         public NguoiLxesBusinesses(GplxCsdtContext context, TeknovaContext tkcontext,ITokenGenerator tokenGenerator, IAuthenInfo authenInfo, IOptions<UploadOptions> opt)
         {
             _context = context;
@@ -131,18 +134,35 @@ namespace Ttlaixe.Businesses
                 hoSo.MaDk = maDk;
                 hoSo.SoHoSo = soHoSo;
 
-                if (rq.GiayTos != null && rq.GiayTos.Count > 0)
+                if (rq.GiayTos != null)
                 {
-                    foreach (var gt in rq.GiayTos)
+                    var giayTos = JsonSerializer.Deserialize<List<NguoiLxhsCreateRequest>>(rq.GiayTos);
+
+                    foreach (var gt in giayTos)
                     {
-                        _context.NguoiLxhsGiayTos.Add(new NguoiLxhsGiayTo
+                        var existed = await _context.NguoiLxhsGiayTos
+                            .FirstOrDefaultAsync(x => x.MaDk == maDk && x.MaGt == gt.MaGt);
+                        log.Info("Ten moi nha " +gt.TenGt);
+                        log.Info("Bang ma moi nha " +gt.MaGt);
+                        if (existed == null)
                         {
-                            MaGt = gt.MaGt,
-                            MaDk = maDk,
-                            SoHoSo = soHoSo,
-                            TenGt = gt.TenGt,
-                            TrangThai = true
-                        });
+                            var item = new NguoiLxhsGiayTo
+                            {
+                                MaGt = gt.MaGt,
+                                MaDk = maDk,
+                                SoHoSo = soHoSo,
+                                TenGt = gt.TenGt,
+                                TrangThai = true
+                            };
+
+                            _context.NguoiLxhsGiayTos.Add(item);
+                        }
+                        else
+                        {
+                            existed.TenGt = gt.TenGt;
+                            existed.SoHoSo = soHoSo;
+                            existed.TrangThai = true;
+                        }
                     }
                 }
 
@@ -241,18 +261,34 @@ namespace Ttlaixe.Businesses
             if (oldGiayTos.Any())
                 _context.NguoiLxhsGiayTos.RemoveRange(oldGiayTos);
 
-            if (rq.GiayTos != null && rq.GiayTos.Count > 0)
+            if (rq.GiayTos != null)
             {
-                foreach (var gt in rq.GiayTos)
+                var giayTos = JsonSerializer.Deserialize<List<NguoiLxhsCreateRequest>>(rq.GiayTos);
+
+                foreach (var gt in giayTos)
                 {
-                    _context.NguoiLxhsGiayTos.Add(new NguoiLxhsGiayTo
+                    var existed = await _context.NguoiLxhsGiayTos
+                        .FirstOrDefaultAsync(x => x.MaDk == maDk && x.MaGt == gt.MaGt);
+
+                    if (existed == null)
                     {
-                        MaGt = gt.MaGt,
-                        MaDk = maDk,
-                        SoHoSo = soHoSo,
-                        TenGt = gt.TenGt,
-                        TrangThai = true
-                    });
+                        var item = new NguoiLxhsGiayTo
+                        {
+                            MaGt = gt.MaGt,
+                            MaDk = maDk,
+                            SoHoSo = soHoSo,
+                            TenGt = gt.TenGt,
+                            TrangThai = true
+                        };
+
+                        _context.NguoiLxhsGiayTos.Add(item);
+                    }
+                    else
+                    {
+                        existed.TenGt = gt.TenGt;
+                        existed.SoHoSo = soHoSo;
+                        existed.TrangThai = true;
+                    }
                 }
             }
             if (file != null && file.Length > 0)
@@ -353,85 +389,6 @@ namespace Ttlaixe.Businesses
             return result;
         }
 
-        /*
-         * 
-         * 
-         * 
-         * public async Task<bool> LuuKetQuaChiTietPhanThiAsync(
-    List<ThiSatHachKetQuaChiTietTknRequest> items)
-        {
-            if (items == null || items.Count == 0)
-                return true;
-
-            // Giả sử list cùng 1 MaKySh, MaDk, MaPhanThi
-            var maKySh = items[0].MaKySh;
-            var maDk = items[0].MaDk;
-            var maPhanThi = items[0].MaPhanThi;
-
-            // Lấy các dòng hiện có trong DB cho thí sinh + bài thi này
-            var existing = await _context.ThiSatHachKetQuaChiTietTkns
-                .Where(x => x.MaKySh == maKySh
-                            && x.MaDk == maDk
-                            && x.MaPhanThi == maPhanThi)
-                .ToListAsync();
-
-            // Map cho nhanh
-            var existingDict = existing.ToDictionary(
-                x => x.IdQuyTac,
-                x => x
-            );
-
-            var idQuyTacTrongRequest = items.Select(x => x.IdQuyTac).ToHashSet();
-
-            // 1. Xử lý từng dòng request
-            foreach (var rq in items)
-            {
-                existingDict.TryGetValue(rq.IdQuyTac, out var entity);
-
-                if (rq.SoLanPham <= 0)
-                {
-                    // Nếu số lần phạm <= 0 -> xóa nếu đang có trong DB
-                    if (entity != null)
-                    {
-                        _context.ThiSatHachKetQuaChiTietTkns.Remove(entity);
-                    }
-                }
-                else
-                {
-                    // SoLanPham > 0 -> insert hoặc update
-                    if (entity == null)
-                    {
-                        entity = new ThiSatHachKetQuaChiTietTkn
-                        {
-                            MaKySh = rq.MaKySh,
-                            MaDk = rq.MaDk,
-                            MaPhanThi = rq.MaPhanThi,
-                            IdQuyTac = rq.IdQuyTac,
-                            SoLanPham = rq.SoLanPham
-                        };
-                        _context.ThiSatHachKetQuaChiTietTkns.Add(entity);
-                    }
-                    else
-                    {
-                        entity.SoLanPham = rq.SoLanPham;
-                    }
-                }
-            }
-
-            // 2. Xóa các lỗi cũ không còn trong request nữa (nếu muốn “clean” luôn)
-            var toRemove = existing
-                .Where(x => !idQuyTacTrongRequest.Contains(x.IdQuyTac))
-                .ToList();
-
-            foreach (var e in toRemove)
-            {
-                _context.ThiSatHachKetQuaChiTietTkns.Remove(e);
-            }
-
-            await _context.SaveChangesAsync();
-
-            return true;
-        }*/
 
         public async Task<List<string>> GetMaShatHach()
         {

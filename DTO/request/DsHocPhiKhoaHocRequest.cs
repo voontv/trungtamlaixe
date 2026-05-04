@@ -4,6 +4,7 @@
     {
         public string MaKhoaHoc { get;set; }
 
-        public string MaHangGplx { get;set; }
+        public string HangDt { get;set; }
+        //public string HangDt { get;set; }
     }
 }

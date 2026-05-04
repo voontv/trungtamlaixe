@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using Ttlaixe.DTO.request;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
+using Ttlaixe.LibsStartup;
 
 namespace Ttlaixe.Businesses
 {
@@ -24,6 +25,8 @@ namespace Ttlaixe.Businesses
         Task<List<TongHopChungTuDto>> TongHopTheoTaiKhoanChaAsync();
         Task<List<TongHopChungTuDto>> TongHopTheoTaiKhoanChiTietAsync(DateTime? fromDate, DateTime? toDate);
         Task<List<TongHopChungTuDto>> TongHopTheoTaiKhoanChaAsync(DateTime? fromDate, DateTime? toDate);
+
+        Task<byte[]> GetChungTuNopHocPhiHV(DateTime fromDate, DateTime toDate);
     }
 
     public class NhatKyChungTuBusiness : INhatKyChungTuBusiness
@@ -363,6 +366,42 @@ namespace Ttlaixe.Businesses
                 )
                 .OrderBy(x => x.MaTaiKhoan)
                 .ToListAsync();
+        }
+
+        public async Task<byte[]> GetChungTuNopHocPhiHV(DateTime fromDate, DateTime toDate)
+        {
+            var query =
+                from ct in _context.LichSuNopHocPhis
+                join hp in _context.HoSoHocPhis
+                    on ct.MaDk equals hp.MaDk
+                where ct.NgayNop >= fromDate
+                      && ct.NgayNop <= toDate
+                      //&& ct.GhiChu == Constants.NoiDungHocPhi
+                select new HoaDonRow
+                {
+                    NgayHoaDon = ct.NgayNop.ToString("dd/MM/yyyy"),
+                    MaKhachHang = hp.MaDk,
+                    TenNguoiMua = hp.HoVaTen,
+                    DiaChiKhachHang = hp.NoiThuongTru,
+                    HinhThucThanhToan = ct.HinhThucThanhToan,
+                    ThueSuat = Constants.ThueSuat,
+                    TenHangHoa = Constants.TenHangHoa + " " + hp.MaHangGplx,
+                    DVT = "HV",
+                    ThanhTien = ct.SoTienNop,
+                    SoTT = 1,
+                    TinhChat = 1,
+                    TienThue = ct.SoTienNop * Constants.ThueSuat / 100,
+                    CanCuocCongDan = hp.SoCmt
+                };
+
+            var rows = await query.AsNoTracking().ToListAsync();
+
+            return await ExportExcelAsync(rows);
+        }
+
+        public async Task<byte[]> ExportExcelAsync(List<HoaDonRow> data)
+        {
+            return await ExcelExporter.ExportExcelAsync(data);
         }
     }
 }

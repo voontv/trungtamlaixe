@@ -28,7 +28,7 @@
         [HttpPost("danh-sach-hoc-phi-khoa-hoc")]
         public async Task<List<HoSoHocPhi>> CreateByKhoaHocAsync([FromBody] DsHocPhiKhoaHocRequest dk)
         {
-            return await _business.CreateByKhoaHocAsync(dk.MaKhoaHoc, dk.MaHangGplx);
+            return await _business.CreateByKhoaHocAsync(dk.MaKhoaHoc, dk.HangDt);
         }
 
         [HttpPost("by-ma-khoa-hocs")]

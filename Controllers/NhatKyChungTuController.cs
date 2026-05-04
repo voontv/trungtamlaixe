@@ -83,5 +83,17 @@ namespace Ttlaixe.Controllers
         {
             return await _business.TongHopTheoTaiKhoanChaAsync(fromDate, toDate);
         }
+
+        [HttpPost("file-hoa-don-nop-tien-hoc-phi")]
+        public async Task<IActionResult> GetChungTuNopHocPhiHV([FromQuery] DateTime fromDate,
+    [FromQuery] DateTime toDate)
+        {
+            var bytes = await _business.GetChungTuNopHocPhiHV(fromDate, toDate);
+
+            return File(
+                bytes,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                $"HoaDon_{DateTime.Now:yyyyMMddHHmmss}.xlsx");
+        }
     }
 }

@@ -237,10 +237,11 @@ public partial class TeknovaContext : DbContext
 
         modelBuilder.Entity<UserTkn>(entity =>
         {
-            entity
-                .HasNoKey()
-                .ToTable("UserTkn");
+            entity.HasKey(e => e.UserName);
 
+            entity.ToTable("UserTkn");
+
+            entity.Property(e => e.UserName).HasMaxLength(100);
             entity.Property(e => e.GioiTinh)
                 .IsRequired()
                 .HasMaxLength(1)
@@ -261,9 +262,6 @@ public partial class TeknovaContext : DbContext
                 .IsUnicode(false);
             entity.Property(e => e.TenNguoiChinhSua).HasMaxLength(150);
             entity.Property(e => e.TenNguoiNhap).HasMaxLength(150);
-            entity.Property(e => e.UserName)
-                .IsRequired()
-                .HasMaxLength(100);
         });
 
         OnModelCreatingPartial(modelBuilder);

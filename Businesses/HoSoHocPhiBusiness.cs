@@ -1,11 +1,10 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
+﻿using Microsoft.EntityFrameworkCore;
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Ttlaixe.AutoConfig;
 using Ttlaixe.Models;
-using Microsoft.EntityFrameworkCore;
-using System.Linq;
-using System.Net.WebSockets;
 
 namespace Ttlaixe.Businesses
 {
@@ -213,7 +212,7 @@ namespace Ttlaixe.Businesses
                 .ToListAsync();
         }
 
-        public async Task<List<HoSoHocPhi>> CreateByKhoaHocAsync(string maKhoaHoc, string maHangGplx)
+        public async Task<List<HoSoHocPhi>> CreateByKhoaHocAsync(string maKhoaHoc, string hangDt)
         {
             var dsHocViens = await _nguoiLxes.GetThongTinCoBanByKhoaHocAsync(maKhoaHoc);
 
@@ -226,7 +225,7 @@ namespace Ttlaixe.Businesses
 
             var hocPhi = await _context.DmHocPhis
                 .AsNoTracking()
-                .FirstOrDefaultAsync(x => x.MaHangGplx == maHangGplx);
+                .FirstOrDefaultAsync(x => x.MaHangGplx == hangDt);
 
             var result = new List<HoSoHocPhi>();
             var toAdd = new List<HoSoHocPhi>();
@@ -244,7 +243,7 @@ namespace Ttlaixe.Businesses
                 var model = new HoSoHocPhi();
                 d.Patch(model);
 
-                model.MaHangGplx = maHangGplx;
+                model.MaHangGplx = hangDt;
                 model.HocPhi = hocPhi.HocPhi;
                 model.DaHoanThanhHp = false;
                 model.BoHoc = false;

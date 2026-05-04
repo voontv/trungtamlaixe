@@ -36,8 +36,8 @@ namespace Ttlaixe.DTO.request
         /// <summary>Mã khóa học tham chiếu KhoaHoc.MaKh</summary>
         public string MaKhoaHoc { get; set; }
 
-        /// <summary>Năm học lái xe (YYYY, nếu có)</summary>
-        public int? NamHocLx { get; set; }
+        /// <summary>Năm học lái xe (YYYY, nếu có)</summary> tạm bỏ do họ update mới để null
+        //public int? NamHocLx { get; set; } 
 
         /// <summary>
         /// Mã đơn vị Xã/Phường/Quận/Huyện của Nơi đăng ký thường trú. Ghi MaDVHC trong bảng DM_DVHC
@@ -63,12 +63,12 @@ namespace Ttlaixe.DTO.request
         /// <summary>
         /// Số năm lái xe
         /// </summary>
-        public int? SoNamLx { get; set; }
+        public int SoNamLx { get; set; }
 
         /// <summary>
         /// Số Km lái xe an toàn
         /// </summary>
-        public int? SoKmLxanToan { get; set; }
+        public int SoKmLxanToan { get; set; }
 
         /// <summary>
         /// Số GPLX hiện có của người lái xe.
@@ -105,7 +105,7 @@ namespace Ttlaixe.DTO.request
         public string DonViHocLx { get; set; }
 
 
-        public List<NguoiLxhsCreateRequest> GiayTos { get; set; } = new List<NguoiLxhsCreateRequest>();
+        public string GiayTos { get; set; }
 
         public IFormFile? File { get; set; }
     }

@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using Ttlaixe.DTO.request;
 using Ttlaixe.DTO.response;
+using Ttlaixe.LibsStartup;
 
 namespace Ttlaixe.Businesses
 {
@@ -80,10 +81,10 @@ namespace Ttlaixe.Businesses
 
             var nhatKyChungTu = new NhatKyChungTuRequest();
             nhatKyChungTu.SoChungTu = model.MaDk;
-            nhatKyChungTu.GhiChu = model.GhiChu;
+            nhatKyChungTu.GhiChu = Constants.NoiDungHocPhi;
             nhatKyChungTu.NgayLap = model.NgayNop;
             nhatKyChungTu.SoTien = model.SoTienNop;
-            nhatKyChungTu.DienGiai = "Học viên " + hoSo.HoVaTen + " nộp tiền học phí";
+            nhatKyChungTu.DienGiai = "Học viên " + hoSo.HoVaTen + " "+ Constants.NoiDungHocPhi;
             nhatKyChungTu.TaiKhoanCo = model.TaiKhoanCo;
             nhatKyChungTu.TaiKhoanNo = model.TaiKhoanNo;
             await _nhatKyChungTu.CreateAsync(nhatKyChungTu);
