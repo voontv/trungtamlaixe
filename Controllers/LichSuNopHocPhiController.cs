@@ -39,5 +39,11 @@
         {
             return await _business.DeleteAsync(idNopTien);
         }
+
+        [HttpPost("search")]
+        public async Task<List<NopTienSearchResponse>> Search([FromBody] SearchNopTienRequest rq)
+        {
+            return await _business.SearchAsync(rq);
+        }
     }
 }

@@ -8,6 +8,7 @@ using System.Linq;
 using Ttlaixe.DTO.request;
 using Ttlaixe.DTO.response;
 using Ttlaixe.LibsStartup;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Ttlaixe.Businesses
 {
@@ -17,6 +18,7 @@ namespace Ttlaixe.Businesses
         Task<List<LichSuNopHocPhiReponse>> GetByMaDKAsync(string maDK);
         Task<LichSuNopHocPhiReponse> CreateAsync(LichSuNopHocPhiRequest model);
         Task<bool> DeleteAsync(int idNopTien);
+        Task<List<NopTienSearchResponse>> SearchAsync(SearchNopTienRequest rq);
     }
 
     public class LichSuNopHocPhiBusiness : ILichSuNopHocPhiBusiness
@@ -122,6 +124,55 @@ namespace Ttlaixe.Businesses
             }
 
             return true;
+        }
+
+        public async Task<List<NopTienSearchResponse>> SearchAsync(SearchNopTienRequest rq)
+        {
+            var query =
+                from nop in _context.LichSuNopHocPhis.AsNoTracking()
+                join hs in _context.HoSoHocPhis.AsNoTracking()
+                    on nop.MaDk equals hs.MaDk
+                select new { nop, hs };
+
+            if (!string.IsNullOrWhiteSpace(rq.MaDk))
+                query = query.Where(x => x.nop.MaDk == rq.MaDk);
+
+            if (rq.FromNgayNop.HasValue)
+                query = query.Where(x => x.nop.NgayNop >= rq.FromNgayNop.Value.Date);
+
+            if (rq.ToNgayNop.HasValue)
+                query = query.Where(x => x.nop.NgayNop <= rq.ToNgayNop.Value.Date);
+
+            if (!string.IsNullOrWhiteSpace(rq.HinhThucThanhToan))
+                query = query.Where(x => x.nop.HinhThucThanhToan.Contains(rq.HinhThucThanhToan));
+
+            // ==== Search chéo hồ sơ ====
+
+            if (!string.IsNullOrWhiteSpace(rq.HoVaTen))
+                query = query.Where(x => x.hs.HoVaTen.Contains(rq.HoVaTen));
+
+            if (!string.IsNullOrWhiteSpace(rq.NgaySinh))
+                query = query.Where(x => x.hs.NgaySinh == rq.NgaySinh);
+
+            if (!string.IsNullOrWhiteSpace(rq.SoCmt))
+                query = query.Where(x => x.hs.SoCmt.Contains(rq.SoCmt));
+
+            return await query
+                .OrderByDescending(x => x.nop.NgayNop)
+                .Select(x => new NopTienSearchResponse
+                {
+                    IdNopTien = x.nop.IdNopTien,
+                    MaDk = x.nop.MaDk,
+                    SoTienNop = x.nop.SoTienNop,
+                    NgayNop = x.nop.NgayNop,
+                    HinhThucThanhToan = x.nop.HinhThucThanhToan,
+                    SoBienLai = x.nop.SoBienLai,
+                    GhiChu = x.nop.GhiChu,
+                    HoVaTen = x.hs.HoVaTen,
+                    NgaySinh = x.hs.NgaySinh,
+                    SoCmt = x.hs.SoCmt
+                })
+                .ToListAsync();
         }
     }
 }

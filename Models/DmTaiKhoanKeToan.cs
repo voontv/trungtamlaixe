@@ -23,6 +23,8 @@ public partial class DmTaiKhoanKeToan
 
     public DateTime? NgayChinhSuaCuoiCung { get; set; }
 
+    public string MaTaiKhoanChaTrue { get; set; }
+
     public virtual ICollection<NhatKyChungTu> NhatKyChungTuTaiKhoanCoNavigations { get; set; } = new List<NhatKyChungTu>();
 
     public virtual ICollection<NhatKyChungTu> NhatKyChungTuTaiKhoanNoNavigations { get; set; } = new List<NhatKyChungTu>();

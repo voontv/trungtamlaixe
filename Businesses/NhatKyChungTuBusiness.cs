@@ -7,7 +7,6 @@ using Ttlaixe.DTO.response;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using Ttlaixe.DTO.request;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 using Ttlaixe.LibsStartup;
 
 namespace Ttlaixe.Businesses
@@ -27,6 +26,7 @@ namespace Ttlaixe.Businesses
         Task<List<TongHopChungTuDto>> TongHopTheoTaiKhoanChaAsync(DateTime? fromDate, DateTime? toDate);
 
         Task<byte[]> GetChungTuNopHocPhiHV(DateTime fromDate, DateTime toDate);
+        Task<TongHopThangReponse> TongHopTheoThangAsync(int nam, int thang);
     }
 
     public class NhatKyChungTuBusiness : INhatKyChungTuBusiness
@@ -402,6 +402,87 @@ namespace Ttlaixe.Businesses
         public async Task<byte[]> ExportExcelAsync(List<HoaDonRow> data)
         {
             return await ExcelExporter.ExportExcelAsync(data);
+        }
+
+        public async Task<TongHopThangReponse> TongHopTheoThangAsync(int nam, int thang)
+        {
+            
+            var fromDauNam = new DateTime(nam, 1, 1);
+            var fromThang = new DateTime(nam, thang, 1);
+            var toThang = fromThang.AddMonths(1).AddDays(-1);
+
+            // 1. Lũy kế đến hết tháng trước
+            var luyKe = await TongHopTheoTaiKhoanChaAsync(fromDauNam, fromThang.AddDays(-1));
+            var duDauNam = await _context.LichSuSoDus
+    .Where(x => x.Nam == nam)
+    .ToListAsync();
+
+            var dictLuyKe = luyKe.ToDictionary(x => x.MaTaiKhoan);
+
+            // cộng số dư đầu năm vào lũy kế
+            foreach (var du in duDauNam)
+            {
+                if (dictLuyKe.TryGetValue(du.MaTaiKhoan, out var item))
+                {
+                    item.TongNo += du.No;
+                    item.TongCo += du.Co;
+                }
+                else
+                {
+                    luyKe.Add(new TongHopChungTuDto
+                    {
+                        MaTaiKhoan = du.MaTaiKhoan,
+                        TenTaiKhoan = du.TenTaiKhoan,
+                        TongNo = du.No,
+                        TongCo = du.Co
+                    });
+                }
+            }
+            // 2. Phát sinh trong tháng
+            var phatSinh = await TongHopTheoTaiKhoanChaAsync(fromThang, toThang);
+
+
+            var dictPhatSinh = phatSinh.ToDictionary(x => x.MaTaiKhoan);
+
+            var allKeys = dictLuyKe.Keys
+                .Union(dictPhatSinh.Keys)
+                .ToList();
+
+            var soDuCuoi = new List<TongHopChungTuDto>();
+
+            foreach (var key in allKeys)
+            {
+                var lk = dictLuyKe.ContainsKey(key) ? dictLuyKe[key] : new TongHopChungTuDto { MaTaiKhoan = key };
+                var ps = dictPhatSinh.ContainsKey(key) ? dictPhatSinh[key] : new TongHopChungTuDto { MaTaiKhoan = key };
+                
+                var tongNo = lk.TongNo + ps.TongNo;
+                var tongCo = lk.TongCo + ps.TongCo;
+
+                var chenhlech = tongCo - tongNo;
+
+                decimal no = 0;
+                decimal co = 0;
+
+                if (chenhlech > 0)
+                    co = chenhlech;
+                else
+                    no = Math.Abs(chenhlech);
+
+                soDuCuoi.Add(new TongHopChungTuDto
+                {
+                    MaTaiKhoan = key,
+                    TenTaiKhoan = lk.TenTaiKhoan ?? ps.TenTaiKhoan,
+                    TongNo = no,
+                    TongCo = co
+                });
+            }
+
+            return new TongHopThangReponse
+            {
+                SoDuDauKy = luyKe,
+                SoPhatSinhTrongKy = phatSinh,
+                SoDuCuoiKy = soDuCuoi.OrderBy(x => x.MaTaiKhoan).ToList()
+            };
         }
     }
 }

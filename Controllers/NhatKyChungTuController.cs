@@ -95,5 +95,11 @@ namespace Ttlaixe.Controllers
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 $"HoaDon_{DateTime.Now:yyyyMMddHHmmss}.xlsx");
         }
+
+        [HttpGet("tong-hop-theo-thang")]
+        public async Task<TongHopThangReponse> TongHopTheoThang(int nam, int thang)
+        {
+            return await _business.TongHopTheoThangAsync(nam, thang);
+        }
     }
 }

@@ -21,7 +21,7 @@ namespace Ttlaixe.Businesses
     [ImplementBy(typeof(NguoiLxesBusinesses))]
     public interface INguoiLxesBusinesses
     {
-        Task<NguoiLxResponse> CreateAsync(NguoiLxCreateRequest request);
+        Task CreateAsync(NguoiLxCreateRequest request);
 
         Task<bool> UpdateAsync(NguoiLxResponse rq);
 
@@ -54,7 +54,7 @@ namespace Ttlaixe.Businesses
             _opt = opt.Value;
         }
 
-        public async Task<NguoiLxResponse> CreateAsync(NguoiLxCreateRequest rq)
+        public async Task CreateAsync(NguoiLxCreateRequest rq)
         {
             var file = rq.File;
             var now = DateTime.Now;
@@ -173,19 +173,6 @@ namespace Ttlaixe.Businesses
                 {
                     await _context.SaveChangesAsync();
 
-                    var res = new NguoiLxResponse();
-                    rq.Patch(res);
-                    res.MaDk = maDk;
-
-                    if (file != null && file.Length > 0)
-                    {
-                        var savedPath = await SaveToRelativePathAsync(file, hoSo.MaDk);
-                        hoSo.DuongDanAnh = savedPath.Replace(_opt.ImageRoot, _opt.ImageSaveDatabase);
-                        hoSo.TtXuLy = "03";
-                        await _context.SaveChangesAsync();
-                    }
-
-                    return res;
                 }
                 catch (DbUpdateException ex) when (IsDuplicateKey(ex))
                 {
@@ -253,42 +240,28 @@ namespace Ttlaixe.Businesses
 
             var soHoSo = hoSo.SoHoSo;
 
-            // ===== Reset & add lại Giấy tờ =====
+            // ===== Reset Giấy tờ đúng cách =====
             var oldGiayTos = await _context.NguoiLxhsGiayTos
                 .Where(x => x.MaDk == maDk && x.SoHoSo == soHoSo)
                 .ToListAsync();
 
-            if (oldGiayTos.Any())
-                _context.NguoiLxhsGiayTos.RemoveRange(oldGiayTos);
+            _context.NguoiLxhsGiayTos.RemoveRange(oldGiayTos);
 
-            if (rq.GiayTos != null)
+            // QUAN TRỌNG: clear tracking
+            _context.ChangeTracker.Clear();
+
+            if (rq.GiayTos != null && rq.GiayTos.Any())
             {
-                var giayTos = JsonSerializer.Deserialize<List<NguoiLxhsCreateRequest>>(rq.GiayTos);
-
-                foreach (var gt in giayTos)
+                foreach (var gt in rq.GiayTos)
                 {
-                    var existed = await _context.NguoiLxhsGiayTos
-                        .FirstOrDefaultAsync(x => x.MaDk == maDk && x.MaGt == gt.MaGt);
-
-                    if (existed == null)
+                    _context.NguoiLxhsGiayTos.Add(new NguoiLxhsGiayTo
                     {
-                        var item = new NguoiLxhsGiayTo
-                        {
-                            MaGt = gt.MaGt,
-                            MaDk = maDk,
-                            SoHoSo = soHoSo,
-                            TenGt = gt.TenGt,
-                            TrangThai = true
-                        };
-
-                        _context.NguoiLxhsGiayTos.Add(item);
-                    }
-                    else
-                    {
-                        existed.TenGt = gt.TenGt;
-                        existed.SoHoSo = soHoSo;
-                        existed.TrangThai = true;
-                    }
+                        MaGt = gt.MaGt,
+                        MaDk = maDk,
+                        SoHoSo = soHoSo,
+                        TenGt = gt.TenGt,
+                        TrangThai = true
+                    });
                 }
             }
             if (file != null && file.Length > 0)
@@ -325,7 +298,9 @@ namespace Ttlaixe.Businesses
             var nguoiLxRes = new NguoiLxResponse();
             nguoiLxHoSo.Patch(nguoiLxRes);
             nguoiLx.Patch(nguoiLxRes);
-            nguoiLxGiayTo.Patch(nguoiLxRes.GiayTos);
+            var giayTo = new List<NguoiLxhsCreateRequest>();
+            nguoiLxGiayTo.Patch(giayTo);
+            nguoiLxRes.GiayTos = giayTo;
             return nguoiLxRes;
         }
 

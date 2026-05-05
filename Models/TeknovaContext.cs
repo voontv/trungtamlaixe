@@ -25,6 +25,8 @@ public partial class TeknovaContext : DbContext
 
     public virtual DbSet<LichSuNopHocPhi> LichSuNopHocPhis { get; set; }
 
+    public virtual DbSet<LichSuSoDu> LichSuSoDus { get; set; }
+
     public virtual DbSet<NhatKyChungTu> NhatKyChungTus { get; set; }
 
     public virtual DbSet<UserTkn> UserTkns { get; set; }
@@ -84,6 +86,9 @@ public partial class TeknovaContext : DbContext
                 .IsRequired()
                 .HasMaxLength(255);
             entity.Property(e => e.MaTaiKhoanCha)
+                .HasMaxLength(20)
+                .IsUnicode(false);
+            entity.Property(e => e.MaTaiKhoanChaTrue)
                 .HasMaxLength(20)
                 .IsUnicode(false);
             entity.Property(e => e.NgayChinhSuaCuoiCung).HasColumnType("datetime");
@@ -158,7 +163,7 @@ public partial class TeknovaContext : DbContext
 
         modelBuilder.Entity<LichSuNopHocPhi>(entity =>
         {
-            entity.HasKey(e => e.IdNopTien).HasName("PK__LichSuNo__1B8CD04D17C92629");
+            entity.HasKey(e => e.IdNopTien);
 
             entity.ToTable("LichSuNopHocPhi");
 
@@ -188,6 +193,22 @@ public partial class TeknovaContext : DbContext
                 .HasForeignKey(d => d.MaDk)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_LichSuNopHocPhi_HoSoHocPhi");
+        });
+
+        modelBuilder.Entity<LichSuSoDu>(entity =>
+        {
+            entity.HasKey(e => new { e.Nam, e.MaTaiKhoan }).HasName("PK_LichSuNoCoNam");
+
+            entity.ToTable("LichSuSoDu");
+
+            entity.Property(e => e.MaTaiKhoan)
+                .HasMaxLength(20)
+                .IsUnicode(false);
+            entity.Property(e => e.Co).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.No).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.TenTaiKhoan)
+                .IsRequired()
+                .HasMaxLength(255);
         });
 
         modelBuilder.Entity<NhatKyChungTu>(entity =>

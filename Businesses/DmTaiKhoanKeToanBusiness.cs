@@ -30,7 +30,7 @@ namespace Ttlaixe.Businesses
             var data = await _context.DmTaiKhoanKeToans
                 .AsNoTracking()
                 .Where(x => (bool)x.IsActive)
-                .OrderBy(x => x.SoThuTu)
+                .OrderBy(x => x.TenTaiKhoan)
                 .ThenBy(x => x.MaTaiKhoan)
                 .Select(x => new DmTaiKhoanKeToanTreeDto
                 {
@@ -82,7 +82,7 @@ namespace Ttlaixe.Businesses
 
             return data
                 .Where(x => string.IsNullOrWhiteSpace(x.MaTaiKhoanCha))
-                .OrderBy(x => x.SoThuTu)
+                .OrderBy(x => x.TenTaiKhoan)
                 .ThenBy(x => x.MaTaiKhoan)
                 .ToList();
         }

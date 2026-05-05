@@ -45,9 +45,9 @@ namespace Ttlaixe.Controllers
         [HttpPost]
         [Authorize]
         [Consumes("multipart/form-data")]
-        public async Task<NguoiLxResponse> CreateAsync([FromForm] NguoiLxCreateRequest request)
+        public async Task CreateAsync([FromForm] NguoiLxCreateRequest request)
         {
-            return await _business.CreateAsync(request);
+            await _business.CreateAsync(request);
         }
 
         [HttpPut]
