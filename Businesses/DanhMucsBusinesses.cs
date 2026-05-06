@@ -25,6 +25,7 @@ namespace Ttlaixe.Businesses
         Task<List<DmQuocTich>> GetDMQuocTich();
 
         Task<List<DmTenKeHoachDaoTaoItem>> GetDanhMucKhdt();
+        Task<List<GiaoVienResponse>> GetDanhMucGiaoVien();
 
     }
     public class DanhMucsBusinesses : ControllerBase, IDanhMucsBusinesses
@@ -186,5 +187,16 @@ namespace Ttlaixe.Businesses
             return Task.FromResult(list);
         }
 
+        public async Task<List<GiaoVienResponse>> GetDanhMucGiaoVien()
+        {
+            return await _context.GiaoViens.Where(x => x.TrangThai == true)
+                .Select(x => new GiaoVienResponse
+                {
+                    MaGv = x.MaGv,
+                    HoTenDem = x.HoTenDem,
+                    TenGv = x.TenGv
+                })
+                .ToListAsync();
+        }
     }
 }

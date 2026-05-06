@@ -66,5 +66,11 @@ namespace Ttlaixe.Controllers
             return await _business.GetDanhMucKhdt();
         }
 
+        [HttpGet("danh-sach-giao-vien")]
+        public async Task<List<GiaoVienResponse>> GetDanhMucGiaoVien()
+        {
+            return await _business.GetDanhMucGiaoVien();
+        }
+
     }
 }

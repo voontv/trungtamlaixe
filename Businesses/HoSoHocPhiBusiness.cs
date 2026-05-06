@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Ttlaixe.AutoConfig;
+using Ttlaixe.LibsStartup;
 using Ttlaixe.Models;
 
 namespace Ttlaixe.Businesses
@@ -213,6 +214,72 @@ namespace Ttlaixe.Businesses
         }
 
         public async Task<List<HoSoHocPhi>> CreateByKhoaHocAsync(string maKhoaHoc, string hangDt)
+        {
+            if (maKhoaHoc.Equals(Constants.MaKhoaHocTam))
+            {
+                return await CreateByKhoaHocTamAsync();
+            }
+
+            return await CreateByKhoaHocChuanAsync(maKhoaHoc, hangDt);
+        }
+        private async Task<List<HoSoHocPhi>> CreateByKhoaHocTamAsync()
+        {
+            var dsTam = await _context.HocVienChuaPhanKhoas
+                .Where(x => x.TrangThai == true)
+                .ToListAsync();
+
+            var ids = dsTam.Select(x => x.IdHs.ToString()).ToList();
+
+            // Kiểm tra hồ sơ đã tồn tại (dùng IdHs làm MaDk giả)
+            var existedDict = await _context.HoSoHocPhis
+                .Where(x => ids.Contains(x.MaDk))
+                .ToDictionaryAsync(x => x.MaDk);
+
+            var result = new List<HoSoHocPhi>();
+            var toAdd = new List<HoSoHocPhi>();
+
+            foreach (var hv in dsTam)
+            {
+                var maDkFake = hv.IdHs.ToString();
+
+                if (existedDict.TryGetValue(maDkFake, out var existed))
+                {
+                    result.Add(existed);
+                    continue;
+                }
+
+                // Lấy học phí theo HangDaoTao của học viên
+                var hocPhi = await _context.DmHocPhis
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(x => x.MaHangGplx == hv.HangDaoTao);
+
+                var model = new HoSoHocPhi
+                {
+                    MaDk = maDkFake,              // KEY QUAN TRỌNG
+                    HoVaTen = $"{hv.HoDemNlx} {hv.TenNlx}",
+                    NgaySinh = hv.NgaySinh.ToString("ddMMyyyy"),
+                    MaHangGplx = hv.HangDaoTao,
+                    HocPhi = hocPhi?.HocPhi ?? 0,
+                    DaHoanThanhHp = false,
+                    BoHoc = false,
+                    NgayKhoiTao = DateTime.Now,
+                    GioiTinh = hv.GioiTinh,
+                    SoCmt = hv.SoCmt
+                };
+
+                toAdd.Add(model);
+                result.Add(model);
+            }
+
+            if (toAdd.Any())
+            {
+                _context.HoSoHocPhis.AddRange(toAdd);
+                await _context.SaveChangesAsync();
+            }
+
+            return result;
+        }
+        public async Task<List<HoSoHocPhi>> CreateByKhoaHocChuanAsync(string maKhoaHoc, string hangDt)
         {
             var dsHocViens = await _nguoiLxes.GetThongTinCoBanByKhoaHocAsync(maKhoaHoc);
 

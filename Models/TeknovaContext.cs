@@ -23,6 +23,8 @@ public partial class TeknovaContext : DbContext
 
     public virtual DbSet<HoSoHocPhi> HoSoHocPhis { get; set; }
 
+    public virtual DbSet<HocVienChuaPhanKhoa> HocVienChuaPhanKhoas { get; set; }
+
     public virtual DbSet<LichSuNopHocPhi> LichSuNopHocPhis { get; set; }
 
     public virtual DbSet<LichSuSoDu> LichSuSoDus { get; set; }
@@ -159,6 +161,88 @@ public partial class TeknovaContext : DbContext
                 .HasForeignKey(d => d.MaHangGplx)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_HoSoHocPhi_DmHocPhi");
+        });
+
+        modelBuilder.Entity<HocVienChuaPhanKhoa>(entity =>
+        {
+            entity.HasKey(e => e.IdHs).HasName("PK__HocVienC__B773FA588BBFA55C");
+
+            entity.ToTable("HocVienChuaPhanKhoa");
+
+            entity.Property(e => e.AnhThe)
+                .IsRequired()
+                .HasDefaultValueSql("((1))");
+            entity.Property(e => e.BangA1).HasMaxLength(20);
+            entity.Property(e => e.CamKet)
+                .IsRequired()
+                .HasDefaultValueSql("((1))");
+            entity.Property(e => e.ChupAnh)
+                .IsRequired()
+                .HasDefaultValueSql("((1))");
+            entity.Property(e => e.Don)
+                .IsRequired()
+                .HasDefaultValueSql("((1))");
+            entity.Property(e => e.DonSatHach)
+                .IsRequired()
+                .HasDefaultValueSql("((1))");
+            entity.Property(e => e.DuongDanAnh).HasMaxLength(255);
+            entity.Property(e => e.GhiChu).HasMaxLength(250);
+            entity.Property(e => e.GioiTinh)
+                .IsRequired()
+                .HasMaxLength(1)
+                .IsUnicode(false)
+                .IsFixedLength();
+            entity.Property(e => e.Gksk)
+                .IsRequired()
+                .HasDefaultValueSql("((1))")
+                .HasColumnName("GKSK");
+            entity.Property(e => e.HangDaoTao)
+                .HasMaxLength(20)
+                .IsUnicode(false);
+            entity.Property(e => e.HoDemNlx)
+                .IsRequired()
+                .HasMaxLength(30)
+                .HasColumnName("HoDemNLX");
+            entity.Property(e => e.HopDong)
+                .IsRequired()
+                .HasDefaultValueSql("((1))");
+            entity.Property(e => e.MaDk)
+                .HasMaxLength(25)
+                .IsUnicode(false)
+                .HasColumnName("MaDK");
+            entity.Property(e => e.MaGv)
+                .IsRequired()
+                .HasMaxLength(8)
+                .IsUnicode(false)
+                .HasColumnName("MaGV");
+            entity.Property(e => e.MaQuocTich)
+                .IsRequired()
+                .HasMaxLength(3)
+                .IsUnicode(false);
+            entity.Property(e => e.NgayNopHoSo)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.NgaySinh).HasColumnType("datetime");
+            entity.Property(e => e.SoCmt)
+                .IsRequired()
+                .HasMaxLength(20)
+                .IsUnicode(false)
+                .HasColumnName("SoCMT");
+            entity.Property(e => e.SoDienThoai)
+                .HasMaxLength(10)
+                .IsUnicode(false);
+            entity.Property(e => e.SoTienNop).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.TenNlx)
+                .IsRequired()
+                .HasMaxLength(20)
+                .HasColumnName("TenNLX");
+            entity.Property(e => e.TrangThai)
+                .IsRequired()
+                .HasDefaultValueSql("((1))")
+                .HasComment("0 = khong hieu luc; 1 = co hieu luc; mac dinh la 1;");
+            entity.Property(e => e.VanTayKhuonMat)
+                .IsRequired()
+                .HasDefaultValueSql("((1))");
         });
 
         modelBuilder.Entity<LichSuNopHocPhi>(entity =>

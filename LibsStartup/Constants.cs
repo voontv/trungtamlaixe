@@ -10,6 +10,7 @@ namespace Ttlaixe.LibsStartup
         public const string path_o_dia_that = @"\\192.168.100.250\im_gplx";
         public const string NoiDungHocPhi = @"nộp tiền học phí";
         public const string TenHangHoa = @"Đào tạo lái xe hạng";
+        public const string MaKhoaHocTam = MaCSDT + "K0000";//để xác định tạm ;
         public const int ThueSuat = 10;
 
     }

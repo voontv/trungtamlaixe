@@ -51,6 +51,8 @@ public partial class GplxCsdtContext : DbContext
 
     public virtual DbSet<NguoiLxhsGiayTo> NguoiLxhsGiayTos { get; set; }
 
+    public virtual DbSet<QthtThamSoHt> QthtThamSoHts { get; set; }
+
     public virtual DbSet<XeTap> XeTaps { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -1374,6 +1376,47 @@ public partial class GplxCsdtContext : DbContext
                 .HasForeignKey(d => d.MaGt)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_NguoiLXHS_GiayTo_DM_GiayTo");
+        });
+
+        modelBuilder.Entity<QthtThamSoHt>(entity =>
+        {
+            entity.HasKey(e => e.MaTs);
+
+            entity.ToTable("QTHT_ThamSoHT");
+
+            entity.HasIndex(e => new { e.TenTs, e.DonViSuDung }, "UK_QTHT_ThamSoHT").IsUnique();
+
+            entity.Property(e => e.MaTs)
+                .HasMaxLength(36)
+                .IsUnicode(false)
+                .HasDefaultValueSql("(newid())")
+                .HasColumnName("MaTS");
+            entity.Property(e => e.DonViSuDung)
+                .IsRequired()
+                .HasMaxLength(10)
+                .IsUnicode(false)
+                .HasComment("ALL: Tất cả; TW: Trung ương; TCDB: Tổng cục đường bộ; SOGTVT: Sở GTVT; TTSH: Trung tâm sát hạch; CSDT: Cơ sở đào tạo; VPDK: Văn phòng đăng ký");
+            entity.Property(e => e.GhiChu).HasMaxLength(255);
+            entity.Property(e => e.GiaTriTs)
+                .IsRequired()
+                .HasMaxLength(500)
+                .HasColumnName("GiaTriTS");
+            entity.Property(e => e.NgaySua)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.NgayTao)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.NguoiSua).HasMaxLength(30);
+            entity.Property(e => e.NguoiTao).HasMaxLength(30);
+            entity.Property(e => e.TenTs)
+                .IsRequired()
+                .HasMaxLength(100)
+                .HasColumnName("TenTS");
+            entity.Property(e => e.TrangThai)
+                .IsRequired()
+                .HasDefaultValueSql("((1))")
+                .HasComment("0 = khong hieu luc; 1 = co hieu luc; mac dinh la 1;");
         });
 
         modelBuilder.Entity<XeTap>(entity =>

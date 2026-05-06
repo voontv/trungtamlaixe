@@ -46,7 +46,6 @@ namespace Ttlaixe.Controllers
             => _business.SearchAsync(maKh, thang, tuan, fromDate, toDate);
 
         [HttpPost("tao-lich-hoc-mac-dinh")]
-        [Authorize]
         public async Task<List<LichHocCreatedRequest>> TaoMacDinhLichHoc(string maKhoaHoc)
         {
             return await _business.TaoMacDinhLichHoc(maKhoaHoc);

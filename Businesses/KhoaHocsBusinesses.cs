@@ -19,6 +19,8 @@ namespace Ttlaixe.Businesses
     {
         Task<KhoaHocResponse> PostKhoaHoc(KhoaHocCreateRequest khoaHoc);
 
+        Task PostKhoaHocTam();
+
         Task<List<KhoaHocResponse>> GetListKhoaHocsTheoTg(MocThoiGian dk);
 
         Task<List<KhoaHocResponse>> KhoaHocChuaTaoLichHoc();
@@ -36,6 +38,40 @@ namespace Ttlaixe.Businesses
             _context = context;
             _tokenGenerator = tokenGenerator;
             _authenInfo = authenInfo;
+        }
+
+        public async Task PostKhoaHocTam()
+        {
+
+            
+            var khoaHoc = new KhoaHoc();
+            var maKh = Constants.MaKhoaHocTam;
+            if (KhoaHocExists(maKh))
+            {
+                throw new BadRequestException("Khóa học này đã được tạo ");
+            }    
+                khoaHoc.MaSoGtvt = Constants.MaSoGTVT;
+            khoaHoc.MaCsdt = Constants.MaCSDT;
+            khoaHoc.TenKh = "Lớp chưa phân khóa";
+            khoaHoc.MaKh = maKh;
+            khoaHoc.HangDt = "B.01";
+            khoaHoc.HangGplx = "B11";
+            _context.KhoaHocs.Add(khoaHoc);
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException e)
+            {
+                if (KhoaHocExists(khoaHoc.MaKh))
+                {
+                    Conflict();
+                }
+                else
+                {
+                    throw new BadRequestException("Error found is " + e.Message);
+                }
+            }
         }
 
         public async Task<KhoaHocResponse> PostKhoaHoc(KhoaHocCreateRequest khoaHocRq)
