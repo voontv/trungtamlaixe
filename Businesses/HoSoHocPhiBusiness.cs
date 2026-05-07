@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Ttlaixe.AutoConfig;
+using Ttlaixe.Exceptions;
 using Ttlaixe.LibsStartup;
 using Ttlaixe.Models;
 
@@ -68,14 +69,14 @@ namespace Ttlaixe.Businesses
                 .AnyAsync(x => x.MaDk == model.MaDk);
 
             if (existed)
-                throw new Exception("Hồ sơ học phí này đã có.");
+                throw new BadRequestException("Hồ sơ học phí này đã có.");
 
             var hocPhi = await _context.DmHocPhis
                 .AsNoTracking()
                 .FirstOrDefaultAsync(x => x.MaHangGplx == model.MaHangGplx);
 
             if (hocPhi == null)
-                throw new Exception("Không tìm thấy học phí của hạng GPLX này.");
+                throw new BadRequestException("Không tìm thấy học phí của hạng GPLX này.");
 
             model.HocPhi = hocPhi.HocPhi;
             model.DaHoanThanhHp = false;

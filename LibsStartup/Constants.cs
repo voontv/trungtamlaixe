@@ -11,6 +11,7 @@ namespace Ttlaixe.LibsStartup
         public const string NoiDungHocPhi = @"nộp tiền học phí";
         public const string TenHangHoa = @"Đào tạo lái xe hạng";
         public const string MaKhoaHocTam = MaCSDT + "K0000";//để xác định tạm ;
+        public const string ApiPublicImage = @"/api/HocVienChuaPhanKhoa/image-by-path";//để xác định tạm ;
         public const int ThueSuat = 10;
 
     }

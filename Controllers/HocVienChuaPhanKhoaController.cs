@@ -1,4 +1,5 @@
 ﻿using DocumentFormat.OpenXml.Office2010.ExcelAc;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
@@ -24,21 +25,34 @@ namespace Ttlaixe.Controllers
         [HttpGet]
         public async Task<List<HocVienChuaPhanKhoaDTO>> GetAll()
         {
-             return await _business.GetAllAsync();
+             return await _business.GetAllAsync(true);
+        }
+
+        [HttpGet("danh-sach-hoc-vien-da-phan-lop")]
+        public async Task<List<HocVienChuaPhanKhoaDTO>> GetAllKhoiPhuc()
+        {
+            return await _business.GetAllAsync(false);
+        }
+
+        [HttpGet("image-by-path")]
+        public async Task<IActionResult> GetImageByPath([FromQuery] string path)
+        {
+            var result = await _business.GetImageByPathAsync(path);
+            if (result == null)
+                return NotFound();
+
+            Response.Headers["Content-Disposition"] = "inline";
+
+            return File(result.Value.Bytes, result.Value.ContentType);
         }
 
         [HttpPost]
+        [Authorize]
         [Consumes("multipart/form-data")]
-        public async Task<IActionResult> Create(
-        [FromForm] HocVienChuaPhanKhoa model,
-        [FromForm] IFormFile file)
+        public async Task Create(
+        [FromForm] HocVienChuaPhanKhoaRequest model)
         {
-            if (file == null || file.Length == 0)
-                return BadRequest("Chưa chọn file ảnh.");
-
-            var result = await _business.CreateAsync(model, file);
-
-            return Ok(result);
+            await _business.CreateAsync(model);
         }
 
         [HttpPost("tim-kiem")]
@@ -48,9 +62,18 @@ namespace Ttlaixe.Controllers
         }
 
         [HttpPut]
-        public async Task Update([FromBody] HocVienChuaPhanKhoa model)
+        [Authorize]
+        [Consumes("multipart/form-data")]
+        public async Task Update([FromForm] HocVienChuaPhanKhoaRequest model)
         {
             await _business.UpdateAsync(model);
+        }
+
+        [HttpGet("thay-doi-tinh-trang-phan-lop/{Idhs}")]
+        [Authorize]
+        public async Task Update(int Idhs)
+        {
+            await _business.UpdateTrangThai(Idhs);
         }
 
         [HttpDelete("{id}")]

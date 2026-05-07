@@ -17,6 +17,8 @@ namespace Ttlaixe.DTO.response
         public string NoiCuTru { get; set; }
         public DateTime NgayNhanHso { get; set; }
 
+        public string ImageUrl { get; set; }   // thêm cái này
+
     }
 
     public class NguoiLxThiResponse : NguoiLxCoBanResponse
@@ -25,5 +27,6 @@ namespace Ttlaixe.DTO.response
         /// Tên khóa học
         /// </summary>
         public string TenKh { get; set; }
+        
     }
 }

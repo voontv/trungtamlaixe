@@ -12,5 +12,7 @@ namespace Ttlaixe.DTO.response
         /// Tên của Giáo viên
         /// </summary>
         public string TenGv { get; set; }
+
+        public string ImageUrl { get; set; }   // thêm cái này
     }
 }

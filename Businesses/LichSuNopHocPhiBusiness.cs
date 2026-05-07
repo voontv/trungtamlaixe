@@ -9,6 +9,7 @@ using Ttlaixe.DTO.request;
 using Ttlaixe.DTO.response;
 using Ttlaixe.LibsStartup;
 using Microsoft.AspNetCore.Mvc;
+using Ttlaixe.Exceptions;
 
 namespace Ttlaixe.Businesses
 {
@@ -53,10 +54,10 @@ namespace Ttlaixe.Businesses
                 .FirstOrDefaultAsync(x => x.MaDk == model.MaDk && (bool) !x.BoHoc);
 
             if (hoSo == null)
-                throw new Exception("Không tìm thấy hồ sơ học phí.");
+                throw new BadRequestException("Không tìm thấy hồ sơ học phí.");
 
             if (model.SoTienNop <= 0)
-                throw new Exception("Số tiền nộp phải lớn hơn 0.");
+                throw new BadRequestException("Số tiền nộp phải lớn hơn 0.");
 
             var tongDaNopTruoc = await _context.LichSuNopHocPhis
                 .Where(x => x.MaDk == model.MaDk)
@@ -65,7 +66,7 @@ namespace Ttlaixe.Businesses
             var tongSauLanNopNay = tongDaNopTruoc + model.SoTienNop;
 
             if (tongSauLanNopNay > hoSo.HocPhi)
-                throw new Exception("Số tiền nộp vượt quá học phí phải nộp.");
+                throw new BadRequestException("Số tiền nộp vượt quá học phí phải nộp.");
 
             model.NgayNop = model.NgayNop == default ? DateTime.Now : model.NgayNop;
             var lichSuNop = new LichSuNopHocPhi();

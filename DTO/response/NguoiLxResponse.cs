@@ -104,7 +104,7 @@ namespace Ttlaixe.DTO.response
         /// </summary>
         public string DonViHocLx { get; set; }
 
-
+        public string ImageUrl { get; set; }   // thêm cái này
         public List<NguoiLxhsCreateRequest> GiayTos { get; set; }
 
         public IFormFile? File { get; set; }
