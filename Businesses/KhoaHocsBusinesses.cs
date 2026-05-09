@@ -22,6 +22,7 @@ namespace Ttlaixe.Businesses
         Task PostKhoaHocTam();
 
         Task<List<KhoaHocResponse>> GetListKhoaHocsTheoTg(MocThoiGian dk);
+        Task<List<KhoaHocResponse>> GetListKhoaHocsTheoHangMucDT(HangDaoTao dk);
 
         Task<List<KhoaHocResponse>> KhoaHocChuaTaoLichHoc();
 
@@ -110,6 +111,15 @@ namespace Ttlaixe.Businesses
             khoaHoc.Patch(khoaHocRes);
 
             return khoaHocRes;
+        }
+
+        public async Task<List<KhoaHocResponse>> GetListKhoaHocsTheoHangMucDT(HangDaoTao dk)
+        {
+            var mocThoiGian = new MocThoiGian();
+            mocThoiGian.NgayKetThuc = dk.NgayKetThuc;
+            mocThoiGian.NgayBatDau = dk.NgayBatDau;
+            var result = await GetListKhoaHocsTheoTg(mocThoiGian);
+            return result.Where(x => x.HangDt == dk.HangDt).ToList();
         }
 
         public async Task<List<KhoaHocResponse>> GetListKhoaHocsTheoTg(MocThoiGian dk)

@@ -1,6 +1,5 @@
-﻿using DocumentFormat.OpenXml.Office2010.ExcelAc;
+﻿
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -53,6 +52,15 @@ namespace Ttlaixe.Controllers
         [FromForm] HocVienChuaPhanKhoaRequest model)
         {
             await _business.CreateAsync(model);
+        }
+
+        [HttpPost("chuyen-lop")]
+        [Authorize]
+        [Consumes("multipart/form-data")]
+        public async Task ChuyenLop(
+        [FromForm] NguoiLxCreateRequest model)
+        {
+            await _business.ChuyenLop(model);
         }
 
         [HttpPost("tim-kiem")]

@@ -21,7 +21,7 @@ namespace Ttlaixe.Businesses
     [ImplementBy(typeof(NguoiLxesBusinesses))]
     public interface INguoiLxesBusinesses
     {
-        Task CreateAsync(NguoiLxCreateRequest request);
+        Task<string> CreateAsync(NguoiLxCreateRequest request);
 
         Task<bool> UpdateAsync(NguoiLxResponse rq);
 
@@ -53,8 +53,7 @@ namespace Ttlaixe.Businesses
             _authenInfo = authenInfo;
             _http = http;
         }
-
-        public async Task CreateAsync(NguoiLxCreateRequest rq)
+        public async Task<string> CreateAsync(NguoiLxCreateRequest rq)
         {
             var file = rq.File;
             var now = DateTime.Now;
@@ -223,6 +222,8 @@ namespace Ttlaixe.Businesses
                     await Task.Delay(1100);
                     continue;
                 }
+
+                return nguoi.MaDk;
             }
         }
 
@@ -741,7 +742,6 @@ namespace Ttlaixe.Businesses
                     );
             }
         }
-
 
     }
 }

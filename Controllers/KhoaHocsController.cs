@@ -39,6 +39,12 @@ namespace Ttlaixe.Controllers
             return await _bs.GetListKhoaHocsTheoTg(dk);
         }
 
+        [HttpPost("danh-sach-khoa-hoc-theo-hang-dao-tao")]
+        public async Task<List<KhoaHocResponse>> GetListKhoaHocsTheoHangMucDT(HangDaoTao dk)
+        {
+            return await _bs.GetListKhoaHocsTheoHangMucDT(dk);
+        }
+
         // POST: api/KhoaHocs
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost("danh-sach-khoa-hoc-chua-co-lich-hoc")]

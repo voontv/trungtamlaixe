@@ -26,16 +26,20 @@ namespace Ttlaixe.Businesses
 
         Task<List<DmTenKeHoachDaoTaoItem>> GetDanhMucKhdt();
         Task<List<GiaoVienResponse>> GetDanhMucGiaoVien();
+        Task<List<DmHocPhi>> GetDmHocPhi();
+        Task UpdateHocPhi(DmHocPhi dk);
 
     }
     public class DanhMucsBusinesses : ControllerBase, IDanhMucsBusinesses
     {
         private readonly GplxCsdtContext _context;
+        private readonly TeknovaContext _teknova;
         private readonly IAuthenInfo _authenInfo;
-        public DanhMucsBusinesses(GplxCsdtContext context, IAuthenInfo authenInfo)
+        public DanhMucsBusinesses(GplxCsdtContext context, IAuthenInfo authenInfo, TeknovaContext teknova)
         {
             _context = context;
             _authenInfo = authenInfo;
+            _teknova = teknova;
         }
         
         public async Task<List<DmDiemSatHach>> GetDmDiemSatHach(string hang)
@@ -197,6 +201,20 @@ namespace Ttlaixe.Businesses
                     TenGv = x.TenGv
                 })
                 .ToListAsync();
+        }
+
+        public async Task<List<DmHocPhi>> GetDmHocPhi()
+        {
+            return await _teknova.DmHocPhis.ToListAsync();
+            throw new System.NotImplementedException();
+        }
+
+        public async Task   UpdateHocPhi(DmHocPhi dk)
+        {
+            var dmHocPhi = await _teknova.DmHocPhis.FindAsync(dk.MaHangGplx)
+                ?? throw new BadRequestException("Không tìm thấy danh mục học phí của mã hạng giấy phép lái xe "+dk.MaHangGplx);
+            dmHocPhi.HocPhi = dk.HocPhi;
+            await _teknova.SaveChangesAsync();
         }
     }
 }

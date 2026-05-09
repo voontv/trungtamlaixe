@@ -29,6 +29,7 @@ namespace Ttlaixe.Businesses
         Task<(byte[] Bytes, string ContentType)?> GetImageByPathAsync(string uncPath);
 
         Task UpdateTrangThai(int IdHs);
+        Task ChuyenLop(NguoiLxCreateRequest request);
     }
 
     public class HocVienChuaPhanKhoaBusiness : IHocVienChuaPhanKhoaBusiness
@@ -36,12 +37,13 @@ namespace Ttlaixe.Businesses
         private readonly TeknovaContext _context;
         private readonly GplxCsdtContext _gplx;
         private readonly IHttpContextAccessor _http;
-
-        public HocVienChuaPhanKhoaBusiness(TeknovaContext context, GplxCsdtContext gplx, IHttpContextAccessor http)
+        private readonly INguoiLxesBusinesses _nguoiLxes;
+        public HocVienChuaPhanKhoaBusiness(TeknovaContext context, GplxCsdtContext gplx, IHttpContextAccessor http, INguoiLxesBusinesses nguoiLxes)
         {
             _context = context;
             _gplx = gplx;
             _http = http;
+            _nguoiLxes = nguoiLxes;
         }
 
         public async Task<List<HocVienChuaPhanKhoaDTO>> GetAllAsync(bool? chuaCoLop = true)
@@ -461,6 +463,15 @@ namespace Ttlaixe.Businesses
             await _context.SaveChangesAsync();
         }
 
-
+        public async Task ChuyenLop(NguoiLxCreateRequest request)
+        {
+            var hv = await _context.HocVienChuaPhanKhoas.Where(x => x.SoCmt == request.SoCmt && x.HangDaoTao == request.HangDaoTao).FirstOrDefaultAsync()
+                ?? throw new BadRequestException("Không có Idhs này trong hệ thống");
+            var madk = await _nguoiLxes.CreateAsync(request);    
+            
+            hv.MaDk = madk;
+            hv.TrangThai = false;
+            await _context.SaveChangesAsync();
+        }
     }
 }

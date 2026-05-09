@@ -72,5 +72,17 @@ namespace Ttlaixe.Controllers
             return await _business.GetDanhMucGiaoVien();
         }
 
+        [HttpGet("danh-muc-hoc-phi")]
+        public async Task<List<DmHocPhi>> GetDmHocPhi()
+        {
+            return await _business.GetDmHocPhi();
+        }
+
+        [HttpPut("danh-muc-hoc-phi")]
+        public async Task UpdateHocPhi(DmHocPhi dm)
+        {
+            await _business.UpdateHocPhi(dm);
+        }
+
     }
 }
