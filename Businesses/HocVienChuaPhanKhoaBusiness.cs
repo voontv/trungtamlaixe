@@ -6,7 +6,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection.Metadata;
 using System.Threading.Tasks;
 using Ttlaixe.AutoConfig;
 using Ttlaixe.DTO.request;
@@ -398,7 +397,9 @@ namespace Ttlaixe.Businesses
                 {
                     HocVien = hv,
                     TenGv = gv?.TenGv,
-                    HoTenDem = gv?.HoTenDem
+                    HoTenDem = gv?.HoTenDem,
+                    ImageUrl = string.IsNullOrEmpty(hv.DuongDanAnh)
+                        ? null : $"{Constants.ApiPublicImage}?path={Uri.EscapeDataString(hv.DuongDanAnh)}"
                 };
             }).ToList();
 
@@ -471,6 +472,7 @@ namespace Ttlaixe.Businesses
             
             hv.MaDk = madk;
             hv.TrangThai = false;
+
             await _context.SaveChangesAsync();
         }
     }
