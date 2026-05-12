@@ -1,5 +1,4 @@
-using BusinessLogic.Providers;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using BusinessLogic.Providers;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
@@ -31,31 +30,52 @@ namespace Ttlaixe
 
         public IConfiguration Configuration { get; }
 
-        // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
             Console.OutputEncoding = Encoding.UTF8;
-            services.AddControllers();
-            //services.ConfigSecurity(Providers<SecuritySettings>(services));
-            services.ConfigSecurity(Config<SecuritySettings>(services));
-            //services.AddAuthorization();
-            services.Configure<UploadOptions>(Configuration.GetSection("Upload"));
 
+            services.AddControllers();
+            services.ConfigSecurity(Config<SecuritySettings>(services));
+
+            services.Configure<UploadOptions>(Configuration.GetSection("Upload"));
             services.Configure<WebConfig>(Configuration.GetSection("WebConfig"));
-            services.AddDbContext<GplxCsdtContext>(options => options.UseSqlServer(Configuration.GetConnectionString("Ttlaixe")));
-            services.AddDbContext<TeknovaContext>(options => options.UseSqlServer(Configuration.GetConnectionString("Teknova")));
-            //services.AddScoped<ISFTPFileService, SFTPFileService>();
+
+            services.AddHttpContextAccessor();
+            services.AddScoped<IGplxTenantProvider, GplxTenantProvider>();
+
+            // ✅ QUAN TRỌNG NHẤT — Factory
+            services.AddDbContextFactory<GplxCsdtContext>();
+
+            // ✅ Context tạo theo từng request (đọc header đúng)
+            services.AddScoped<GplxCsdtContext>(sp =>
+            {
+                var tenant = sp.GetRequiredService<IGplxTenantProvider>();
+                var conn = tenant.GetConnectionString();
+
+                var options = new DbContextOptionsBuilder<GplxCsdtContext>()
+                    .UseSqlServer(conn)
+                    .Options;
+
+                return new GplxCsdtContext(options);
+            });
+
+            services.AddDbContext<TeknovaContext>(options =>
+                options.UseSqlServer(Configuration.GetConnectionString("Teknova")));
+
             services.RegisterDI();
-            services.AddMvc(FilterHelper.Register).AddJsonOptions(ConfigJson);
+
+            services.AddMvc(FilterHelper.Register)
+                .AddJsonOptions(ConfigJson);
+
 #if DEBUG
-            //swagger
             services.AddSwaggerGen(SwaggerConfig.ConfigSwagger);
 #endif
 
             services.AddScoped<IpLaiXe>(container =>
             {
-
-                return new IpLaiXe(Configuration.GetSection("AdminSafeList").GetSection("Vnpt").Value);
+                return new IpLaiXe(
+                    Configuration.GetSection("AdminSafeList")
+                    .GetSection("Vnpt").Value);
             });
 
             services.AddScoped<INguoiLxesBusinesses, NguoiLxesBusinesses>();
@@ -63,12 +83,12 @@ namespace Ttlaixe
             services.AddScoped<INhatKyChungTuBusiness, NhatKyChungTuBusiness>();
         }
 
-
         private static void ConfigJson(JsonOptions options)
         {
             options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
             options.JsonSerializerOptions.PropertyNamingPolicy = new SnakeJsonNamingPolicy();
-            options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+            options.JsonSerializerOptions.ReferenceHandler =
+                System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
             options.JsonSerializerOptions.WriteIndented = true;
         }
 
@@ -80,50 +100,50 @@ namespace Ttlaixe
             return config;
         }
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, /*QlcongVanContext dataContext,*/ ILoggerFactory loggerFactory)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)
         {
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
             }
+
             loggerFactory.AddLog4Net();
+
             app.UseRewriter(new RewriteOptions().AddRedirectToHttps());
+
             app.UseCors(x => x
                 .AllowAnyMethod()
                 .AllowAnyHeader()
-                .SetIsOriginAllowed(CheckAllowOrigin) // allow any origin
-                .AllowCredentials()); // allow credentials
-            app.UseMiddleware<TokenProviderMiddleware>();
-            //keep
-            //app.UseMiddleware<TokenProviderMiddleware>();
-            //app.UseHttpsRedirection();
+                .SetIsOriginAllowed(origin => true)
+                .AllowCredentials());
 
             app.UseRouting();
-            //app.UseAuthentication();
+
+            app.UseAuthentication();
             app.UseAuthorization();
+
+            app.UseMiddleware<TokenProviderMiddleware>();
+
 #if DEBUG
-            //swagger
             app.ConfigSwagger();
 #endif
-
 
             var options = new DefaultFilesOptions();
             options.DefaultFileNames.Clear();
             options.DefaultFileNames.Add("index.html");
 
-            app.UseRewriter(new RewriteOptions().AddRewrite(@"^((?!.*?\b(web$.*|api\/.*)))((\w+))*\/?(\.\w{{5,}})?\??([^.]+)?$", "index.html", false));
-            app.UseDefaultFiles(options);
+            app.UseRewriter(new RewriteOptions().AddRewrite(
+                @"^((?!.*?\b(web$.*|api\/.*)))((\w+))*\/?(\.\w{{5,}})?\??([^.]+)?$",
+                "index.html",
+                false));
 
+            app.UseDefaultFiles(options);
             app.UseStaticFiles();
 
-            app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
-            //app.UseHttpsRedirection();
-        }
-
-        private bool CheckAllowOrigin(string origin)
-        {
-            return true;
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapControllers();
+            });
         }
     }
 }

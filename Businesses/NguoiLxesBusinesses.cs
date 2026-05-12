@@ -75,7 +75,7 @@ namespace Ttlaixe.Businesses
                 if (retry > 5)
                     throw new BadRequestException("Không thể sinh MaDK duy nhất, vui lòng thử lại.");
 
-                maDk = $"{Constants.MaCSDT}-{DateTime.Now:yyyyMMdd-HHmmss}";
+                maDk = $"{rq.MaCsdt}-{DateTime.Now:yyyyMMdd-HHmmss}";
 
                 if (await _context.NguoiLxes.AnyAsync(x => x.MaDk == maDk))
                 {
@@ -86,14 +86,14 @@ namespace Ttlaixe.Businesses
                 var nguoi = new NguoiLx();
                 rq.Patch(nguoi);
                 nguoi.MaDk = maDk;
-                nguoi.DonViNhanHso = Constants.MaCSDT;
+                nguoi.DonViNhanHso = rq.MaCsdt;
                 nguoi.HoVaTen = $"{nguoi.HoDemNlx} {nguoi.TenNlx}";
                 nguoi.HoVaTenIn = nguoi.HoVaTen;
                 nguoi.NoiCt = "";
                 nguoi.NoiTt = "";
 
                 var lastSoHoSo = await _context.NguoiLxHoSos
-                    .Where(x => x.MaCsdt == Constants.MaCSDT && x.MaKhoaHoc == rq.MaKhoaHoc)
+                    .Where(x => x.MaCsdt == rq.MaCsdt && x.MaKhoaHoc == rq.MaKhoaHoc)
                     .OrderByDescending(x => x.SoHoSo)
                     .Select(x => x.SoHoSo)
                     .FirstOrDefaultAsync();
@@ -113,9 +113,9 @@ namespace Ttlaixe.Businesses
 
                 var hoSo = new NguoiLxHoSo
                 {
-                    MaCsdt = Constants.MaCSDT,
+                    MaCsdt = rq.MaCsdt,
                     MaSoGtvt = Constants.MaSoGTVT,
-                    MaDvnhanHso = Constants.MaCSDT,
+                    MaDvnhanHso = rq.MaCsdt,
                     NgayNhanHso = now,
                     MaLoaiHs = maLoaiHs,
                     TtXuLy = "01",
@@ -141,8 +141,7 @@ namespace Ttlaixe.Businesses
                     {
                         var existed = await _context.NguoiLxhsGiayTos
                             .FirstOrDefaultAsync(x => x.MaDk == maDk && x.MaGt == gt.MaGt);
-                        log.Info("Ten moi nha " +gt.TenGt);
-                        log.Info("Bang ma moi nha " +gt.MaGt);
+                        
                         if (existed == null)
                         {
                             var item = new NguoiLxhsGiayTo
@@ -442,8 +441,7 @@ namespace Ttlaixe.Businesses
                 join dvNoiCT in _context.DmDvhcs
                     on n.NoiCtMaDvhc equals dvNoiCT.MaDvhc into dvNoiCTJoin
                 from dvNoiCT in dvNoiCTJoin.DefaultIfEmpty()
-                where h.MaCsdt == Constants.MaCSDT
-                      && h.MaKhoaHoc == maKhoaHoc
+                where h.MaKhoaHoc == maKhoaHoc
                       && h.TransferFlag != 1
                 select new
                 {

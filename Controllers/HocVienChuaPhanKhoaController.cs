@@ -72,7 +72,7 @@ namespace Ttlaixe.Controllers
         [HttpPut]
         [Authorize]
         [Consumes("multipart/form-data")]
-        public async Task Update([FromForm] HocVienChuaPhanKhoaRequest model)
+        public async Task Update([FromForm] HocVienChuaPhanKhoaUpdateRequest model)
         {
             await _business.UpdateAsync(model);
         }

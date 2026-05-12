@@ -23,13 +23,13 @@ namespace Ttlaixe.Controllers
             _bs = bs;
         }
 
-        // POST: api/KhoaHocs
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
-        public async Task<KhoaHocResponse> PostKhoaHoc(KhoaHocCreateRequest khoaHoc)
-        {
-            return await _bs.PostKhoaHoc(khoaHoc);
-        }
+        //// POST: api/KhoaHocs
+        //// To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        //[HttpPost]
+        //public async Task<KhoaHocResponse> PostKhoaHoc(KhoaHocCreateRequest khoaHoc)
+        //{
+        //    return await _bs.PostKhoaHoc(khoaHoc);
+        //}
 
         // POST: api/KhoaHocs
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
@@ -45,13 +45,13 @@ namespace Ttlaixe.Controllers
             return await _bs.GetListKhoaHocsTheoHangMucDT(dk);
         }
 
-        // POST: api/KhoaHocs
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost("danh-sach-khoa-hoc-chua-co-lich-hoc")]
-        public async Task KhoaHocChuaTaoLichHoc()
-        {
-             await _bs.PostKhoaHocTam();
-        }
+        //// POST: api/KhoaHocs
+        //// To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        //[HttpPost("danh-sach-khoa-hoc-chua-co-lich-hoc")]
+        //public async Task KhoaHocChuaTaoLichHoc()
+        //{
+        //     await _bs.PostKhoaHocTam();
+        //}
 
        
     }

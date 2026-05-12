@@ -10,6 +10,7 @@ namespace Ttlaixe.DTO.request
         /// Mã Cơ sở đào tạo lái xe. Ghi Mã CSDT trong bảng DM_DonViGTVT
         /// </summary>
         public string MaCsdt { get; set; }
+
         public string HoDemNlx { get; set; }
         public string TenNlx { get; set; }
 

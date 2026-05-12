@@ -21,7 +21,7 @@ namespace Ttlaixe.Businesses
     {
         Task<List<HocVienChuaPhanKhoaDTO>> GetAllAsync(bool? chuaCoLop);
         Task CreateAsync(HocVienChuaPhanKhoaRequest model);
-        Task<bool> UpdateAsync(HocVienChuaPhanKhoaRequest model);
+        Task<bool> UpdateAsync(HocVienChuaPhanKhoaUpdateRequest model);
         Task<bool> DeleteAsync(int id);
         Task<List<HocVienChuaPhanKhoaDTO>> SearchAsync(HocVienChuaPhanKhoaSearchRequest rq);
 
@@ -37,6 +37,8 @@ namespace Ttlaixe.Businesses
         private readonly GplxCsdtContext _gplx;
         private readonly IHttpContextAccessor _http;
         private readonly INguoiLxesBusinesses _nguoiLxes;
+        private static readonly log4net.ILog log
+            = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
         public HocVienChuaPhanKhoaBusiness(TeknovaContext context, GplxCsdtContext gplx, IHttpContextAccessor http, INguoiLxesBusinesses nguoiLxes)
         {
             _context = context;
@@ -124,30 +126,34 @@ namespace Ttlaixe.Businesses
         return (bytes, contentType);
     }
 
-    public async Task CreateAsync(HocVienChuaPhanKhoaRequest rq)
+        public async Task CreateAsync(HocVienChuaPhanKhoaRequest rq)
         {
-
             var model = new HocVienChuaPhanKhoa();
             rq.Patch(model);
-            var file = rq.File;
             model.NgayNopHoSo = DateTime.Now;
 
             _context.HocVienChuaPhanKhoas.Add(model);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(); // phải save trước để có Id / SoCmt ổn định
+
+            var file = rq.File;
+
+            // ❗ Nếu không có file → kết thúc luôn
+            if (file == null || file.Length == 0)
+                return;
 
             var thamSoHt = await _gplx.QthtThamSoHts
                 .FirstOrDefaultAsync(x => x.TenTs == "IMG_PATH_CSDT");
 
-            var image_path = thamSoHt?.GiaTriTs ?? @"\\192.168.100.248\d\2026\im_gplx";
+            var image_path = thamSoHt?.GiaTriTs
+                ?? @"\\192.168.100.248\d\2026\im_gplx";
 
             var resolver = new ImagePathResolver(image_path);
-            // ===== Build đường dẫn động từ resolver =====
             var year = DateTime.Now.Year.ToString();
 
             var localFolder = Path.Combine(
-                resolver.LocalRoot,   // D:\
+                resolver.LocalRoot,
                 year,
-                resolver.BaseFolder,  // im_gplx
+                resolver.BaseFolder,
                 model.SoCmt
             );
 
@@ -162,41 +168,18 @@ namespace Ttlaixe.Businesses
                 await file.CopyToAsync(stream);
             }
 
-            // ===== Lưu UNC path cho desktop =====
             model.DuongDanAnh = Path.Combine(
-                resolver.UncRoot,     // \\ip\d\
+                resolver.UncRoot,
                 year,
                 resolver.BaseFolder,
                 model.SoCmt,
                 fileName
             );
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (Exception ex)
-            {
-                var errorMessage = ex.Message;
-                var innerMessage = ex.InnerException?.Message;
 
-                // log ra console / file / serilog tùy hệ thống bạn đang dùng
-                Console.WriteLine("=== SAVE CHANGES ERROR ===");
-                Console.WriteLine(errorMessage);
-
-                if (ex.InnerException != null)
-                {
-                    Console.WriteLine("=== INNER ERROR ===");
-                    Console.WriteLine(innerMessage);
-                }
-
-                throw new BadRequestException(
-                    $"Lỗi khi lưu: {errorMessage} - {innerMessage}"
-                );
-            }
-
+            await _context.SaveChangesAsync();
         }
 
-        public async Task<bool> UpdateAsync(HocVienChuaPhanKhoaRequest rq)
+        public async Task<bool> UpdateAsync(HocVienChuaPhanKhoaUpdateRequest rq)
         {
             var entity = await _context.HocVienChuaPhanKhoas
                 .FirstOrDefaultAsync(x => x.IdHs == rq.IdHs);

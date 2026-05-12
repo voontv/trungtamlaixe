@@ -6,8 +6,6 @@ namespace Ttlaixe.DTO.request
 {
     public class HocVienChuaPhanKhoaRequest
     {
-        public int IdHs { get; set; }
-
         public string HoDemNlx { get; set; }
 
         public string TenNlx { get; set; }
@@ -55,5 +53,10 @@ namespace Ttlaixe.DTO.request
         public string DuongDanAnh { get; set; }
 
         public IFormFile? File { get; set; }
+    }
+
+    public class HocVienChuaPhanKhoaUpdateRequest : HocVienChuaPhanKhoaRequest
+    {
+        public int IdHs { get; set; }
     }
 }
