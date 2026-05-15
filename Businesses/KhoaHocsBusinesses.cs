@@ -12,6 +12,7 @@ using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using Ttlaixe.DTO.response;
 using Ttlaixe.Exceptions;
+using DocumentFormat.OpenXml.Office2010.Excel;
 namespace Ttlaixe.Businesses
 {
     [ImplementBy(typeof(KhoaHocsBusinesses))]
@@ -23,9 +24,7 @@ namespace Ttlaixe.Businesses
 
         Task<List<KhoaHocResponse>> GetListKhoaHocsTheoTg(MocThoiGian dk);
         Task<List<KhoaHocResponse>> GetListKhoaHocsTheoHangMucDT(HangDaoTao dk);
-
         Task<List<KhoaHocResponse>> KhoaHocChuaTaoLichHoc();
-
         Task<object> GetThongTinKhoaHoc(string MaKhoaHoc);
     }
 
@@ -41,77 +40,43 @@ namespace Ttlaixe.Businesses
             _authenInfo = authenInfo;
         }
 
-        //public async Task PostKhoaHocTam()
-        //{
+        public async Task PostKhoaHocTam()
+        {
+            var khoaHoc = new KhoaHoc();
+            var maKh = Constants.MaKhoaHocTam;
+            if (KhoaHocExists(maKh))
+            {
+                throw new BadRequestException("Khóa học này đã được tạo ");
+            }
+            khoaHoc.MaSoGtvt = Constants.MaSoGTVT;
+            khoaHoc.MaCsdt = "Teknova";
+            khoaHoc.TenKh = "Lớp chưa phân khóa";
+            khoaHoc.MaKh = maKh;
+            khoaHoc.HangDt = "B.01";
+            khoaHoc.HangGplx = "B11";
+            _context.KhoaHocs.Add(khoaHoc);
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException e)
+            {
+                if (KhoaHocExists(khoaHoc.MaKh))
+                {
+                    Conflict();
+                }
+                else
+                {
+                    throw new BadRequestException("Error found is " + e.Message);
+                }
+            }
+        }
 
-            
-        //    var khoaHoc = new KhoaHoc();
-        //    var maKh = Constants.MaKhoaHocTam;
-        //    if (KhoaHocExists(maKh))
-        //    {
-        //        throw new BadRequestException("Khóa học này đã được tạo ");
-        //    }    
-        //        khoaHoc.MaSoGtvt = Constants.MaSoGTVT;
-        //    khoaHoc.MaCsdt = Constants.MaCSDT;
-        //    khoaHoc.TenKh = "Lớp chưa phân khóa";
-        //    khoaHoc.MaKh = maKh;
-        //    khoaHoc.HangDt = "B.01";
-        //    khoaHoc.HangGplx = "B11";
-        //    _context.KhoaHocs.Add(khoaHoc);
-        //    try
-        //    {
-        //        await _context.SaveChangesAsync();
-        //    }
-        //    catch (DbUpdateException e)
-        //    {
-        //        if (KhoaHocExists(khoaHoc.MaKh))
-        //        {
-        //            Conflict();
-        //        }
-        //        else
-        //        {
-        //            throw new BadRequestException("Error found is " + e.Message);
-        //        }
-        //    }
-        //}
+        private bool KhoaHocExists(string maKh)
+        {
+            return _context.KhoaHocs.Any(e => e.MaKh == maKh);
+        }
 
-        //public async Task<KhoaHocResponse> PostKhoaHoc(KhoaHocCreateRequest khoaHocRq)
-        //{
-        //    var thoiGiandt = await _context.DmHangDts.FindAsync(khoaHocRq.HangDt);
-        //    var time = DateTime.Now;
-        //    var maKh = Constants.MaCSDT + "K" + time.Year.ToString()[^2..];//lấy 2 ký tự cuối của năm hiện tại
-        //    maKh += Regex.Replace(khoaHocRq.HangDt, @"[^\w\s]", "");
-        //    var soLopHienTaiDoiVoiHangDt = await _context.KhoaHocs
-        //        .Where(x => x.MaCsdt == Constants.MaCSDT && x.HangDt == khoaHocRq.HangDt && x.NgayKg.Value.Year == DateTime.Now.Year)
-        //        .CountAsync();
-        //    maKh += (soLopHienTaiDoiVoiHangDt + 1);
-        //    var khoaHoc = new KhoaHoc();
-        //    khoaHocRq.Patch(khoaHoc);
-        //    khoaHoc.NgayTao = time;
-        //    khoaHoc.NgaySua = khoaHoc.NgayTao;
-        //    khoaHoc.MaKh = maKh;
-        //    khoaHoc.ThoiGianDt = thoiGiandt.ThoiGianDaoTao;
-        //    _context.KhoaHocs.Add(khoaHoc);
-        //    try
-        //    {
-        //        await _context.SaveChangesAsync();
-        //    }
-        //    catch (DbUpdateException e)
-        //    {
-        //        if (KhoaHocExists(khoaHoc.MaKh))
-        //        {
-        //            Conflict();
-        //        }
-        //        else
-        //        {
-        //            throw new BadRequestException("Error found is " + e.Message);
-        //        }
-        //    }
-        //    var khoaHocRes = new KhoaHocResponse();
-        //    khoaHoc.Patch(khoaHocRes);
-
-        //    return khoaHocRes;
-        //}
 
         public async Task<List<KhoaHocResponse>> GetListKhoaHocsTheoHangMucDT(HangDaoTao dk)
         {
@@ -124,6 +89,11 @@ namespace Ttlaixe.Businesses
 
         public async Task<List<KhoaHocResponse>> GetListKhoaHocsTheoTg(MocThoiGian dk)
         {
+            if(!KhoaHocExists(Constants.MaKhoaHocTam))
+            {
+                await PostKhoaHocTam();
+            }    
+            
             var result = _context.KhoaHocs.AsQueryable();
 
             // Lọc từ ngày
@@ -160,7 +130,7 @@ namespace Ttlaixe.Businesses
 
             var khoaHocRess = new List<KhoaHocResponse>();
             khoaHocs.Patch(khoaHocRess);
-
+            
             return khoaHocRess;
         }
 

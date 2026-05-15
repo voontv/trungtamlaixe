@@ -80,7 +80,8 @@ namespace Ttlaixe
 
             services.AddScoped<INguoiLxesBusinesses, NguoiLxesBusinesses>();
             services.AddScoped<IHoSoHocPhiBusiness, HoSoHocPhiBusiness>();
-            services.AddScoped<INhatKyChungTuBusiness, NhatKyChungTuBusiness>();
+            services.AddScoped<IHoSoHocPhiBusiness, HoSoHocPhiBusiness>();
+            services.AddScoped<IKhoaHocsBusinesses, KhoaHocsBusinesses>();
         }
 
         private static void ConfigJson(JsonOptions options)

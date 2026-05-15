@@ -39,29 +39,28 @@ namespace Ttlaixe.Businesses
     public class NguoiLxesBusinesses : INguoiLxesBusinesses
     {
         private readonly GplxCsdtContext _context;
-        private readonly TeknovaContext _Tkcontext;
         private readonly ITokenGenerator _tokenGenerator;
         private readonly IAuthenInfo _authenInfo;
+        private readonly IImageGplxService _imageService;
         private static readonly log4net.ILog log
             = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
         private readonly IHttpContextAccessor _http;
-        public NguoiLxesBusinesses(GplxCsdtContext context, TeknovaContext tkcontext,ITokenGenerator tokenGenerator, IAuthenInfo authenInfo, IHttpContextAccessor http)
+        public NguoiLxesBusinesses(
+    GplxCsdtContext context,
+    IImageGplxService imageService)
         {
             _context = context;
-            _Tkcontext = tkcontext;
-            _tokenGenerator = tokenGenerator;
-            _authenInfo = authenInfo;
-            _http = http;
+            _imageService = imageService;
         }
         public async Task<string> CreateAsync(NguoiLxCreateRequest rq)
         {
             var file = rq.File;
             var now = DateTime.Now;
-            var logged = _authenInfo.Get();
-            var actor = await _Tkcontext.UserTkns.FindAsync(logged.UserName);
+            //var logged = _authenInfo.Get();
+            //var actor = await _Tkcontext.UserTkns.FindAsync(logged.UserName);
 
-            if (!actor.QuyenAdmin && !actor.QuyenNhapLieu)
-                throw new BadRequestException("Bạn không có quyền thực hiện tính năng này.");
+            //if (!actor.QuyenAdmin && !actor.QuyenNhapLieu)
+            //    throw new BadRequestException("Bạn không có quyền thực hiện tính năng này.");
 
             if (await ExistsSoCmtInKhoaHocAsync(rq.MaCsdt, rq.MaKhoaHoc, rq.SoCmt))
                 throw new BadRequestException("Số CMT này đã tồn tại trong khóa học này.");
@@ -171,49 +170,14 @@ namespace Ttlaixe.Businesses
                 {
                     await _context.SaveChangesAsync();
 
-                    // ===== XỬ LÝ ẢNH =====
+                    // ===== XỬ LÝ ẢNH QUA SERVICE =====
                     if (file != null && file.Length > 0)
                     {
-                        var ts = await _context.QthtThamSoHts
-                            .FirstOrDefaultAsync(x => x.TenTs == "IMG_PATH_CSDT");
-
-                        var image_path = ts?.GiaTriTs
-                            ?? @"\\192.168.100.248\d\2026\im_gplx";
-
-                        var resolver = new ImagePathResolver(image_path);
-
-                        var year = DateTime.Now.Year.ToString();
-
-                        var localFolder = Path.Combine(
-                            resolver.LocalRoot,
-                            year,
-                            resolver.BaseFolder,
-                            nguoi.MaDk
-                        );
-
-                        Directory.CreateDirectory(localFolder);
-
-                        var ext = Path.GetExtension(file.FileName);
-                        var fileName = $"{nguoi.SoCmt}-{DateTime.Now:yyyyMMdd-HHmmss}{ext}";
-                        var localFullPath = Path.Combine(localFolder, fileName);
-
-                        using (var stream = new FileStream(localFullPath, FileMode.Create))
-                        {
-                            await file.CopyToAsync(stream);
-                        }
-
-                        // Lưu UNC vào NguoiLx
-                        hoSo.DuongDanAnh = Path.Combine(
-                            resolver.UncRoot,
-                            year,
-                            resolver.BaseFolder,
-                            nguoi.SoCmt,
-                            fileName
-                        );
+                        hoSo.DuongDanAnh = await _imageService
+                            .SaveAsync(file, nguoi.MaDk, nguoi.SoCmt);
 
                         await _context.SaveChangesAsync();
                     }
-
                 }
                 catch (DbUpdateException ex) when (IsDuplicateKey(ex))
                 {
@@ -239,11 +203,11 @@ namespace Ttlaixe.Businesses
             var file = rq.File;
             var now = DateTime.Now;
 
-            var logged = _authenInfo.Get();
-            var actor = await _Tkcontext.UserTkns.FindAsync(logged.UserName);
+            //var logged = _authenInfo.Get();
+            //var actor = await _Tkcontext.UserTkns.FindAsync(logged.UserName);
 
-            if (!actor.QuyenAdmin && !actor.QuyenNhapLieu)
-                throw new BadRequestException("Bạn không có quyền thực hiện tính năng này.");
+            //if (!actor.QuyenAdmin && !actor.QuyenNhapLieu)
+            //    throw new BadRequestException("Bạn không có quyền thực hiện tính năng này.");
 
             if (string.IsNullOrWhiteSpace(rq.MaDk))
                 throw new Exception("MaDk không được để trống khi cập nhật");
@@ -317,53 +281,11 @@ namespace Ttlaixe.Businesses
                 }
             }
 
-            // ===== XỬ LÝ ẢNH =====
             if (file != null && file.Length > 0)
             {
-                var thamSoHt = await _context.QthtThamSoHts
-                    .FirstOrDefaultAsync(x => x.TenTs == "IMG_PATH_CSDT");
+                hoSo.DuongDanAnh = await _imageService
+                    .SaveAsync(file, nguoi.MaDk, nguoi.SoCmt);
 
-                var image_path =
-                    thamSoHt?.GiaTriTs
-                    ?? @"\\192.168.100.248\d\2026\im_gplx";
-
-                var resolver = new ImagePathResolver(image_path);
-
-                var year = DateTime.Now.Year.ToString();
-
-                var localFolder = Path.Combine(
-                    resolver.LocalRoot,
-                    year,
-                    resolver.BaseFolder,
-                    nguoi.MaDk
-                );
-
-                Directory.CreateDirectory(localFolder);
-
-                var ext = Path.GetExtension(file.FileName);
-
-                var fileName =
-                    $"{nguoi.MaDk}-{DateTime.Now:yyyyMMdd-HHmmss}{ext}";
-
-                var localFullPath = Path.Combine(localFolder, fileName);
-
-                using (var stream = new FileStream(
-                    localFullPath,
-                    FileMode.Create))
-                {
-                    await file.CopyToAsync(stream);
-                }
-
-                // ===== LƯU UNC PATH =====
-                hoSo.DuongDanAnh = Path.Combine(
-                    resolver.UncRoot,
-                    year,
-                    resolver.BaseFolder,
-                    nguoi.MaDk,
-                    fileName
-                );
-
-                // Có upload ảnh thì chuyển trạng thái
                 if (string.IsNullOrEmpty(hoSo.TtXuLy)
                     || hoSo.TtXuLy == "01")
                 {
@@ -574,12 +496,6 @@ namespace Ttlaixe.Businesses
 
         public async Task UpdateHinhThe(IFormFile file, string maDk)
         {
-            var logged = _authenInfo.Get();
-            var actor = await _Tkcontext.UserTkns.FindAsync(logged.UserName);
-
-            if (!actor.QuyenAdmin && !actor.QuyenNhapLieu)
-                throw new BadRequestException("Bạn không có quyền thực hiện tính năng này.");
-
             var hoSo = await _context.NguoiLxHoSos
                 .FirstOrDefaultAsync(x => x.MaDk == maDk);
 
@@ -589,68 +505,14 @@ namespace Ttlaixe.Businesses
             if (file == null || file.Length == 0)
                 throw new BadRequestException("File ảnh không hợp lệ.");
 
-            // ===== LẤY PATH HỆ THỐNG =====
-            var ts = await _context.QthtThamSoHts
-                .FirstOrDefaultAsync(x => x.TenTs == "IMG_PATH_CSDT");
-
-            var image_path = ts?.GiaTriTs
-                ?? @"\\192.168.100.248\d\2026\im_gplx";
-
-            var resolver = new ImagePathResolver(image_path);
-
-            var year = DateTime.Now.Year.ToString();
-
-            var localFolder = Path.Combine(
-                resolver.LocalRoot,
-                year,
-                resolver.BaseFolder,
-                maDk
-            );
-
-            Directory.CreateDirectory(localFolder);
-
-            var ext = Path.GetExtension(file.FileName);
-            var fileName = $"{maDk}-{DateTime.Now:yyyyMMdd-HHmmss}{ext}";
-            var localFullPath = Path.Combine(localFolder, fileName);
-
-            using (var stream = new FileStream(localFullPath, FileMode.Create))
-            {
-                await file.CopyToAsync(stream);
-            }
-
-            // ===== LƯU UNC VÀO DB =====
-            hoSo.DuongDanAnh = Path.Combine(
-                resolver.UncRoot,
-                year,
-                resolver.BaseFolder,
-                maDk,
-                fileName
-            );
+            // ===== CHỈ 1 DÒNG DUY NHẤT =====
+            hoSo.DuongDanAnh = await _imageService
+                .SaveAsync(file, maDk, maDk);
 
             hoSo.TtXuLy = "03";
 
             await _context.SaveChangesAsync();
         }
-        //private async Task<string> SaveToRelativePathAsync(IFormFile file, string maDk)
-        //{
-        //    var nguoiLx = await _context.NguoiLxHoSos.FindAsync(maDk)
-        //?? throw new BadRequestException("Không có thông tin người này");
-
-        //    // Lấy đuôi từ file upload (".png", ".jpg", ".jp2"...)
-        //    var ext = Path.GetExtension(file.FileName);
-
-        //    // fallback nếu không có ext
-        //    if (string.IsNullOrWhiteSpace(ext))
-        //        ext = Utils.GetExtFromContentType(file.ContentType) ?? ".bin";
-
-        //    // normalize ext
-        //    if (!ext.StartsWith(".")) ext = "." + ext;
-
-        //    // relativePath đầy đủ gồm cả tên file
-        //    var relativePath = Path.Combine(nguoiLx.MaKhoaHoc, maDk + ext);
-
-        //    return await Utils.SaveToRelativePathAsync(file, relativePath, _opt.ImageRoot);
-        //}
 
         public async Task UpdateMaBcByMaDksAsync(IFormFile file)
         {

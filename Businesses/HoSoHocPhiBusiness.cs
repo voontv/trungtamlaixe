@@ -1,9 +1,11 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using DocumentFormat.OpenXml.VariantTypes;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Ttlaixe.AutoConfig;
+using Ttlaixe.DTO.request;
 using Ttlaixe.Exceptions;
 using Ttlaixe.LibsStartup;
 using Ttlaixe.Models;
@@ -24,16 +26,20 @@ namespace Ttlaixe.Businesses
         Task<bool> UpdateAsync(string maDK, HoSoHocPhi model);
         Task<bool> UpdateTrangThaiThanhToanAsync(string maDK);
         Task<bool> BoHocAsync(string maDK);
+
+        Task<List<HoSoHocPhi>> HoSoChuaNopHocPhi();
     }
 
     public class HoSoHocPhiBusiness : IHoSoHocPhiBusiness
     {
         private readonly TeknovaContext _context;
         private readonly INguoiLxesBusinesses _nguoiLxes;
-        public HoSoHocPhiBusiness(TeknovaContext context, INguoiLxesBusinesses nguoiLxes)
+        private readonly IKhoaHocsBusinesses _khoaHocs;
+        public HoSoHocPhiBusiness(TeknovaContext context, INguoiLxesBusinesses nguoiLxes, IKhoaHocsBusinesses khoaHocs)
         {
             _context = context;
             _nguoiLxes = nguoiLxes;
+            _khoaHocs = khoaHocs;
         }
 
         public async Task<List<HoSoHocPhi>> GetAllAsync()
@@ -49,7 +55,7 @@ namespace Ttlaixe.Businesses
         {
             return await _context.HoSoHocPhis
                 .AsNoTracking()
-                .Where(x => (bool) !x.BoHoc && (bool)!x.DaHoanThanhHp)
+                .Where(x => (bool)!x.BoHoc && (bool)!x.DaHoanThanhHp)
                 .OrderByDescending(x => x.NgayKhoiTao)
                 .ToListAsync();
         }
@@ -58,7 +64,7 @@ namespace Ttlaixe.Businesses
         {
             return await _context.HoSoHocPhis
                 .AsNoTracking()
-                .Where(x => (bool) !x.BoHoc && (bool)x.DaHoanThanhHp)
+                .Where(x => (bool)!x.BoHoc && (bool)x.DaHoanThanhHp)
                 .OrderByDescending(x => x.NgayKhoiTao)
                 .ToListAsync();
         }
@@ -206,8 +212,8 @@ namespace Ttlaixe.Businesses
             return await _context.HoSoHocPhis
                 .AsNoTracking()
                 .Where(x =>
-                    (bool) !x.BoHoc &&
-                    (bool) x.DaHoanThanhHp &&
+                    (bool)!x.BoHoc &&
+                    (bool)x.DaHoanThanhHp &&
                     x.MaKhoaHoc != null &&
                     maKhoaHocs.Contains(x.MaKhoaHoc))
                 .OrderByDescending(x => x.NgayKhoiTao)
@@ -223,6 +229,21 @@ namespace Ttlaixe.Businesses
 
             return await CreateByKhoaHocChuanAsync(maKhoaHoc, hangDt);
         }
+
+        public async Task<List<HoSoHocPhi>> HoSoChuaNopHocPhi()
+        {
+            var thoiGian = new MocThoiGian();
+            var khoaHocs = await _khoaHocs.GetListKhoaHocsTheoTg(thoiGian);
+            var hoSoHocPhis = new List<HoSoHocPhi>();
+            foreach(var khoaHoc in khoaHocs)
+            {
+                var hoSoHocPhi = await CreateByKhoaHocAsync(khoaHoc.MaKh, khoaHoc.HangDt);
+                hoSoHocPhis.AddRange(hoSoHocPhi);
+            }
+
+            return hoSoHocPhis;
+        }
+         
         private async Task<List<HoSoHocPhi>> CreateByKhoaHocTamAsync()
         {
             var dsTam = await _context.HocVienChuaPhanKhoas

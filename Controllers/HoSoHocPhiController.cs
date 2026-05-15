@@ -69,6 +69,13 @@
         }
 
         [Authorize]
+        [HttpPost("toan-bo-danh-sach-hoc-phi")]
+        public async Task<List<HoSoHocPhi>> HoSoChuaNopHocPhi()
+        {
+            return await _business.HoSoChuaNopHocPhi();
+        }
+
+        [Authorize]
         [HttpPut("{maDK}")]
         public async Task<bool> Update(string maDK, [FromBody] HoSoHocPhi model)
         {
