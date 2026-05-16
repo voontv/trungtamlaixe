@@ -33,7 +33,7 @@ public partial class HoSoHocPhi
 
     public DateTime? NgayChinhSuaCuoiCung { get; set; }
 
-    public virtual ICollection<LichSuNopHocPhi> LichSuNopHocPhis { get; set; } = new List<LichSuNopHocPhi>();
+    public bool? IsActive { get; set; }
 
     public virtual DmHocPhi MaHangGplxNavigation { get; set; }
 }

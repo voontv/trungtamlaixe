@@ -14,4 +14,6 @@ public partial class LichSuSoDu
     public decimal No { get; set; }
 
     public decimal Co { get; set; }
+
+    public bool? IsActive { get; set; }
 }

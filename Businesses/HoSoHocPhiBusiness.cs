@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using Ttlaixe.AutoConfig;
@@ -28,6 +29,8 @@ namespace Ttlaixe.Businesses
         Task<bool> BoHocAsync(string maDK);
 
         Task<List<HoSoHocPhi>> HoSoChuaNopHocPhi();
+
+        Task DeleteHoSoHocPhi(string maDk);
     }
 
     public class HoSoHocPhiBusiness : IHoSoHocPhiBusiness
@@ -46,7 +49,7 @@ namespace Ttlaixe.Businesses
         {
             return await _context.HoSoHocPhis
                 .AsNoTracking()
-                .Where(x => (bool)!x.BoHoc)
+                .Where(x => (bool)!x.BoHoc && x.IsActive == true)
                 .OrderByDescending(x => x.NgayKhoiTao)
                 .ToListAsync();
         }
@@ -55,7 +58,7 @@ namespace Ttlaixe.Businesses
         {
             return await _context.HoSoHocPhis
                 .AsNoTracking()
-                .Where(x => (bool)!x.BoHoc && (bool)!x.DaHoanThanhHp)
+                .Where(x => (bool)!x.BoHoc && (bool)!x.DaHoanThanhHp && x.IsActive == true)
                 .OrderByDescending(x => x.NgayKhoiTao)
                 .ToListAsync();
         }
@@ -163,6 +166,7 @@ namespace Ttlaixe.Businesses
                 return false;
 
             hoSo.BoHoc = true;
+            hoSo.IsActive = false;
             hoSo.NgayChinhSuaCuoiCung = DateTime.Now;
 
             await _context.SaveChangesAsync();
@@ -222,12 +226,13 @@ namespace Ttlaixe.Businesses
 
         public async Task<List<HoSoHocPhi>> CreateByKhoaHocAsync(string maKhoaHoc, string hangDt)
         {
-            if (maKhoaHoc.Equals(Constants.MaKhoaHocTam))
-            {
-                return await CreateByKhoaHocTamAsync();
-            }
+            //if (!maKhoaHoc.Equals(Constants.MaKhoaHocTam))
+            //{
+            //    await CreateByKhoaHocChuanAsync(maKhoaHoc, hangDt);
+            //}
 
-            return await CreateByKhoaHocChuanAsync(maKhoaHoc, hangDt);
+            
+            return await CreateByKhoaHocTamAsync();
         }
 
         public async Task<List<HoSoHocPhi>> HoSoChuaNopHocPhi()
@@ -301,54 +306,51 @@ namespace Ttlaixe.Businesses
 
             return result;
         }
-        public async Task<List<HoSoHocPhi>> CreateByKhoaHocChuanAsync(string maKhoaHoc, string hangDt)
+        public async Task CreateByKhoaHocChuanAsync(string maKhoaHoc, string hangDt)
         {
             var dsHocViens = await _nguoiLxes.GetThongTinCoBanByKhoaHocAsync(maKhoaHoc);
 
-            var maDks = dsHocViens.Select(x => x.MaDk).ToList();
+            if (!dsHocViens.Any())
+                return;
 
-            // Lấy sẵn những hồ sơ đã tồn tại
-            var existedDict = await _context.HoSoHocPhis
-                .Where(x => maDks.Contains(x.MaDk))
-                .ToDictionaryAsync(x => x.MaDk);
+            // Lấy danh sách MaDk đã tồn tại trong HocVienChuaPhanKhoa của khóa này
+            var existedMaDk = await _context.HocVienChuaPhanKhoas
+                .Where(x => x.MaKhoaHoc == maKhoaHoc)
+                .Select(x => x.MaDk)
+                .ToListAsync();
 
-            var hocPhi = await _context.DmHocPhis
-                .AsNoTracking()
-                .FirstOrDefaultAsync(x => x.MaHangGplx == hangDt);
+            var existedSet = existedMaDk.ToHashSet();
 
-            var result = new List<HoSoHocPhi>();
-            var toAdd = new List<HoSoHocPhi>();
-
-            foreach (var d in dsHocViens)
-            {
-                // ĐÃ CÓ → lấy ra dùng lại
-                if (existedDict.TryGetValue(d.MaDk, out var existed))
+            // Lọc ra những người CHƯA có
+            var needInsert = dsHocViens
+                .Where(x => !existedSet.Contains(x.MaDk))
+                .Select(x => new HocVienChuaPhanKhoa
                 {
-                    result.Add(existed);
-                    continue;
-                }
+                    HoDemNlx = x.HoDemNlx,
+                    TenNlx = x.TenNlx,
+                    MaQuocTich = x.MaQuocTich,
+                    NgaySinh = DateTime.ParseExact(x.NgaySinh, "yyyyMMdd",CultureInfo.InvariantCulture),
+                    SoCmt = x.SoCmt,
+                    MaDk = x.MaDk,
+                    MaKhoaHoc = maKhoaHoc,
+                    HangDaoTao = hangDt,
+                    TrangThai = false
+                })
+                .ToList();
 
-                // CHƯA CÓ → tạo mới
-                var model = new HoSoHocPhi();
-                d.Patch(model);
-
-                model.MaHangGplx = hangDt;
-                model.HocPhi = hocPhi.HocPhi;
-                model.DaHoanThanhHp = false;
-                model.BoHoc = false;
-                model.NgayKhoiTao = DateTime.Now;
-
-                toAdd.Add(model);
-                result.Add(model);
-            }
-
-            if (toAdd.Any())
+            if (needInsert.Any())
             {
-                _context.HoSoHocPhis.AddRange(toAdd);
+                await _context.HocVienChuaPhanKhoas.AddRangeAsync(needInsert);
                 await _context.SaveChangesAsync();
             }
+        }
 
-            return result;
+        public async Task DeleteHoSoHocPhi(string maDk)
+        {
+           
+            var hoSoHp = await _context.HoSoHocPhis.FindAsync(maDk) ?? throw new BadRequestException("Không tìm thấy mã "+maDk);
+            hoSoHp.IsActive = false;
+            await _context.SaveChangesAsync();
         }
     }
 }

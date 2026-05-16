@@ -69,7 +69,7 @@
         }
 
         [Authorize]
-        [HttpPost("toan-bo-danh-sach-hoc-phi")]
+        [HttpGet("toan-bo-danh-sach-hoc-phi")]
         public async Task<List<HoSoHocPhi>> HoSoChuaNopHocPhi()
         {
             return await _business.HoSoChuaNopHocPhi();

@@ -20,6 +20,4 @@ public partial class LichSuNopHocPhi
     public string GhiChu { get; set; }
 
     public DateTime NgayKhoiTao { get; set; }
-
-    public virtual HoSoHocPhi MaDkNavigation { get; set; }
 }

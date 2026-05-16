@@ -133,6 +133,9 @@ public partial class TeknovaContext : DbContext
                 .IsRequired()
                 .HasMaxLength(70);
             entity.Property(e => e.HocPhi).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.IsActive)
+                .IsRequired()
+                .HasDefaultValueSql("((1))");
             entity.Property(e => e.MaHangGplx)
                 .IsRequired()
                 .HasMaxLength(20)
@@ -211,10 +214,12 @@ public partial class TeknovaContext : DbContext
                 .IsUnicode(false)
                 .HasColumnName("MaDK");
             entity.Property(e => e.MaGv)
-                .IsRequired()
                 .HasMaxLength(8)
                 .IsUnicode(false)
                 .HasColumnName("MaGV");
+            entity.Property(e => e.MaKhoaHoc)
+                .HasMaxLength(13)
+                .IsUnicode(false);
             entity.Property(e => e.MaQuocTich)
                 .IsRequired()
                 .HasMaxLength(3)
@@ -272,11 +277,6 @@ public partial class TeknovaContext : DbContext
                 .HasMaxLength(30)
                 .IsUnicode(false);
             entity.Property(e => e.SoTienNop).HasColumnType("decimal(18, 2)");
-
-            entity.HasOne(d => d.MaDkNavigation).WithMany(p => p.LichSuNopHocPhis)
-                .HasForeignKey(d => d.MaDk)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_LichSuNopHocPhi_HoSoHocPhi");
         });
 
         modelBuilder.Entity<LichSuSoDu>(entity =>
@@ -289,6 +289,9 @@ public partial class TeknovaContext : DbContext
                 .HasMaxLength(20)
                 .IsUnicode(false);
             entity.Property(e => e.Co).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.IsActive)
+                .IsRequired()
+                .HasDefaultValueSql("((1))");
             entity.Property(e => e.No).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.TenTaiKhoan)
                 .IsRequired()

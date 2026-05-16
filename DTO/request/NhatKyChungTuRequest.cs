@@ -17,5 +17,6 @@ namespace Ttlaixe.DTO.request
         public decimal SoTien { get; set; }
 
         public string GhiChu { get; set; }
+
     }
 }

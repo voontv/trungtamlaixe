@@ -78,6 +78,7 @@ namespace Ttlaixe
                     .GetSection("Vnpt").Value);
             });
 
+            services.AddScoped<IImageGplxService, ImageGplxService>();
             services.AddScoped<INguoiLxesBusinesses, NguoiLxesBusinesses>();
             services.AddScoped<IHoSoHocPhiBusiness, HoSoHocPhiBusiness>();
             services.AddScoped<IHoSoHocPhiBusiness, HoSoHocPhiBusiness>();

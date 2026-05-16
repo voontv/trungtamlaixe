@@ -454,6 +454,7 @@ namespace Ttlaixe.Businesses
             var madk = await _nguoiLxes.CreateAsync(request);    
             
             hv.MaDk = madk;
+            hv.MaKhoaHoc = request.MaKhoaHoc;
             hv.TrangThai = false;
 
             await _context.SaveChangesAsync();

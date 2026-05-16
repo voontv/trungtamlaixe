@@ -23,6 +23,8 @@ public partial class NhatKyChungTu
 
     public DateTime NgayKhoiTao { get; set; }
 
+    public int? IdNopTien { get; set; }
+
     public virtual DmTaiKhoanKeToan TaiKhoanCoNavigation { get; set; }
 
     public virtual DmTaiKhoanKeToan TaiKhoanNoNavigation { get; set; }

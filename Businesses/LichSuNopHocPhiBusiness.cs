@@ -91,6 +91,7 @@ namespace Ttlaixe.Businesses
             nhatKyChungTu.TaiKhoanCo = model.TaiKhoanCo;
             nhatKyChungTu.TaiKhoanNo = model.TaiKhoanNo;
             await _nhatKyChungTu.CreateAsync(nhatKyChungTu);
+            
             return result;
         }
 

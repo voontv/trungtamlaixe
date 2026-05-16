@@ -42,39 +42,46 @@ namespace Ttlaixe.Businesses
 
         public async Task PostKhoaHocTam()
         {
-            var khoaHoc = new KhoaHoc();
             var maKh = Constants.MaKhoaHocTam;
-            if (KhoaHocExists(maKh))
+            var heThong = await _context.QthtThamSoHts.Where(x => x.TenTs.Equals("MA_DONVI")).FirstOrDefaultAsync();
+            if (await KhoaHocExistsAsync(maKh))
+                throw new BadRequestException("Khóa học này đã được tạo");
+
+            var khoaHoc = new KhoaHoc
             {
-                throw new BadRequestException("Khóa học này đã được tạo ");
-            }
-            khoaHoc.MaSoGtvt = Constants.MaSoGTVT;
-            khoaHoc.MaCsdt = "Teknova";
-            khoaHoc.TenKh = "Lớp chưa phân khóa";
-            khoaHoc.MaKh = maKh;
-            khoaHoc.HangDt = "B.01";
-            khoaHoc.HangGplx = "B11";
+                MaSoGtvt = Constants.MaSoGTVT,
+                MaCsdt = heThong.GiaTriTs,
+                TenKh = heThong.GiaTriTs,
+                MaKh = maKh,
+                HangDt = "B.01",
+                HangGplx = "B11"
+            };
+
             _context.KhoaHocs.Add(khoaHoc);
+
             try
             {
                 await _context.SaveChangesAsync();
             }
-            catch (DbUpdateException e)
+            catch (DbUpdateException ex)
             {
-                if (KhoaHocExists(khoaHoc.MaKh))
-                {
-                    Conflict();
-                }
-                else
-                {
-                    throw new BadRequestException("Error found is " + e.Message);
-                }
+                var sqlEx = ex.InnerException?.InnerException ?? ex.InnerException;
+
+                var detail = $@"
+                Lỗi khi lưu KhoaHoc:
+                Message: {ex.Message}
+                Inner: {ex.InnerException?.Message}
+                Sql: {sqlEx?.Message}
+                ";
+
+                throw new BadRequestException(detail);
             }
         }
 
-        private bool KhoaHocExists(string maKh)
+        private async Task<bool> KhoaHocExistsAsync(string maKh)
         {
-            return _context.KhoaHocs.Any(e => e.MaKh == maKh);
+            return await _context.KhoaHocs
+                .AnyAsync(e => e.MaKh == maKh);
         }
 
 
@@ -89,7 +96,8 @@ namespace Ttlaixe.Businesses
 
         public async Task<List<KhoaHocResponse>> GetListKhoaHocsTheoTg(MocThoiGian dk)
         {
-            if(!KhoaHocExists(Constants.MaKhoaHocTam))
+            var exit = await KhoaHocExistsAsync(Constants.MaKhoaHocTam);
+            if (!exit)
             {
                 await PostKhoaHocTam();
             }    

@@ -9,6 +9,17 @@ namespace Ttlaixe.DTO.response
         public string MaCsdt { get; set; }
 
         public string HoVaTen { get; set; }
+        /// <summary>
+        /// Họ và tên đệm của Người lái xe
+        /// </summary>
+        public string HoDemNlx { get; set; }
+
+        /// <summary>
+        /// Tên của người lái xe
+        /// </summary>
+        /// 
+        public string MaQuocTich { get; set; }
+        public string TenNlx { get; set; }
         public string SoCmt { get; set; }
         public string? NgaySinh { get; set; }
         public string GioiTinh { get; set; }

@@ -57,4 +57,6 @@ public partial class HocVienChuaPhanKhoa
     public string MaDk { get; set; }
 
     public string DuongDanAnh { get; set; }
+
+    public string MaKhoaHoc { get; set; }
 }

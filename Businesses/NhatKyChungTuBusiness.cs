@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using Ttlaixe.DTO.request;
 using Ttlaixe.LibsStartup;
+using Ttlaixe.Exceptions;
 
 namespace Ttlaixe.Businesses
 {
@@ -84,10 +85,10 @@ namespace Ttlaixe.Businesses
                 .AnyAsync(x => x.MaTaiKhoan == model.TaiKhoanCo);
 
             if (!tkCoExists)
-                throw new Exception("Tài khoản có không tồn tại.");
+                throw new BadRequestException("Tài khoản có không tồn tại.");
 
             if (model.SoTien <= 0)
-                throw new Exception("Số tiền phải lớn hơn 0.");
+                throw new BadRequestException("Số tiền phải lớn hơn 0.");
 
             var nhatKyChungTu = new NhatKyChungTu();
             model.Patch(nhatKyChungTu);
@@ -100,7 +101,7 @@ namespace Ttlaixe.Businesses
                 await _context.SaveChangesAsync();
             }catch (Exception ex)
             {
-                throw new Exception(ex.Message.ToString());
+                throw new BadRequestException(ex.Message.ToString());
             }
             
 
@@ -118,16 +119,16 @@ namespace Ttlaixe.Businesses
                 .AnyAsync(x => x.MaTaiKhoan == model.TaiKhoanNo);
 
             if (!tkNoExists)
-                throw new Exception("Tài khoản nợ không tồn tại.");
+                throw new BadRequestException("Tài khoản nợ không tồn tại.");
 
             var tkCoExists = await _context.DmTaiKhoanKeToans
                 .AnyAsync(x => x.MaTaiKhoan == model.TaiKhoanCo);
 
             if (!tkCoExists)
-                throw new Exception("Tài khoản có không tồn tại.");
+                throw new BadRequestException("Tài khoản có không tồn tại.");
 
             if (model.SoTien <= 0)
-                throw new Exception("Số tiền phải lớn hơn 0.");
+                throw new BadRequestException("Số tiền phải lớn hơn 0.");
 
             existing.SoChungTu = model.SoChungTu;
             existing.NgayLap = model.NgayLap;
@@ -146,6 +147,11 @@ namespace Ttlaixe.Businesses
         {
             var existing = await _context.NhatKyChungTus
                 .FirstOrDefaultAsync(x => x.IdChungTu == idChungTu);
+
+            if(existing.GhiChu.Equals("nộp tiền học phí"))
+            {
+                throw new BadRequestException("Đây là chứng từ nộp tiền học phí. Vui lòng xóa bên lịch sử thu học phí");
+            }    
 
             if (existing == null)
                 return false;
