@@ -14,8 +14,6 @@ using Microsoft.AspNetCore.Http;
 using System.IO;
 using System.Xml;
 using System.Text.Json;
-using log4net;
-using static System.Net.WebRequestMethods;
 namespace Ttlaixe.Businesses
 {
     [ImplementBy(typeof(NguoiLxesBusinesses))]
@@ -44,7 +42,6 @@ namespace Ttlaixe.Businesses
         private readonly IImageGplxService _imageService;
         private static readonly log4net.ILog log
             = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
-        private readonly IHttpContextAccessor _http;
         public NguoiLxesBusinesses(
     GplxCsdtContext context,
     IImageGplxService imageService)

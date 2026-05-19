@@ -27,7 +27,8 @@ namespace Ttlaixe.Businesses
         Task<List<TongHopChungTuDto>> TongHopTheoTaiKhoanChaAsync(DateTime? fromDate, DateTime? toDate);
 
         Task<byte[]> GetChungTuNopHocPhiHV(DateTime fromDate, DateTime toDate);
-        Task<TongHopThangReponse> TongHopTheoThangAsync(int nam, int thang);
+        Task<TongHopThangReponse> TongHopTheoThangAsync(DateTime? fromDate, DateTime toDate);
+        Task<List<NhatKyChungTu>> TongHopChiTietAsync(TongHopChiTietRequest req);
     }
 
     public class NhatKyChungTuBusiness : INhatKyChungTuBusiness
@@ -410,22 +411,39 @@ namespace Ttlaixe.Businesses
             return await ExcelExporter.ExportExcelAsync(data);
         }
 
-        public async Task<TongHopThangReponse> TongHopTheoThangAsync(int nam, int thang)
+        public async Task<TongHopThangReponse> TongHopTheoThangAsync(DateTime? tuNgay, DateTime denNgay)
         {
-            
-            var fromDauNam = new DateTime(nam, 1, 1);
-            var fromThang = new DateTime(nam, thang, 1);
-            var toThang = fromThang.AddMonths(1).AddDays(-1);
+            // Chuẩn hóa ngày
+            denNgay = denNgay.Date.AddDays(1).AddTicks(-1);
 
-            // 1. Lũy kế đến hết tháng trước
-            var luyKe = await TongHopTheoTaiKhoanChaAsync(fromDauNam, fromThang.AddDays(-1));
+            var nam = denNgay.Year;
+            var fromDauNam = new DateTime(nam, 1, 1);
+
+            // Nếu không truyền từ ngày => lấy từ đầu năm
+            var fromKy = tuNgay.HasValue
+                ? tuNgay.Value.Date
+                : fromDauNam;
+
+            // ===== 1. Lũy kế trước kỳ =====
+            List<TongHopChungTuDto> luyKe;
+
+            if (fromKy == fromDauNam)
+            {
+                // Không có lũy kế trước kỳ
+                luyKe = new List<TongHopChungTuDto>();
+            }
+            else
+            {
+                luyKe = await TongHopTheoTaiKhoanChaAsync(fromDauNam, fromKy.AddTicks(-1));
+            }
+
+            // Số dư đầu năm luôn cộng vào
             var duDauNam = await _context.LichSuSoDus
-    .Where(x => x.Nam == nam)
-    .ToListAsync();
+                .Where(x => x.Nam == nam)
+                .ToListAsync();
 
             var dictLuyKe = luyKe.ToDictionary(x => x.MaTaiKhoan);
 
-            // cộng số dư đầu năm vào lũy kế
             foreach (var du in duDauNam)
             {
                 if (dictLuyKe.TryGetValue(du.MaTaiKhoan, out var item))
@@ -444,12 +462,12 @@ namespace Ttlaixe.Businesses
                     });
                 }
             }
-            // 2. Phát sinh trong tháng
-            var phatSinh = await TongHopTheoTaiKhoanChaAsync(fromThang, toThang);
 
-
+            // ===== 2. Phát sinh trong kỳ =====
+            var phatSinh = await TongHopTheoTaiKhoanChaAsync(fromKy, denNgay);
             var dictPhatSinh = phatSinh.ToDictionary(x => x.MaTaiKhoan);
 
+            // ===== 3. Tính số dư cuối =====
             var allKeys = dictLuyKe.Keys
                 .Union(dictPhatSinh.Keys)
                 .ToList();
@@ -460,26 +478,18 @@ namespace Ttlaixe.Businesses
             {
                 var lk = dictLuyKe.ContainsKey(key) ? dictLuyKe[key] : new TongHopChungTuDto { MaTaiKhoan = key };
                 var ps = dictPhatSinh.ContainsKey(key) ? dictPhatSinh[key] : new TongHopChungTuDto { MaTaiKhoan = key };
-                
+
                 var tongNo = lk.TongNo + ps.TongNo;
                 var tongCo = lk.TongCo + ps.TongCo;
 
                 var chenhlech = tongCo - tongNo;
 
-                decimal no = 0;
-                decimal co = 0;
-
-                if (chenhlech > 0)
-                    co = chenhlech;
-                else
-                    no = Math.Abs(chenhlech);
-
                 soDuCuoi.Add(new TongHopChungTuDto
                 {
                     MaTaiKhoan = key,
                     TenTaiKhoan = lk.TenTaiKhoan ?? ps.TenTaiKhoan,
-                    TongNo = no,
-                    TongCo = co
+                    TongNo = chenhlech < 0 ? Math.Abs(chenhlech) : 0,
+                    TongCo = chenhlech > 0 ? chenhlech : 0
                 });
             }
 
@@ -490,5 +500,26 @@ namespace Ttlaixe.Businesses
                 SoDuCuoiKy = soDuCuoi.OrderBy(x => x.MaTaiKhoan).ToList()
             };
         }
+
+        public async Task<List<NhatKyChungTu>> TongHopChiTietAsync(TongHopChiTietRequest req)
+        {
+            if (req.MaTaiKhoans == null || !req.MaTaiKhoans.Any())
+                return new List<NhatKyChungTu>();
+
+            var fromDate = req.TuNgay.Date;
+            var denDate = req.DenNgay.Date.AddDays(1).AddTicks(-1);
+
+            var result = await _context.NhatKyChungTus
+                .Where(x =>
+                    (req.MaTaiKhoans.Contains(x.TaiKhoanCo) || req.MaTaiKhoans.Contains(x.TaiKhoanNo)) &&
+                    x.NgayLap >= fromDate &&
+                    x.NgayLap <= denDate)
+                .OrderBy(x => x.TaiKhoanCo)
+                .ThenBy(x => x.NgayLap)
+                .ToListAsync();
+
+            return result;
+        }
+
     }
 }

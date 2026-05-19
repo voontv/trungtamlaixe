@@ -44,6 +44,12 @@ namespace Ttlaixe.AutoConfig
             x.CreateMap<NguoiLxhsGiayTo, NguoiLxCreateRequest> ();
             x.CreateMap<NguoiLxCoBanResponse, HoSoHocPhi>();
             x.CreateMap<HoSoHocPhi, NguoiLxCoBanResponse>();
+            x.CreateMap<HoSoHocPhiCreated, HoSoHocPhi>();
+            x.CreateMap<HoSoHocPhi, HoSoHocPhiCreated>();
+
+             x.CreateMap<HoSoHocPhiResponse, HoSoHocPhi>();
+            x.CreateMap<HoSoHocPhi, HoSoHocPhiResponse>();
+
 
             x.CreateMap<NguoiLxResponse, NguoiLx>();
             x.CreateMap<NguoiLx, NguoiLxResponse>();
@@ -53,8 +59,7 @@ namespace Ttlaixe.AutoConfig
 
             x.CreateMap<HocVienChuaPhanKhoaRequest, HocVienChuaPhanKhoa>();
             x.CreateMap<HocVienChuaPhanKhoa, HocVienChuaPhanKhoaRequest>();
-             x.CreateMap<HocVienChuaPhanKhoaRequest, NguoiLxCoBanResponse>();
-            x.CreateMap<NguoiLxCoBanResponse, HocVienChuaPhanKhoaRequest>();
+             
 
 
             x.CreateMap<NguoiLxResponse, NguoiLxHoSo>();

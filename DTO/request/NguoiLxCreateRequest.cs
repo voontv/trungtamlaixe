@@ -105,6 +105,7 @@ namespace Ttlaixe.DTO.request
         /// </summary>
         public string DonViHocLx { get; set; }
 
+        public string DuongDanAnh { get; set; }
 
         public string GiayTos { get; set; }
 

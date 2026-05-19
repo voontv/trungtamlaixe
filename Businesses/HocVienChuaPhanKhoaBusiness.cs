@@ -1,5 +1,4 @@
-﻿using DocumentFormat.OpenXml.InkML;
-using ImageMagick;
+﻿using ImageMagick;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -13,6 +12,7 @@ using Ttlaixe.DTO.response;
 using Ttlaixe.Exceptions;
 using Ttlaixe.LibsStartup;
 using Ttlaixe.Models;
+using Ttlaixe.Providers;
 
 namespace Ttlaixe.Businesses
 {
@@ -35,15 +35,15 @@ namespace Ttlaixe.Businesses
     {
         private readonly TeknovaContext _context;
         private readonly GplxCsdtContext _gplx;
-        private readonly IHttpContextAccessor _http;
+        private readonly IImageGplxService _imageService;
         private readonly INguoiLxesBusinesses _nguoiLxes;
         private static readonly log4net.ILog log
             = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
-        public HocVienChuaPhanKhoaBusiness(TeknovaContext context, GplxCsdtContext gplx, IHttpContextAccessor http, INguoiLxesBusinesses nguoiLxes)
+        public HocVienChuaPhanKhoaBusiness(TeknovaContext context, GplxCsdtContext gplx, IImageGplxService imageService, INguoiLxesBusinesses nguoiLxes)
         {
             _context = context;
             _gplx = gplx;
-            _http = http;
+            _imageService = imageService;
             _nguoiLxes = nguoiLxes;
         }
 
@@ -57,11 +57,11 @@ namespace Ttlaixe.Businesses
             .OrderByDescending(x => x.NgayNopHoSo)
             .ToListAsync();
 
-            var request = _http.HttpContext.Request;
-
             var result = hvs.Select(hv =>
             {
-                gvDict.TryGetValue(hv.MaGv, out var gv);
+                var gv = hv.MaGv != null && gvDict.TryGetValue(hv.MaGv, out var g)
+                    ? g
+                    : null;
 
                 return new HocVienChuaPhanKhoaDTO
                 {
@@ -69,8 +69,9 @@ namespace Ttlaixe.Businesses
                     TenGv = gv?.TenGv,
                     HoTenDem = gv?.HoTenDem,
                     ImageUrl = string.IsNullOrEmpty(hv.DuongDanAnh)
-                        ? null: $"{Constants.ApiPublicImage}?path={Uri.EscapeDataString(hv.DuongDanAnh)}"
-                };//$"{baseUrl}/api//api/HocVienChuaPhanKhoa/image/{hv.IdHs}" đây là gọi api để load Image lên
+                        ? null
+                        : $"{Constants.ApiPublicImage}?path={Uri.EscapeDataString(hv.DuongDanAnh)}"
+                };
             }).ToList();
 
             return result;
@@ -133,50 +134,15 @@ namespace Ttlaixe.Businesses
             model.NgayNopHoSo = DateTime.Now;
 
             _context.HocVienChuaPhanKhoas.Add(model);
-            await _context.SaveChangesAsync(); // phải save trước để có Id / SoCmt ổn định
+            await _context.SaveChangesAsync(); // có SoCmt ổn định
 
-            var file = rq.File;
-
-            // ❗ Nếu không có file → kết thúc luôn
-            if (file == null || file.Length == 0)
-                return;
-
-            var thamSoHt = await _gplx.QthtThamSoHts
-                .FirstOrDefaultAsync(x => x.TenTs == "IMG_PATH_CSDT");
-
-            var image_path = thamSoHt?.GiaTriTs
-                ?? @"\\192.168.100.248\d\2026\im_gplx";
-
-            var resolver = new ImagePathResolver(image_path);
-            var year = DateTime.Now.Year.ToString();
-
-            var localFolder = Path.Combine(
-                resolver.LocalRoot,
-                year,
-                resolver.BaseFolder,
-                model.SoCmt
-            );
-
-            Directory.CreateDirectory(localFolder);
-
-            var ext = Path.GetExtension(file.FileName);
-            var fileName = $"{model.SoCmt}-{DateTime.Now:yyyyMMdd-HHmmss}{ext}";
-            var localFullPath = Path.Combine(localFolder, fileName);
-
-            using (var stream = new FileStream(localFullPath, FileMode.Create))
+            if (rq.File != null && rq.File.Length > 0)
             {
-                await file.CopyToAsync(stream);
+                model.DuongDanAnh = await _imageService
+                    .SaveAsync(rq.File, model.MaDk ?? model.SoCmt, model.SoCmt);
+
+                await _context.SaveChangesAsync();
             }
-
-            model.DuongDanAnh = Path.Combine(
-                resolver.UncRoot,
-                year,
-                resolver.BaseFolder,
-                model.SoCmt,
-                fileName
-            );
-
-            await _context.SaveChangesAsync();
         }
 
         public async Task<bool> UpdateAsync(HocVienChuaPhanKhoaUpdateRequest rq)
@@ -187,83 +153,15 @@ namespace Ttlaixe.Businesses
             if (entity == null)
                 return false;
 
-            var oldImage = entity.DuongDanAnh;
-
-            // update data
             rq.Patch(entity);
 
-            // nếu request không gửi ảnh thì giữ ảnh cũ
-            entity.DuongDanAnh = oldImage;
-
-            var file = rq.File;
-
-            // ===== upload ảnh mới =====
-            if (file != null && file.Length > 0)
+            if (rq.File != null && rq.File.Length > 0)
             {
-                var thamSoHt = await _gplx.QthtThamSoHts
-                    .FirstOrDefaultAsync(x => x.TenTs == "IMG_PATH_CSDT");
-
-                var image_path = thamSoHt?.GiaTriTs
-                    ?? @"\\192.168.100.248\d\2026\im_gplx";
-
-                var resolver = new ImagePathResolver(image_path);
-
-                var year = DateTime.Now.Year.ToString();
-
-                var localFolder = Path.Combine(
-                    resolver.LocalRoot,
-                    year,
-                    resolver.BaseFolder,
-                    entity.SoCmt
-                );
-
-                Directory.CreateDirectory(localFolder);
-
-                var ext = Path.GetExtension(file.FileName);
-
-                var fileName =
-                    $"{entity.SoCmt}-{DateTime.Now:yyyyMMdd-HHmmss}{ext}";
-
-                var localFullPath = Path.Combine(localFolder, fileName);
-
-                using (var stream = new FileStream(localFullPath, FileMode.Create))
-                {
-                    await file.CopyToAsync(stream);
-                }
-
-                // update UNC path mới
-                entity.DuongDanAnh = Path.Combine(
-                    resolver.UncRoot,
-                    year,
-                    resolver.BaseFolder,
-                    entity.SoCmt,
-                    fileName
-                );
+                entity.DuongDanAnh = await _imageService
+                    .SaveAsync(rq.File, entity.MaDk ?? entity.SoCmt, entity.SoCmt);
             }
 
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (Exception ex)
-            {
-                var errorMessage = ex.Message;
-                var innerMessage = ex.InnerException?.Message;
-
-                Console.WriteLine("=== UPDATE ERROR ===");
-                Console.WriteLine(errorMessage);
-
-                if (ex.InnerException != null)
-                {
-                    Console.WriteLine("=== INNER ERROR ===");
-                    Console.WriteLine(innerMessage);
-                }
-
-                throw new BadRequestException(
-                    $"Lỗi khi cập nhật: {errorMessage} - {innerMessage}"
-                );
-            }
-
+            await _context.SaveChangesAsync();
             return true;
         }
 
@@ -292,7 +190,9 @@ namespace Ttlaixe.Businesses
                 .Select(x => new { x.MaGv, x.TenGv, x.HoTenDem })
                 .ToListAsync();
 
-            var gvDict = gvList.ToDictionary(x => x.MaGv);
+            var gvDict = gvList
+                .Where(x => x.MaGv != null)
+                .ToDictionary(x => x.MaGv);
 
             // Nếu có lọc theo tên GV thì tạo tập MaGv để filter HV
             var maGvFilter = gvList.Select(x => x.MaGv).ToHashSet();
@@ -374,7 +274,9 @@ namespace Ttlaixe.Businesses
             // 3) Map sang DTO kèm tên GV
             var result = hvs.Select(hv =>
             {
-                gvDict.TryGetValue(hv.MaGv, out var gv);
+                var gv = hv.MaGv != null && gvDict.TryGetValue(hv.MaGv, out var g)
+                    ? g
+                    : null;
 
                 return new HocVienChuaPhanKhoaDTO
                 {
@@ -382,7 +284,8 @@ namespace Ttlaixe.Businesses
                     TenGv = gv?.TenGv,
                     HoTenDem = gv?.HoTenDem,
                     ImageUrl = string.IsNullOrEmpty(hv.DuongDanAnh)
-                        ? null : $"{Constants.ApiPublicImage}?path={Uri.EscapeDataString(hv.DuongDanAnh)}"
+                        ? null
+                        : $"{Constants.ApiPublicImage}?path={Uri.EscapeDataString(hv.DuongDanAnh)}"
                 };
             }).ToList();
 

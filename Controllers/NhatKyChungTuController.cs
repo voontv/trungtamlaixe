@@ -96,10 +96,16 @@ namespace Ttlaixe.Controllers
                 $"HoaDon_{DateTime.Now:yyyyMMddHHmmss}.xlsx");
         }
 
-        [HttpGet("tong-hop-theo-thang")]
-        public async Task<TongHopThangReponse> TongHopTheoThang(int nam, int thang)
+        [HttpPost("tim-kiem-tong-hop-chi-tiet")]
+        public async Task<List<NhatKyChungTu>> TongHopChiTietAsync(TongHopChiTietRequest req)
         {
-            return await _business.TongHopTheoThangAsync(nam, thang);
+            return await _business.TongHopChiTietAsync(req);
+        }
+        
+        [HttpPost("tong-hop-theo-thang")]
+        public async Task<TongHopThangReponse> TongHopTheoThang(DateTime? fromDate, DateTime toDate)
+        {
+            return await _business.TongHopTheoThangAsync(fromDate, toDate);
         }
     }
 }
