@@ -377,38 +377,52 @@ namespace Ttlaixe.Businesses
 
         public async Task<byte[]> GetChungTuNopHocPhiHV(DateTime? fromDate, DateTime? toDate)
         {
-            var query =
-                from ct in _context.LichSuNopHocPhis
-                join hp in _context.HoSoHocPhis
-                    on ct.MaDk equals hp.MaDk
-                select new { ct, hp };
+            // B1: Query lịch sử nộp và lọc ngày
+            var lichSuQuery = _context.LichSuNopHocPhis.AsQueryable();
 
-            // lọc động theo ngày
             if (fromDate.HasValue)
-                query = query.Where(x => x.ct.NgayNop >= fromDate.Value);
+                lichSuQuery = lichSuQuery.Where(x => x.NgayNop >= fromDate.Value);
 
             if (toDate.HasValue)
-                query = query.Where(x => x.ct.NgayNop <= toDate.Value);
+                lichSuQuery = lichSuQuery.Where(x => x.NgayNop <= toDate.Value);
 
-            var rows = await query
-                .Select(x => new HoaDonRow
+            // B2: Sum tiền TRƯỚC khi join
+            var tongTheoMaDk = await lichSuQuery
+                .GroupBy(x => x.MaDk)
+                .Select(g => new
                 {
-                    NgayHoaDon = x.ct.NgayNop.ToString("dd/MM/yyyy"),
-                    MaKhachHang = x.hp.MaDk,
-                    TenNguoiMua = x.hp.HoVaTen,
-                    DiaChiKhachHang = x.hp.NoiThuongTru,
-                    HinhThucThanhToan = x.ct.HinhThucThanhToan,
+                    MaDk = g.Key,
+                    TongTien = g.Sum(x => x.SoTienNop),
+                    NgayCuoi = g.Max(x => x.NgayNop),
+                    HinhThuc = g
+                        .OrderByDescending(x => x.NgayNop)
+                        .Select(x => x.HinhThucThanhToan)
+                        .FirstOrDefault()
+                })
+                .ToListAsync();
+
+            // B3: Join sang hồ sơ học phí
+            var rows = (
+                from t in tongTheoMaDk
+                join hp in _context.HoSoHocPhis.AsNoTracking()
+                    on t.MaDk equals hp.MaDk
+                select new HoaDonRow
+                {
+                    NgayHoaDon = t.NgayCuoi.ToString("dd/MM/yyyy"),
+                    MaKhachHang = hp.MaDk,
+                    TenNguoiMua = hp.HoVaTen,
+                    DiaChiKhachHang = hp.NoiThuongTru,
+                    HinhThucThanhToan = t.HinhThuc,
                     ThueSuat = Constants.ThueSuat,
-                    TenHangHoa = Constants.TenHangHoa + " " + x.hp.MaHangGplx,
+                    TenHangHoa = Constants.TenHangHoa + " " + hp.MaHangGplx,
                     DVT = "HV",
-                    ThanhTien = x.ct.SoTienNop,
+                    ThanhTien = t.TongTien,              // ✅ luôn đúng
                     SoTT = 1,
                     TinhChat = 1,
-                    TienThue = x.ct.SoTienNop * Constants.ThueSuat / 100,
-                    CanCuocCongDan = x.hp.SoCmt
+                    TienThue = t.TongTien * Constants.ThueSuat / 100,
+                    CanCuocCongDan = hp.SoCmt
                 })
-                .AsNoTracking()
-                .ToListAsync();
+                .ToList();
 
             return await ExportExcelAsync(rows);
         }
