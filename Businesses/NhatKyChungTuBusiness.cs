@@ -26,7 +26,7 @@ namespace Ttlaixe.Businesses
         Task<List<TongHopChungTuDto>> TongHopTheoTaiKhoanChiTietAsync(DateTime? fromDate, DateTime? toDate);
         Task<List<TongHopChungTuDto>> TongHopTheoTaiKhoanChaAsync(DateTime? fromDate, DateTime? toDate);
 
-        Task<byte[]> GetChungTuNopHocPhiHV(DateTime fromDate, DateTime toDate);
+        Task<byte[]> GetChungTuNopHocPhiHV(DateTime? fromDate, DateTime? toDate);
         Task<TongHopThangReponse> TongHopTheoThangAsync(DateTime? fromDate, DateTime toDate);
         Task<List<NhatKyChungTu>> TongHopChiTietAsync(TongHopChiTietRequest req);
     }
@@ -375,33 +375,40 @@ namespace Ttlaixe.Businesses
                 .ToListAsync();
         }
 
-        public async Task<byte[]> GetChungTuNopHocPhiHV(DateTime fromDate, DateTime toDate)
+        public async Task<byte[]> GetChungTuNopHocPhiHV(DateTime? fromDate, DateTime? toDate)
         {
             var query =
                 from ct in _context.LichSuNopHocPhis
                 join hp in _context.HoSoHocPhis
                     on ct.MaDk equals hp.MaDk
-                where ct.NgayNop >= fromDate
-                      && ct.NgayNop <= toDate
-                      //&& ct.GhiChu == Constants.NoiDungHocPhi
-                select new HoaDonRow
+                select new { ct, hp };
+
+            // lọc động theo ngày
+            if (fromDate.HasValue)
+                query = query.Where(x => x.ct.NgayNop >= fromDate.Value);
+
+            if (toDate.HasValue)
+                query = query.Where(x => x.ct.NgayNop <= toDate.Value);
+
+            var rows = await query
+                .Select(x => new HoaDonRow
                 {
-                    NgayHoaDon = ct.NgayNop.ToString("dd/MM/yyyy"),
-                    MaKhachHang = hp.MaDk,
-                    TenNguoiMua = hp.HoVaTen,
-                    DiaChiKhachHang = hp.NoiThuongTru,
-                    HinhThucThanhToan = ct.HinhThucThanhToan,
+                    NgayHoaDon = x.ct.NgayNop.ToString("dd/MM/yyyy"),
+                    MaKhachHang = x.hp.MaDk,
+                    TenNguoiMua = x.hp.HoVaTen,
+                    DiaChiKhachHang = x.hp.NoiThuongTru,
+                    HinhThucThanhToan = x.ct.HinhThucThanhToan,
                     ThueSuat = Constants.ThueSuat,
-                    TenHangHoa = Constants.TenHangHoa + " " + hp.MaHangGplx,
+                    TenHangHoa = Constants.TenHangHoa + " " + x.hp.MaHangGplx,
                     DVT = "HV",
-                    ThanhTien = ct.SoTienNop,
+                    ThanhTien = x.ct.SoTienNop,
                     SoTT = 1,
                     TinhChat = 1,
-                    TienThue = ct.SoTienNop * Constants.ThueSuat / 100,
-                    CanCuocCongDan = hp.SoCmt
-                };
-
-            var rows = await query.AsNoTracking().ToListAsync();
+                    TienThue = x.ct.SoTienNop * Constants.ThueSuat / 100,
+                    CanCuocCongDan = x.hp.SoCmt
+                })
+                .AsNoTracking()
+                .ToListAsync();
 
             return await ExportExcelAsync(rows);
         }
@@ -504,8 +511,10 @@ namespace Ttlaixe.Businesses
         public async Task<List<NhatKyChungTu>> TongHopChiTietAsync(TongHopChiTietRequest req)
         {
             if (req.MaTaiKhoans == null || !req.MaTaiKhoans.Any())
-                return new List<NhatKyChungTu>();
-
+            {
+                req.MaTaiKhoans = await _context.DmTaiKhoanKeToans.Where(x => x.IsActive == true).Select(x => x.MaTaiKhoan).ToListAsync();
+            }    
+            
             var fromDate = req.TuNgay.Date;
             var denDate = req.DenNgay.Date.AddDays(1).AddTicks(-1);
 

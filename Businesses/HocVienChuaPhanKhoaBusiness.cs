@@ -37,14 +37,17 @@ namespace Ttlaixe.Businesses
         private readonly GplxCsdtContext _gplx;
         private readonly IImageGplxService _imageService;
         private readonly INguoiLxesBusinesses _nguoiLxes;
+        private readonly IHoSoHocPhiBusiness _hocPhi;
         private static readonly log4net.ILog log
             = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
-        public HocVienChuaPhanKhoaBusiness(TeknovaContext context, GplxCsdtContext gplx, IImageGplxService imageService, INguoiLxesBusinesses nguoiLxes)
+        public HocVienChuaPhanKhoaBusiness(TeknovaContext context, GplxCsdtContext gplx, IImageGplxService imageService, 
+                INguoiLxesBusinesses nguoiLxes, IHoSoHocPhiBusiness hocPhi)
         {
             _context = context;
             _gplx = gplx;
             _imageService = imageService;
             _nguoiLxes = nguoiLxes;
+            _hocPhi = hocPhi;
         }
 
         public async Task<List<HocVienChuaPhanKhoaDTO>> GetAllAsync(bool? chuaCoLop = true)
@@ -127,22 +130,36 @@ namespace Ttlaixe.Businesses
         return (bytes, contentType);
     }
 
-        public async Task CreateAsync(HocVienChuaPhanKhoaRequest rq)
+        public async Task CreateAsync(HocVienChuaPhanKhoaRequest hv)
         {
             var model = new HocVienChuaPhanKhoa();
-            rq.Patch(model);
+            hv.Patch(model);
             model.NgayNopHoSo = DateTime.Now;
 
             _context.HocVienChuaPhanKhoas.Add(model);
             await _context.SaveChangesAsync(); // có SoCmt ổn định
 
-            if (rq.File != null && rq.File.Length > 0)
+            if (hv.File != null && hv.File.Length > 0)
             {
                 model.DuongDanAnh = await _imageService
-                    .SaveAsync(rq.File, model.MaDk ?? model.SoCmt, model.SoCmt);
+                    .SaveAsync(hv.File, model.MaDk ?? model.SoCmt, model.SoCmt);
 
                 await _context.SaveChangesAsync();
             }
+
+            var hosoHocPhi = new HoSoHocPhiCreated
+            {
+                MaDk = string.IsNullOrWhiteSpace(model.MaDk)
+                ? model.IdHs.ToString(): model.MaDk,              // KEY QUAN TRỌNG
+                HoVaTen = $"{hv.HoDemNlx} {hv.TenNlx}",
+                NgaySinh = hv.NgaySinh.ToString("ddMMyyyy"),
+                MaHangGplx = hv.HangDaoTao,
+                DaHoanThanhHp = false,
+                BoHoc = false,
+                GioiTinh = hv.GioiTinh,
+                SoCmt = hv.SoCmt
+            };
+            await _hocPhi.CreateAsync(hosoHocPhi);
         }
 
         public async Task<bool> UpdateAsync(HocVienChuaPhanKhoaUpdateRequest rq)

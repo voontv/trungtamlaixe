@@ -96,7 +96,10 @@ namespace Ttlaixe.Businesses
 
             var hoSoHocPhi = new HoSoHocPhi();
             model.Patch(hoSoHocPhi);
-
+            if(hoSoHocPhi.HocPhi <= 0 && hocPhi != null)
+            {
+                hoSoHocPhi.HocPhi = hocPhi.HocPhi;
+            }    
             return hoSoHocPhi;
         }
 

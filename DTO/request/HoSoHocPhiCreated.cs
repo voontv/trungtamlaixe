@@ -2,6 +2,8 @@
 {
     public class HoSoHocPhiCreated
     {
+        public string MaDk { get; set; }
+
         public string MaKhoaHoc { get; set; }
 
         public string MaHangGplx { get; set; }
