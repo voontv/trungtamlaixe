@@ -1,5 +1,6 @@
 ﻿using ImageMagick;
-using Microsoft.AspNetCore.Http;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Differencing;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -132,12 +133,30 @@ namespace Ttlaixe.Businesses
 
         public async Task CreateAsync(HocVienChuaPhanKhoaRequest hv)
         {
+
+            var exit = await _context.HocVienChuaPhanKhoas.AnyAsync(x => x.SoCmt == hv.SoCmt 
+                    && x.HangDaoTao == hv.HangDaoTao && x.TrangThai == true);
+            if(exit)  throw new BadRequestException("Hồ sơ này đã tồn tại vui lòng kiểm tra lại");
+
             var model = new HocVienChuaPhanKhoa();
+            
             hv.Patch(model);
             model.NgayNopHoSo = DateTime.Now;
 
             _context.HocVienChuaPhanKhoas.Add(model);
-            await _context.SaveChangesAsync(); // có SoCmt ổn định
+            try
+            {
+                await _context.SaveChangesAsync(); // có SoCmt ổn định
+            }
+            catch (DbUpdateException ex)
+            {
+                var inner = ex.InnerException;
+
+                throw new BadRequestException(
+                    inner?.Message ?? ex.Message
+                );
+            }
+
 
             if (hv.File != null && hv.File.Length > 0)
             {
@@ -159,16 +178,32 @@ namespace Ttlaixe.Businesses
                 GioiTinh = hv.GioiTinh,
                 SoCmt = hv.SoCmt
             };
-            await _hocPhi.CreateAsync(hosoHocPhi);
+            try
+            {
+                await _hocPhi.CreateAsync(hosoHocPhi);
+            }
+            catch (DbUpdateException ex)
+            {
+                var inner = ex.InnerException;
+
+                throw new BadRequestException(
+                    inner?.Message ?? ex.Message
+                );
+            }
+
         }
 
         public async Task<bool> UpdateAsync(HocVienChuaPhanKhoaUpdateRequest rq)
         {
+
             var entity = await _context.HocVienChuaPhanKhoas
                 .FirstOrDefaultAsync(x => x.IdHs == rq.IdHs);
 
             if (entity == null)
                 return false;
+
+            if (entity.MaDk != null && entity.MaKhoaHoc != null) 
+                throw new BadRequestException("Đã chuyển lớp học không thể update hồ sơ này");
 
             rq.Patch(entity);
 

@@ -377,49 +377,90 @@ namespace Ttlaixe.Businesses
 
         public async Task<byte[]> GetChungTuNopHocPhiHV(DateTime? fromDate, DateTime? toDate)
         {
-            // B1: Query lịch sử nộp và lọc ngày
-            var lichSuQuery = _context.LichSuNopHocPhis.AsQueryable();
+            // =========================
+            // QUERY LỊCH SỬ NỘP
+            // =========================
+            var lichSuQuery = _context.LichSuNopHocPhis
+                .AsNoTracking()
+                .AsQueryable();
 
             if (fromDate.HasValue)
-                lichSuQuery = lichSuQuery.Where(x => x.NgayNop >= fromDate.Value);
+            {
+                var from = fromDate.Value.Date;
+                lichSuQuery = lichSuQuery.Where(x => x.NgayNop >= from);
+            }
 
             if (toDate.HasValue)
-                lichSuQuery = lichSuQuery.Where(x => x.NgayNop <= toDate.Value);
+            {
+                var to = toDate.Value.Date.AddDays(1).AddTicks(-1);
+                lichSuQuery = lichSuQuery.Where(x => x.NgayNop <= to);
+            }
 
-            // B2: Sum tiền TRƯỚC khi join
+            // =========================
+            // GROUP THEO MÃ ĐĂNG KÝ
+            // =========================
             var tongTheoMaDk = await lichSuQuery
                 .GroupBy(x => x.MaDk)
                 .Select(g => new
                 {
                     MaDk = g.Key,
+
+                    // Tổng tiền
                     TongTien = g.Sum(x => x.SoTienNop),
+
+                    // Ngày nộp cuối
                     NgayCuoi = g.Max(x => x.NgayNop),
-                    HinhThuc = g
+
+                    // Lấy 1 hình thức thanh toán bất kỳ
+                    HinhThucThanhToan = g
                         .OrderByDescending(x => x.NgayNop)
                         .Select(x => x.HinhThucThanhToan)
                         .FirstOrDefault()
                 })
                 .ToListAsync();
 
-            // B3: Join sang hồ sơ học phí
+            // =========================
+            // LẤY HỒ SƠ HỌC PHÍ
+            // =========================
+            var hoSoHocPhi = await _context.HoSoHocPhis
+                .AsNoTracking()
+                .ToListAsync();
+
+            // =========================
+            // JOIN RA HÓA ĐƠN
+            // =========================
             var rows = (
                 from t in tongTheoMaDk
-                join hp in _context.HoSoHocPhis.AsNoTracking()
+                join hp in hoSoHocPhi
                     on t.MaDk equals hp.MaDk
                 select new HoaDonRow
                 {
                     NgayHoaDon = t.NgayCuoi.ToString("dd/MM/yyyy"),
+
                     MaKhachHang = hp.MaDk,
+
                     TenNguoiMua = hp.HoVaTen,
+
                     DiaChiKhachHang = hp.NoiThuongTru,
-                    HinhThucThanhToan = t.HinhThuc,
+
+                    HinhThucThanhToan = t.HinhThucThanhToan,
+
                     ThueSuat = Constants.ThueSuat,
+
                     TenHangHoa = Constants.TenHangHoa + " " + hp.MaHangGplx,
+
                     DVT = "HV",
-                    ThanhTien = t.TongTien,              // ✅ luôn đúng
+
+                    // Tổng tiền đúng
+                    ThanhTien = t.TongTien,
+
                     SoTT = 1,
+
                     TinhChat = 1,
-                    TienThue = t.TongTien * Constants.ThueSuat / 100,
+
+                    // Tiền thuế
+                    TienThue = t.TongTien * Constants.ThueSuat / 100m,
+
                     CanCuocCongDan = hp.SoCmt
                 })
                 .ToList();

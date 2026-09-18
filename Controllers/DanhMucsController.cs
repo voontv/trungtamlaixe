@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Ttlaixe.Models;
 using Ttlaixe.Businesses;
 using Ttlaixe.DTO.response;
+using System;
 
 namespace Ttlaixe.Controllers
 {
@@ -35,6 +36,19 @@ namespace Ttlaixe.Controllers
         {
             return await _business.GetMaHangDaoTao();
         }
+
+        [HttpGet("ma-hang-dao-tao-chuan")]
+        public  object GetDanhSachHangDaoTao()
+        {
+            return new[]
+            {
+                new { Hanggplx = "A1m", Hangdaotao = "A1m" },
+                new { Hanggplx = "B11", Hangdaotao = "B.01" },
+                new { Hanggplx = "B1", Hangdaotao = "B" },
+                new { Hanggplx = "C1", Hangdaotao = "C1" }
+            };
+        }
+
 
         [HttpGet("loai-hinh-dao-tao/{maDaoTao}")]
         public async Task<List<HangDaoTaoReponse>> GetDmLoaiHinhDaoTao(string maDaoTao)

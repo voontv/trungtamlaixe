@@ -188,8 +188,21 @@ public partial class TeknovaContext : DbContext
             entity.Property(e => e.DonSatHach)
                 .IsRequired()
                 .HasDefaultValueSql("((1))");
+            entity.Property(e => e.DonViCapGplxdaCo)
+                .HasMaxLength(100)
+                .IsUnicode(false)
+                .HasColumnName("DonViCapGPLXDaCo");
+            entity.Property(e => e.DonViHocLx)
+                .HasMaxLength(6)
+                .IsUnicode(false)
+                .HasColumnName("DonViHocLX");
+            entity.Property(e => e.DonViNhanHso)
+                .HasMaxLength(6)
+                .IsUnicode(false)
+                .HasColumnName("DonViNhanHSo");
             entity.Property(e => e.DuongDanAnh).HasMaxLength(255);
             entity.Property(e => e.GhiChu).HasMaxLength(250);
+            entity.Property(e => e.GiayTos).HasMaxLength(255);
             entity.Property(e => e.GioiTinh)
                 .IsRequired()
                 .HasMaxLength(1)
@@ -202,6 +215,15 @@ public partial class TeknovaContext : DbContext
             entity.Property(e => e.HangDaoTao)
                 .HasMaxLength(20)
                 .IsUnicode(false);
+            entity.Property(e => e.HangGplx)
+                .IsRequired()
+                .HasMaxLength(3)
+                .IsUnicode(false)
+                .HasColumnName("HangGPLX");
+            entity.Property(e => e.HangGplxdaCo)
+                .HasMaxLength(100)
+                .IsUnicode(false)
+                .HasColumnName("HangGPLXDaCo");
             entity.Property(e => e.HoDemNlx)
                 .IsRequired()
                 .HasMaxLength(30)
@@ -224,10 +246,59 @@ public partial class TeknovaContext : DbContext
                 .IsRequired()
                 .HasMaxLength(3)
                 .IsUnicode(false);
+            entity.Property(e => e.NgayCapCmt)
+                .HasColumnType("datetime")
+                .HasColumnName("NgayCapCMT");
+            entity.Property(e => e.NgayCapGplxdaCo)
+                .HasMaxLength(100)
+                .IsUnicode(false)
+                .HasColumnName("NgayCapGPLXDaCo");
+            entity.Property(e => e.NgayHhgplxdaCo)
+                .HasMaxLength(100)
+                .IsUnicode(false)
+                .HasColumnName("NgayHHGPLXDaCo");
             entity.Property(e => e.NgayNopHoSo)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.NgaySinh).HasColumnType("datetime");
+            entity.Property(e => e.NgaySua).HasColumnType("datetime");
+            entity.Property(e => e.NgayTao).HasColumnType("datetime");
+            entity.Property(e => e.NgayTtgplxdaCo)
+                .HasMaxLength(100)
+                .IsUnicode(false)
+                .HasColumnName("NgayTTGPLXDaCo");
+            entity.Property(e => e.NguoiSua).HasMaxLength(30);
+            entity.Property(e => e.NguoiTao).HasMaxLength(30);
+            entity.Property(e => e.NguonGioiThieu)
+                .IsRequired()
+                .HasMaxLength(255);
+            entity.Property(e => e.NoiCapCmt)
+                .IsRequired()
+                .HasMaxLength(50)
+                .HasColumnName("NoiCapCMT");
+            entity.Property(e => e.NoiCapGplxdaCo)
+                .HasMaxLength(500)
+                .HasColumnName("NoiCapGPLXDaCo");
+            entity.Property(e => e.NoiCt)
+                .HasMaxLength(50)
+                .HasColumnName("NoiCT");
+            entity.Property(e => e.NoiCtMaDvhc)
+                .IsRequired()
+                .HasMaxLength(5)
+                .IsUnicode(false)
+                .HasColumnName("NoiCT_MaDVHC");
+            entity.Property(e => e.NoiTt)
+                .HasMaxLength(50)
+                .HasColumnName("NoiTT");
+            entity.Property(e => e.NoiTtMaDvhc)
+                .IsRequired()
+                .HasMaxLength(5)
+                .IsUnicode(false)
+                .HasColumnName("NoiTT_MaDVHC");
+            entity.Property(e => e.SoCmndCu)
+                .HasMaxLength(20)
+                .IsUnicode(false)
+                .HasColumnName("SO_CMND_CU");
             entity.Property(e => e.SoCmt)
                 .IsRequired()
                 .HasMaxLength(20)
@@ -236,7 +307,16 @@ public partial class TeknovaContext : DbContext
             entity.Property(e => e.SoDienThoai)
                 .HasMaxLength(10)
                 .IsUnicode(false);
+            entity.Property(e => e.SoGplxdaCo)
+                .HasMaxLength(100)
+                .IsUnicode(false)
+                .HasColumnName("SoGPLXDaCo");
+            entity.Property(e => e.SoKmLxanToan).HasColumnName("SoKmLXAnToan");
+            entity.Property(e => e.SoNamLx).HasColumnName("SoNamLX");
             entity.Property(e => e.SoTienNop).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.TenKhoaNoiBo)
+                .IsRequired()
+                .HasMaxLength(255);
             entity.Property(e => e.TenNlx)
                 .IsRequired()
                 .HasMaxLength(20)

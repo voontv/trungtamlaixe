@@ -59,4 +59,56 @@ public partial class HocVienChuaPhanKhoa
     public string DuongDanAnh { get; set; }
 
     public string MaKhoaHoc { get; set; }
+
+    public string TenKhoaNoiBo { get; set; }
+
+    public string NguonGioiThieu { get; set; }
+
+    public DateTime NgayCapCmt { get; set; }
+
+    public string NoiCapCmt { get; set; }
+
+    public string SoGplxdaCo { get; set; }
+
+    public string HangGplxdaCo { get; set; }
+
+    public string DonViCapGplxdaCo { get; set; }
+
+    public string NoiCapGplxdaCo { get; set; }
+
+    public string NgayCapGplxdaCo { get; set; }
+
+    public string NgayHhgplxdaCo { get; set; }
+
+    public string NgayTtgplxdaCo { get; set; }
+
+    public string DonViHocLx { get; set; }
+
+    public string HangGplx { get; set; }
+
+    public int? SoNamLx { get; set; }
+
+    public int? SoKmLxanToan { get; set; }
+
+    public string GiayTos { get; set; }
+
+    public string NguoiTao { get; set; }
+
+    public string NguoiSua { get; set; }
+
+    public DateTime? NgayTao { get; set; }
+
+    public DateTime? NgaySua { get; set; }
+
+    public string DonViNhanHso { get; set; }
+
+    public string NoiTt { get; set; }
+
+    public string NoiTtMaDvhc { get; set; }
+
+    public string NoiCt { get; set; }
+
+    public string NoiCtMaDvhc { get; set; }
+
+    public string SoCmndCu { get; set; }
 }

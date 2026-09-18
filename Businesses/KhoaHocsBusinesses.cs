@@ -40,43 +40,43 @@ namespace Ttlaixe.Businesses
             _authenInfo = authenInfo;
         }
 
-        public async Task PostKhoaHocTam()
-        {
-            var maKh = Constants.MaKhoaHocTam;
-            var heThong = await _context.QthtThamSoHts.Where(x => x.TenTs.Equals("MA_DONVI")).FirstOrDefaultAsync();
-            if (await KhoaHocExistsAsync(maKh))
-                throw new BadRequestException("Khóa học này đã được tạo");
+        //public async Task PostKhoaHocTam()
+        //{
+        //    var maKh = Constants.MaKhoaHocTam;
+        //    var heThong = await _context.QthtThamSoHts.Where(x => x.TenTs.Equals("MA_DONVI")).FirstOrDefaultAsync();
+        //    if (await KhoaHocExistsAsync(maKh))
+        //        throw new BadRequestException("Khóa học này đã được tạo");
 
-            var khoaHoc = new KhoaHoc
-            {
-                MaSoGtvt = Constants.MaSoGTVT,
-                MaCsdt = heThong.GiaTriTs,
-                TenKh = heThong.GiaTriTs,
-                MaKh = maKh,
-                HangDt = "B.01",
-                HangGplx = "B11"
-            };
+        //    var khoaHoc = new KhoaHoc
+        //    {
+        //        MaSoGtvt = Constants.MaSoGTVT,
+        //        MaCsdt = heThong.GiaTriTs,
+        //        TenKh = heThong.GiaTriTs,
+        //        MaKh = maKh,
+        //        HangDt = "B.01",
+        //        HangGplx = "B11"
+        //    };
 
-            _context.KhoaHocs.Add(khoaHoc);
+        //    _context.KhoaHocs.Add(khoaHoc);
 
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateException ex)
-            {
-                var sqlEx = ex.InnerException?.InnerException ?? ex.InnerException;
+        //    try
+        //    {
+        //        await _context.SaveChangesAsync();
+        //    }
+        //    catch (DbUpdateException ex)
+        //    {
+        //        var sqlEx = ex.InnerException?.InnerException ?? ex.InnerException;
 
-                var detail = $@"
-                Lỗi khi lưu KhoaHoc:
-                Message: {ex.Message}
-                Inner: {ex.InnerException?.Message}
-                Sql: {sqlEx?.Message}
-                ";
+        //        var detail = $@"
+        //        Lỗi khi lưu KhoaHoc:
+        //        Message: {ex.Message}
+        //        Inner: {ex.InnerException?.Message}
+        //        Sql: {sqlEx?.Message}
+        //        ";
 
-                throw new BadRequestException(detail);
-            }
-        }
+        //        throw new BadRequestException(detail);
+        //    }
+        //}
 
         private async Task<bool> KhoaHocExistsAsync(string maKh)
         {
@@ -96,11 +96,11 @@ namespace Ttlaixe.Businesses
 
         public async Task<List<KhoaHocResponse>> GetListKhoaHocsTheoTg(MocThoiGian dk)
         {
-            var exit = await KhoaHocExistsAsync(Constants.MaKhoaHocTam);
-            if (!exit)
-            {
-                await PostKhoaHocTam();
-            }    
+            //var exit = await KhoaHocExistsAsync(Constants.MaKhoaHocTam);
+            //if (!exit)
+            //{
+            //    await PostKhoaHocTam();
+            //}    
             
             var result = _context.KhoaHocs.AsQueryable();
 

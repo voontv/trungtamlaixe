@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
 using System;
-using Ttlaixe.DTO.response;
 
 namespace Ttlaixe.DTO.request
 {
@@ -48,9 +47,51 @@ namespace Ttlaixe.DTO.request
 
         public string GioiTinh { get; set; }
 
-        public string MaDk { get; set; }
+    /// <summary>
+    /// 0 = khong hieu luc; 1 = co hieu luc; mac dinh la 1;
+    /// </summary>
+    public bool? TrangThai { get; set; }
 
-        public string DuongDanAnh { get; set; }
+    public string MaDk { get; set; }
+
+    public string DuongDanAnh { get; set; }
+
+    public string TenKhoaNoiBo { get; set; }
+
+    public string NguonGioiThieu { get; set; }
+
+    public DateTime NgayCapCmt { get; set; }
+
+    public string NoiCapCmt { get; set; }
+
+    public string SoGplxdaCo { get; set; }
+
+    public string HangGplxdaCo { get; set; }
+
+    public string DonViCapGplxdaCo { get; set; }
+
+    public string NoiCapGplxdaCo { get; set; }
+
+    public string NgayCapGplxdaCo { get; set; }
+
+    public string NgayHhgplxdaCo { get; set; }
+
+    public string NgayTtgplxdaCo { get; set; }
+
+    public string HangGplx { get; set; }
+
+    public int? SoNamLx { get; set; }
+
+    public int? SoKmLxanToan { get; set; }
+
+    public string GiayTos { get; set; }
+    public string NoiTt { get; set; }
+
+    public string NoiTtMaDvhc { get; set; }
+
+    public string NoiCt { get; set; }
+
+    public string NoiCtMaDvhc { get; set; }
 
         public IFormFile? File { get; set; }
     }

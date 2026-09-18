@@ -51,7 +51,7 @@ namespace Ttlaixe.Businesses
         public async Task<LichSuNopHocPhiReponse> CreateAsync(LichSuNopHocPhiRequest model)
         {
             var hoSo = await _context.HoSoHocPhis
-                .FirstOrDefaultAsync(x => x.MaDk == model.MaDk && (bool) !x.BoHoc);
+                .FirstOrDefaultAsync(x => x.MaDk == model.MaDk && (bool)!x.BoHoc);
 
             if (hoSo == null)
                 throw new BadRequestException("Không tìm thấy hồ sơ học phí.");
@@ -69,6 +69,7 @@ namespace Ttlaixe.Businesses
                 throw new BadRequestException("Số tiền nộp vượt quá học phí phải nộp.");
 
             model.NgayNop = model.NgayNop == default ? DateTime.Now : model.NgayNop;
+
             var lichSuNop = new LichSuNopHocPhi();
             model.Patch(lichSuNop);
             lichSuNop.NgayKhoiTao = DateTime.Now;
@@ -79,19 +80,44 @@ namespace Ttlaixe.Businesses
             hoSo.NgayChinhSuaCuoiCung = DateTime.Now;
 
             await _context.SaveChangesAsync();
+
             var result = new LichSuNopHocPhiReponse();
             lichSuNop.Patch(result);
 
+            // =========================
+            // TÁCH TIỀN
+            // =========================
+            decimal tienTruocThue = Math.Round(model.SoTienNop / (1 + Constants.ThueSuat / 100m), 0);
+            decimal tienThue = model.SoTienNop - tienTruocThue;
+
+            // =========================
+            // CHỨNG TỪ 1 - DOANH THU
+            // =========================
             var nhatKyChungTu = new NhatKyChungTuRequest();
             nhatKyChungTu.SoChungTu = model.MaDk;
             nhatKyChungTu.GhiChu = Constants.NoiDungHocPhi;
             nhatKyChungTu.NgayLap = model.NgayNop;
-            nhatKyChungTu.SoTien = model.SoTienNop;
-            nhatKyChungTu.DienGiai = "Học viên " + hoSo.HoVaTen + " "+ Constants.NoiDungHocPhi;
+            nhatKyChungTu.SoTien = tienTruocThue;
+            nhatKyChungTu.DienGiai = "Học viên " + hoSo.HoVaTen + " " + Constants.NoiDungHocPhi;
             nhatKyChungTu.TaiKhoanCo = model.TaiKhoanCo;
             nhatKyChungTu.TaiKhoanNo = model.TaiKhoanNo;
+
             await _nhatKyChungTu.CreateAsync(nhatKyChungTu);
-            
+
+            // =========================
+            // CHỨNG TỪ 2 - VAT 3331
+            // =========================
+            var chungTuThue = new NhatKyChungTuRequest();
+            chungTuThue.SoChungTu = model.MaDk;
+            chungTuThue.GhiChu = "Thuế VAT học phí";
+            chungTuThue.NgayLap = model.NgayNop;
+            chungTuThue.SoTien = tienThue;
+            chungTuThue.DienGiai = "Thuế VAT học viên " + hoSo.HoVaTen;
+            chungTuThue.TaiKhoanCo = "3331";
+            chungTuThue.TaiKhoanNo = model.TaiKhoanNo;
+
+            await _nhatKyChungTu.CreateAsync(chungTuThue);
+
             return result;
         }
 

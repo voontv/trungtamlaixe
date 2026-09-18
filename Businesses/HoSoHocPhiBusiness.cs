@@ -81,7 +81,7 @@ namespace Ttlaixe.Businesses
             if(model.RotHocLaiCungHangLx == null || model.RotHocLaiCungHangLx == false)
             {
                 existed = await _context.HoSoHocPhis
-                .AnyAsync(x => x.MaHangGplx == model.MaHangGplx && model.SoCmt == x.SoCmt);
+                .AnyAsync(x => x.MaHangGplx == model.MaHangGplx && model.SoCmt == x.SoCmt && (x.DaHoanThanhHp == true || x.BoHoc == true));
             }    
 
             if (existed)

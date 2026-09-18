@@ -62,6 +62,16 @@ namespace Ttlaixe.Businesses
             if (await ExistsSoCmtInKhoaHocAsync(rq.MaCsdt, rq.MaKhoaHoc, rq.SoCmt))
                 throw new BadRequestException("Số CMT này đã tồn tại trong khóa học này.");
 
+            var maDonVi = await _context.QthtThamSoHts
+            .Where(x => x.TenTs == "MA_CSDT")
+            .Select(x => x.GiaTriTs)
+            .FirstOrDefaultAsync();
+
+            var maDonViSoGTVT = await _context.QthtThamSoHts
+            .Where(x => x.TenTs == "MA_SO_GTVT")
+            .Select(x => x.GiaTriTs)
+            .FirstOrDefaultAsync();
+
             string maDk;
             int retry = 0;
 
@@ -87,7 +97,8 @@ namespace Ttlaixe.Businesses
                 nguoi.HoVaTenIn = nguoi.HoVaTen;
                 nguoi.NoiCt = "";
                 nguoi.NoiTt = "";
-
+                nguoi.NoiCtMaDvhc = maDonViSoGTVT;
+                nguoi.NoiCtMaDvql = maDonViSoGTVT;
                 var lastSoHoSo = await _context.NguoiLxHoSos
                     .Where(x => x.MaCsdt == rq.MaCsdt && x.MaKhoaHoc == rq.MaKhoaHoc)
                     .OrderByDescending(x => x.SoHoSo)
@@ -110,7 +121,7 @@ namespace Ttlaixe.Businesses
                 var hoSo = new NguoiLxHoSo
                 {
                     MaCsdt = rq.MaCsdt,
-                    MaSoGtvt = Constants.MaSoGTVT,
+                    MaSoGtvt = maDonViSoGTVT,
                     MaDvnhanHso = rq.MaCsdt,
                     NgayNhanHso = now,
                     MaLoaiHs = maLoaiHs,

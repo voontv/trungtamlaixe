@@ -97,6 +97,7 @@ namespace Ttlaixe.Businesses
                 .ToListAsync();
         }
 
+
         public async Task<List<HangDaoTaoReponse>> GetLoaiHinhDaoTao(string maHangDaoTao)
         {
             maHangDaoTao = (maHangDaoTao ?? "").Trim();
