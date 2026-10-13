@@ -547,9 +547,11 @@ public partial class GplxCsdtContext : DbContext
                 .HasMaxLength(150)
                 .HasComment("Đường dẫn tới ảnh chân dung của Giáo viên")
                 .HasColumnName("AnhCD");
+            entity.Property(e => e.CacHangDaCo).HasMaxLength(500);
             entity.Property(e => e.CacHangGplxduocDt)
                 .HasMaxLength(50)
                 .HasColumnName("CacHangGPLXDuocDT");
+            entity.Property(e => e.CacMonHoc).HasMaxLength(500);
             entity.Property(e => e.CauTaoSuaChua)
                 .HasMaxLength(1)
                 .IsUnicode(false)
@@ -562,21 +564,18 @@ public partial class GplxCsdtContext : DbContext
                 .HasMaxLength(50)
                 .IsUnicode(false)
                 .HasComment("Số điện thoại");
-            entity.Property(e => e.GhiChu).HasMaxLength(255);
+            entity.Property(e => e.GhiChu).HasMaxLength(500);
             entity.Property(e => e.GioiTinh)
                 .HasMaxLength(1)
                 .IsUnicode(false)
                 .IsFixedLength()
                 .HasComment("Giới tính của Giáo viên. U=Không xác định; M=Nam; F=Nữ");
             entity.Property(e => e.HangGplx)
-                .IsRequired()
-                .HasMaxLength(3)
-                .IsUnicode(false)
+                .HasMaxLength(50)
                 .HasComment("Hạng GPLX của Giáo viên. Được lưu theo định dạng: A1|A2|A3|...")
                 .HasColumnName("HangGPLX");
             entity.Property(e => e.HinhThucTuyenDung)
-                .HasMaxLength(2)
-                .IsUnicode(false)
+                .HasMaxLength(50)
                 .HasComment("Hình thức tuyển dụng. CT=Chính thức; HD=Hợp đồng")
                 .HasColumnName("HinhThuc_TuyenDung");
             entity.Property(e => e.HoTenDem)
@@ -587,9 +586,9 @@ public partial class GplxCsdtContext : DbContext
                 .HasMaxLength(1)
                 .IsUnicode(false)
                 .IsFixedLength();
+            entity.Property(e => e.LoaiGiaoVien).HasMaxLength(50);
             entity.Property(e => e.LoaiHinhDaoTao)
-                .HasMaxLength(2)
-                .IsUnicode(false)
+                .HasMaxLength(500)
                 .HasComment("Loại hình đào tạo. LT=Lý thuyết; TH=Thực hànhl;LH = Cả hai")
                 .HasColumnName("LoaiHinh_DaoTao");
             entity.Property(e => e.LuatGtdb)
@@ -1003,8 +1002,11 @@ public partial class GplxCsdtContext : DbContext
                 .HasMaxLength(10)
                 .IsUnicode(false)
                 .HasColumnName("DAT_ThoiGianLayKQ");
+            entity.Property(e => e.DiemKqhinh).HasColumnName("DiemKQHinh");
             entity.Property(e => e.DiemKqlyThuyet).HasColumnName("DiemKQLyThuyet");
+            entity.Property(e => e.DiemKqmoPhong).HasColumnName("DiemKQMoPhong");
             entity.Property(e => e.DiemKqthucHanh).HasColumnName("DiemKQThucHanh");
+            entity.Property(e => e.DiemKqtienLui).HasColumnName("DiemKQTienLui");
             entity.Property(e => e.DonViCapGplxdaCo)
                 .HasMaxLength(100)
                 .IsUnicode(false)

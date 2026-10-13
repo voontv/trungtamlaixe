@@ -97,7 +97,7 @@ namespace Ttlaixe.Businesses
                 nguoi.HoVaTenIn = nguoi.HoVaTen;
                 nguoi.NoiCt = "";
                 nguoi.NoiTt = "";
-                nguoi.NoiCtMaDvhc = maDonViSoGTVT;
+                // NoiCtMaDvhc lấy từ body qua rq.Patch(nguoi)
                 nguoi.NoiCtMaDvql = maDonViSoGTVT;
                 var lastSoHoSo = await _context.NguoiLxHoSos
                     .Where(x => x.MaCsdt == rq.MaCsdt && x.MaKhoaHoc == rq.MaKhoaHoc)
@@ -111,10 +111,7 @@ namespace Ttlaixe.Businesses
 
                 var soHoSo = nextSoHoSoNumber.ToString("D3");
 
-                var maLoaiHs = 2;
-                string[] motoCodes = { "A01", "A02", "A1", "A1m", "A2" };
-                if (motoCodes.Contains(rq.HangGplx))
-                    maLoaiHs = 1;
+                var maLoaiHs = await GetMaLoaiHsByKhoaHocAsync(rq.MaKhoaHoc);
 
                 var maHeThongCap = nguoi.MaQuocTich != "VNM" ? "CM_EN" : "CM_VN";
 
@@ -127,7 +124,7 @@ namespace Ttlaixe.Businesses
                     MaLoaiHs = maLoaiHs,
                     TtXuLy = "01",
                     ChonInGplx = 2,
-                    GiayCnsk = false,
+                    GiayCnsk = true,
                     TransferFlag = 0,
                     //HosoDvcc4 = 0,
                     TrangThai = true,
@@ -206,6 +203,36 @@ namespace Ttlaixe.Businesses
                 || msg.Contains("duplicate", StringComparison.OrdinalIgnoreCase);
         }
 
+        private async Task<int> GetMaLoaiHsByKhoaHocAsync(string maKhoaHoc)
+        {
+            if (string.IsNullOrWhiteSpace(maKhoaHoc))
+                throw new BadRequestException("Mã khóa học không được để trống.");
+
+            var khoaHoc = await _context.KhoaHocs
+                .AsNoTracking()
+                .Where(x => x.MaKh == maKhoaHoc)
+                .Select(x => new
+                {
+                    x.HangDt,
+                    x.HangGplx
+                })
+                .FirstOrDefaultAsync();
+
+            if (khoaHoc == null)
+                throw new BadRequestException($"Không tìm thấy khóa học {maKhoaHoc}.");
+
+            // Logic dùng chung cho ô tô và mô tô theo dữ liệu khóa học:
+            // HangDT có dấu '-' => loại 3; còn lại HangGPLX có 'A' => loại 1; còn lại => loại 2.
+            if (!string.IsNullOrWhiteSpace(khoaHoc.HangDt) && khoaHoc.HangDt.Contains("-"))
+                return 3;
+
+            if (!string.IsNullOrWhiteSpace(khoaHoc.HangGplx)
+                && khoaHoc.HangGplx.Contains("A", StringComparison.OrdinalIgnoreCase))
+                return 1;
+
+            return 2;
+        }
+
         public async Task<bool> UpdateAsync(NguoiLxResponse rq)
         {
             var file = rq.File;
@@ -243,39 +270,63 @@ namespace Ttlaixe.Businesses
                     $"Không được phép chỉnh sửa hồ sơ khi TT_XuLy = {hoSo.TtXuLy}");
             }
 
+            var maQuocTichHienTai = nguoi.MaQuocTich;
+
             // ===== PATCH =====
             rq.Patch(nguoi);
             rq.Patch(hoSo);
 
             nguoi.TrangThai = nguoi.TrangThai ?? true;
             nguoi.NgaySua = now;
-            nguoi.MaQuocTich =
-                string.IsNullOrWhiteSpace(rq.MaQuocTich)
-                    ? "VNM"
-                    : rq.MaQuocTich;
+
+            // Nếu body update không truyền quốc tịch thì giữ giá trị đang có;
+            // chỉ dùng VNM khi cả body và dữ liệu hiện tại đều rỗng.
+            nguoi.MaQuocTich = string.IsNullOrWhiteSpace(rq.MaQuocTich)
+                ? (string.IsNullOrWhiteSpace(maQuocTichHienTai) ? "VNM" : maQuocTichHienTai)
+                : rq.MaQuocTich;
+
+            // Đồng bộ lại họ tên đầy đủ sau khi HoDemNLX/TenNLX được cập nhật.
+            nguoi.HoVaTen = $"{nguoi.HoDemNlx} {nguoi.TenNlx}".Trim();
+            nguoi.HoVaTenIn = nguoi.HoVaTen;
 
             // ===== MA LOAI HS =====
-            var maLoaiHs = 2;
-
-            string[] motoCodes = { "A01", "A02", "A1", "A1m", "A2" };
-
-            if (motoCodes.Contains(rq.HangGplx))
-                maLoaiHs = 1;
-
-            hoSo.MaLoaiHs = maLoaiHs;
+            hoSo.MaLoaiHs = await GetMaLoaiHsByKhoaHocAsync(hoSo.MaKhoaHoc);
             hoSo.NgaySua = now;
+
+            // Create đã không cho trùng CMT trong cùng CSDT + khóa học;
+            // Update cũng giữ đúng cùng một quy tắc, nhưng loại trừ chính hồ sơ đang sửa.
+            if (!string.IsNullOrWhiteSpace(nguoi.SoCmt)
+                && !string.IsNullOrWhiteSpace(hoSo.MaCsdt)
+                && !string.IsNullOrWhiteSpace(hoSo.MaKhoaHoc))
+            {
+                var existsSoCmt = await (
+                    from h in _context.NguoiLxHoSos
+                    join n in _context.NguoiLxes on h.MaDk equals n.MaDk
+                    where h.MaDk != maDk
+                          && h.MaCsdt == hoSo.MaCsdt
+                          && h.MaKhoaHoc == hoSo.MaKhoaHoc
+                          && n.SoCmt == nguoi.SoCmt
+                    select n
+                ).AnyAsync();
+
+                if (existsSoCmt)
+                    throw new BadRequestException("Số CMT này đã tồn tại trong khóa học này.");
+            }
 
             var soHoSo = hoSo.SoHoSo;
 
-            // ===== RESET GIAY TO =====
-            var oldGiayTos = await _context.NguoiLxhsGiayTos
-                .Where(x => x.MaDk == maDk && x.SoHoSo == soHoSo)
-                .ToListAsync();
-
-            _context.NguoiLxhsGiayTos.RemoveRange(oldGiayTos);
-
-            if (rq.GiayTos != null && rq.GiayTos.Any())
+            // ===== CAP NHAT GIAY TO =====
+            // null: body không cập nhật giấy tờ -> giữ nguyên dữ liệu cũ.
+            // []: body chủ động gửi danh sách rỗng -> xóa toàn bộ giấy tờ hiện tại.
+            // có dữ liệu: thay danh sách cũ bằng danh sách mới.
+            if (rq.GiayTos != null)
             {
+                var oldGiayTos = await _context.NguoiLxhsGiayTos
+                    .Where(x => x.MaDk == maDk && x.SoHoSo == soHoSo)
+                    .ToListAsync();
+
+                _context.NguoiLxhsGiayTos.RemoveRange(oldGiayTos);
+
                 foreach (var gt in rq.GiayTos)
                 {
                     _context.NguoiLxhsGiayTos.Add(new NguoiLxhsGiayTo
@@ -516,11 +567,21 @@ namespace Ttlaixe.Businesses
             if (file == null || file.Length == 0)
                 throw new BadRequestException("File ảnh không hợp lệ.");
 
-            // ===== CHỈ 1 DÒNG DUY NHẤT =====
+            var blockStatuses = new[] { "05", "11", "12", "13" };
+            if (!string.IsNullOrEmpty(hoSo.TtXuLy)
+                && blockStatuses.Contains(hoSo.TtXuLy))
+            {
+                throw new BadRequestException(
+                    $"Không được phép chỉnh sửa hình thẻ khi TT_XuLy = {hoSo.TtXuLy}");
+            }
+
             hoSo.DuongDanAnh = await _imageService
                 .SaveAsync(file, maDk, maDk);
 
-            hoSo.TtXuLy = "03";
+            // Đồng nhất với UpdateAsync: chỉ chuyển hồ sơ mới/01 sang 03,
+            // không ép các trạng thái hợp lệ khác quay về 03.
+            if (string.IsNullOrEmpty(hoSo.TtXuLy) || hoSo.TtXuLy == "01")
+                hoSo.TtXuLy = "03";
 
             await _context.SaveChangesAsync();
         }

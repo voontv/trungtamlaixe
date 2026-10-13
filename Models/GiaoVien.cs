@@ -143,5 +143,11 @@ public partial class GiaoVien
 
     public string NoiCapGcn { get; set; }
 
+    public string CacMonHoc { get; set; }
+
+    public string LoaiGiaoVien { get; set; }
+
+    public string CacHangDaCo { get; set; }
+
     public virtual DmDvhc NoiCtMaDv { get; set; }
 }

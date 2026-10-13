@@ -376,6 +376,12 @@ public partial class NguoiLxHoSo
 
     public double? QdthucHanhHinh { get; set; }
 
+    public double? DiemKqmoPhong { get; set; }
+
+    public double? DiemKqhinh { get; set; }
+
+    public double? DiemKqtienLui { get; set; }
+
     public virtual DmHangDt HangDaoTaoNavigation { get; set; }
 
     public virtual DmHangGplx HangGplxNavigation { get; set; }
