@@ -1,11 +1,9 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using ImageMagick;
 using log4net;
-using Microsoft.Extensions.Configuration;
 
 namespace Ttlaixe.DriverApi
 {
@@ -13,6 +11,32 @@ namespace Ttlaixe.DriverApi
     {
         /// <summary>The photo resized to the report's portrait box as base64 JPEG, or null when unavailable.</summary>
         Task<string> LoadAsync(string stored);
+    }
+
+    /// <summary>Turns the stored photo path (DuongDanAnh) into a file this server can read, or null.</summary>
+    public interface IDriverPhotoPathResolver
+    {
+        string Resolve(string stored);
+    }
+
+    /// <summary>
+    /// Reads the stored path as it is: DuongDanAnh holds a UNC path (\\server\B\2026\...) of the image share,
+    /// which the Windows host running this API can open directly. Anything that is not an absolute path, or that
+    /// climbs out of its folder with "..", is refused.
+    /// </summary>
+    public class DirectPhotoPathResolver : IDriverPhotoPathResolver
+    {
+        public string Resolve(string stored)
+        {
+            var path = stored.Trim();
+            if (!Path.IsPathRooted(path))
+            {
+                return null;
+            }
+
+            var segments = path.Split('\\', '/');
+            return segments.Contains("..") ? null : path;
+        }
     }
 
     public class DriverPhotoService : IDriverPhotoService
@@ -24,11 +48,11 @@ namespace Ttlaixe.DriverApi
 
         private static readonly ILog Log = LogManager.GetLogger(typeof(DriverPhotoService));
 
-        private readonly IConfiguration _config;
+        private readonly IDriverPhotoPathResolver _paths;
 
-        public DriverPhotoService(IConfiguration config)
+        public DriverPhotoService(IDriverPhotoPathResolver paths)
         {
-            _config = config;
+            _paths = paths;
         }
 
         public async Task<string> LoadAsync(string stored)
@@ -38,10 +62,10 @@ namespace Ttlaixe.DriverApi
                 return null;
             }
 
-            var file = Locate(stored);
+            var file = _paths.Resolve(stored);
             if (file == null)
             {
-                Log.Warn("Photo path is not under any configured path map");
+                Log.Warn("Photo path is not readable by this server");
                 return null;
             }
 
@@ -55,57 +79,6 @@ namespace Ttlaixe.DriverApi
                 Log.Warn($"Photo could not be processed: {ex.Message}");
                 return null;
             }
-        }
-
-        /// <summary>
-        /// Turns a stored photo path (a Windows share path such as \\server\B\2026\x.jp2) into a path below the
-        /// directory where that share is mounted, or null when the path is outside the share.
-        /// </summary>
-        public static string MapPhotoPath(string stored, string sharePrefix, string mountDir)
-        {
-            static string Normalize(string value) => value.Replace('\\', '/');
-
-            var prefix = Normalize(sharePrefix).TrimEnd('/').ToLowerInvariant();
-            var source = Normalize(stored.Trim());
-
-            if (!source.ToLowerInvariant().StartsWith(prefix + "/", StringComparison.Ordinal))
-            {
-                return null;
-            }
-
-            var root = Path.GetFullPath(mountDir);
-            var target = Path.GetFullPath(Path.Combine(root, source.Substring(prefix.Length + 1)));
-            var relative = Path.GetRelativePath(root, target);
-
-            return relative == "" || relative == "." || relative.StartsWith("..", StringComparison.Ordinal) || Path.IsPathRooted(relative)
-                ? null
-                : target;
-        }
-
-        /// <summary>First path map (`source=mountDir`, comma separated in Photo:PathMaps) that contains the path.</summary>
-        private string Locate(string stored)
-        {
-            var maps = (_config["Photo:PathMaps"] ?? "")
-                .Split(',')
-                .Select(entry => entry.Trim())
-                .Where(entry => entry.Length > 0);
-
-            foreach (var entry in maps)
-            {
-                var separator = entry.LastIndexOf('=');
-                if (separator < 0)
-                {
-                    continue;
-                }
-
-                var file = MapPhotoPath(stored, entry.Substring(0, separator), entry.Substring(separator + 1));
-                if (file != null)
-                {
-                    return file;
-                }
-            }
-
-            return null;
         }
 
         private static byte[] Resize(byte[] content)

@@ -79,14 +79,11 @@ and `anhBase64`: the photo of the active HoSo (`DuongDanAnh`) cropped and resize
 (quality 82), or `null` when there is no readable photo. A driver without an active HoSo is still returned, with `null` photo.
 The response carries `Cache-Control: no-store`. The caller prints an exam report from it and must not store or log it.
 
-Photos are JPEG 2000 files on a Windows share (`DuongDanAnh` is a UNC path). Mount the share and map it:
-
-```
-Photo__PathMaps=\\192.168.100.248\B=/mnt/photos/B,\\192.168.100.248\d=/mnt/photos/d
-```
-
-`Photo:PathMaps` is `source prefix=local directory`, comma separated, first match wins, prefix compared ignoring case. A path
-outside every prefix, or one that escapes its directory (`..`), is refused and gives no photo. Decoding, orientation, the
+The stored path (`DuongDanAnh`) is a UNC path of the image share, e.g.
+`\\192.168.100.248\B\2026\im_gplx\48012K26B0100\48012-20260304-103333.jp2`. It is opened as it is, so the API must
+run on a Windows host whose account can read that share (as the rest of this project already assumes). Paths that are not
+absolute, or that contain `..`, are refused and give no photo. A Linux or container deployment cannot open UNC paths and
+returns `null` photos unless it supplies its own `IDriverPhotoPathResolver`. Decoding (JPEG 2000 included), orientation, the
 crop (fill the box, keep the top) and the JPEG encoding use Magick.NET.
 
 ## Errors

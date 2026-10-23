@@ -85,6 +85,7 @@ namespace Ttlaixe
             services.AddScoped<IHoSoHocPhiBusiness, HoSoHocPhiBusiness>();
             services.AddScoped<IKhoaHocsBusinesses, KhoaHocsBusinesses>();
             services.AddScoped<IDriversBusiness, DriversBusiness>();
+            services.AddSingleton<IDriverPhotoPathResolver, DirectPhotoPathResolver>();
             services.AddSingleton<IDriverPhotoService, DriverPhotoService>();
         }
 

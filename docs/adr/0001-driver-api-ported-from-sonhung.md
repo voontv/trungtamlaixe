@@ -14,7 +14,9 @@ habits:
   SQL stays identical to the original so the two can be compared row for row. The connection comes from `IGplxTenantProvider`,
   so `x-loai-xe: moto` selects CSDT_MOTO like every other endpoint.
 - Photos are decoded with Magick.NET (already a dependency, handles JPEG 2000) instead of sharp + openjpeg. Bytes differ,
-  the 240 x 330 crop (fill the box, keep the top) and quality 82 do not.
+  the 240 x 330 crop (fill the box, keep the top) and quality 82 do not. The stored UNC path is opened directly
+  (Windows host with access to the share); the NestJS service needed a path map because it ran in Linux containers. The
+  path lookup sits behind `IDriverPhotoPathResolver` so a non-Windows environment can supply its own.
 
 Why it is worth remembering: the next person will be tempted to "fix" the camelCase or move validation to annotations. Do that
 only together with the partner.

@@ -14,51 +14,56 @@ using Xunit;
 
 namespace Ttlaixe.Tests
 {
-    public class DriverPhotoServiceTests
+    public class DirectPhotoPathResolverTests
     {
-        private static readonly string Mount = Path.GetFullPath(Path.Combine(Path.GetTempPath(), "photos"));
+        private readonly DirectPhotoPathResolver _resolver = new DirectPhotoPathResolver();
 
         [Fact]
-        public void MapPhotoPath_maps_a_share_path_below_the_mount_directory()
+        public void Reads_an_absolute_path_as_stored_ignoring_surrounding_whitespace()
         {
-            var mapped = DriverPhotoService.MapPhotoPath(@"\\192.168.100.248\B\2026\x.jp2", @"\\192.168.100.248\B", Mount);
+            var file = Path.Combine(Path.GetTempPath(), "2026", "x.jp2");
 
-            Assert.Equal(Path.Combine(Mount, "2026", "x.jp2"), mapped);
+            Assert.Equal(file, _resolver.Resolve("  " + file + " "));
         }
 
         [Fact]
-        public void MapPhotoPath_ignores_case_and_surrounding_whitespace()
+        public void Reads_a_UNC_share_path_on_Windows()
         {
-            var mapped = DriverPhotoService.MapPhotoPath(@"  \\SERVER\b\x.jp2 ", @"\\server\B\", Mount);
+            if (!OperatingSystem.IsWindows())
+            {
+                return;
+            }
 
-            Assert.Equal(Path.Combine(Mount, "x.jp2"), mapped);
+            const string stored = @"\\192.168.100.248\B\2026\im_gplx\48012K26B0100\48012-20260304-103333.jp2";
+
+            Assert.Equal(stored, _resolver.Resolve(stored));
         }
 
         [Theory]
-        [InlineData(@"\\other\B\x.jp2")]
-        [InlineData(@"\\192.168.100.248\Bogus\x.jp2")]
-        [InlineData(@"\\192.168.100.248\B")]
-        [InlineData(@"\\192.168.100.248\B\..\..\etc\passwd")]
-        [InlineData(@"\\192.168.100.248\B\")]
-        public void MapPhotoPath_refuses_paths_outside_the_share(string stored)
+        [InlineData("")]
+        [InlineData("2026/x.jp2")]
+        [InlineData("x.jp2")]
+        public void Refuses_a_path_that_is_not_absolute(string stored)
         {
-            Assert.Null(DriverPhotoService.MapPhotoPath(stored, @"\\192.168.100.248\B", Mount));
+            Assert.Null(_resolver.Resolve(stored));
         }
 
         [Fact]
-        public void Locate_uses_the_first_matching_map_and_unreadable_files_give_no_photo()
+        public void Refuses_a_path_that_climbs_out_of_its_folder()
         {
-            var config = new ConfigurationBuilder()
-                .AddInMemoryCollection(new Dictionary<string, string>
-                {
-                    ["Photo:PathMaps"] = $@"\\a\B={Mount}/b,\\a\d={Mount}/d",
-                })
-                .Build();
-            var service = new DriverPhotoService(config);
+            var escaping = Path.Combine(Path.GetTempPath(), "2026", "..", "..", "etc", "passwd");
+
+            Assert.Null(_resolver.Resolve(escaping));
+        }
+
+        [Fact]
+        public void Gives_no_photo_when_the_path_is_refused_or_the_file_is_missing()
+        {
+            var service = new DriverPhotoService(_resolver);
 
             Assert.Null(service.LoadAsync(null).Result);
-            Assert.Null(service.LoadAsync(@"\\nowhere\x.jp2").Result);
-            Assert.Null(service.LoadAsync(@"\\a\d\missing.jp2").Result);
+            Assert.Null(service.LoadAsync("x.jp2").Result);
+            Assert.Null(service.LoadAsync(Path.Combine(Path.GetTempPath(), "missing-photo.jp2")).Result);
         }
     }
 
