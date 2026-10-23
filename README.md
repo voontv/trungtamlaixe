@@ -4,4 +4,4 @@ sql_server Scaffold-DbContext "Data Source=200.201.222.67,1433;Initial Catalog=T
 
 ## Driver query API
 
-Read-only `GET /api/v1/drivers`, `POST /api/v1/drivers/verify` and `POST /api/v1/drivers/profiles` for the exam site, limited to the IPs in `DriverApi:AllowedIps` (empty = nobody). See [docs/driver-query-api.md](docs/driver-query-api.md) and [GLOSSARY.md](GLOSSARY.md).
+Read-only `GET /api/v1/drivers`, `POST /api/v1/drivers/verify` and `POST /api/v1/drivers/profiles` for the exam site, limited to the IPs in `DriverApi:AllowedIps` (`appsettings.json` lists `72.62.73.239`; empty = nobody). See [docs/driver-query-api.md](docs/driver-query-api.md) and [GLOSSARY.md](GLOSSARY.md).
