@@ -18,6 +18,7 @@ using System.Text.Json.Serialization;
 using Ttlaixe.Models;
 using Ttlaixe.DTO.request;
 using Ttlaixe.Businesses;
+using Ttlaixe.DriverApi;
 
 namespace Ttlaixe
 {
@@ -83,6 +84,8 @@ namespace Ttlaixe
             services.AddScoped<IHoSoHocPhiBusiness, HoSoHocPhiBusiness>();
             services.AddScoped<IHoSoHocPhiBusiness, HoSoHocPhiBusiness>();
             services.AddScoped<IKhoaHocsBusinesses, KhoaHocsBusinesses>();
+            services.AddScoped<IDriversBusiness, DriversBusiness>();
+            services.AddSingleton<IDriverPhotoService, DriverPhotoService>();
         }
 
         private static void ConfigJson(JsonOptions options)
