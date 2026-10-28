@@ -1,6 +1,7 @@
 ﻿using BusinessLogic.Providers;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Rewrite;
 using Microsoft.EntityFrameworkCore;
@@ -114,6 +115,14 @@ namespace Ttlaixe
             }
 
             loggerFactory.AddLog4Net();
+
+            // Behind a TLS-terminating proxy (Cloudflare Tunnel, IIS ARR...) the app only sees plain HTTP.
+            // Read X-Forwarded-Proto/For first, otherwise the redirect below loops forever and
+            // DriverApi:AllowedIps is matched against the proxy instead of the real client.
+            app.UseForwardedHeaders(new ForwardedHeadersOptions
+            {
+                ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+            });
 
             app.UseRewriter(new RewriteOptions().AddRedirectToHttps());
 
