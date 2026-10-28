@@ -5,6 +5,8 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ttlaixe", "Ttlaixe.csproj", "{FC0FA9AA-50EA-4AAD-A84A-5301DD1516C3}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ttlaixe.Tests", "Ttlaixe.Tests\Ttlaixe.Tests.csproj", "{3E5C8B52-6B0D-4D47-9E0B-7A1B2C3D4E5F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{FC0FA9AA-50EA-4AAD-A84A-5301DD1516C3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FC0FA9AA-50EA-4AAD-A84A-5301DD1516C3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FC0FA9AA-50EA-4AAD-A84A-5301DD1516C3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3E5C8B52-6B0D-4D47-9E0B-7A1B2C3D4E5F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3E5C8B52-6B0D-4D47-9E0B-7A1B2C3D4E5F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3E5C8B52-6B0D-4D47-9E0B-7A1B2C3D4E5F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3E5C8B52-6B0D-4D47-9E0B-7A1B2C3D4E5F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
