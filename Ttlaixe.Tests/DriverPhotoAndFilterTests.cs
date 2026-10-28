@@ -1,14 +1,6 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Net;
 using System.Text.Json;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Abstractions;
-using Microsoft.AspNetCore.Mvc.Filters;
-using Microsoft.AspNetCore.Routing;
-using Microsoft.Extensions.Configuration;
 using Ttlaixe.DriverApi;
 using Xunit;
 
@@ -64,58 +56,6 @@ namespace Ttlaixe.Tests
             Assert.Null(service.LoadAsync(null).Result);
             Assert.Null(service.LoadAsync("x.jp2").Result);
             Assert.Null(service.LoadAsync(Path.Combine(Path.GetTempPath(), "missing-photo.jp2")).Result);
-        }
-    }
-
-    public class DriverApiIpFilterTests
-    {
-        private static int? Status(string allowed, string realIp, string remote)
-        {
-            var config = new ConfigurationBuilder()
-                .AddInMemoryCollection(new Dictionary<string, string> { ["DriverApi:AllowedIps"] = allowed })
-                .Build();
-            var http = new DefaultHttpContext();
-            if (realIp != null)
-            {
-                http.Request.Headers["X-Real-IP"] = realIp;
-            }
-
-            http.Connection.RemoteIpAddress = remote == null ? null : IPAddress.Parse(remote);
-            var context = new AuthorizationFilterContext(
-                new ActionContext(http, new RouteData(), new ActionDescriptor()), new List<IFilterMetadata>());
-
-            new DriverApiIpFilter(config).OnAuthorization(context);
-
-            return (context.Result as StatusCodeResult)?.StatusCode;
-        }
-
-        [Fact]
-        public void Allows_a_listed_X_Real_IP()
-        {
-            Assert.Null(Status("1.1.1.1; 2.2.2.2", "2.2.2.2", "10.0.0.9"));
-        }
-
-        [Fact]
-        public void X_Real_IP_wins_over_the_connection_address()
-        {
-            Assert.Equal(403, Status("10.0.0.9", "2.2.2.2", "10.0.0.9"));
-        }
-
-        [Fact]
-        public void Falls_back_to_the_remote_address_including_IPv4_mapped_ones()
-        {
-            Assert.Null(Status("10.0.0.9", null, "::ffff:10.0.0.9"));
-        }
-
-        [Theory]
-        [InlineData("", "1.1.1.1")]
-        [InlineData(null, "1.1.1.1")]
-        [InlineData(";", "1.1.1.1")]
-        [InlineData("1.1.1.1", "1.1.1.10")]
-        [InlineData("1.1.1.1", null)]
-        public void Rejects_everyone_else_and_fails_closed(string allowed, string realIp)
-        {
-            Assert.Equal(403, Status(allowed, realIp, null));
         }
     }
 

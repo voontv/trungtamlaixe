@@ -46,10 +46,6 @@ _Avoid_: Current, unless referring to a time-based version.
 The photo of a driver stored on the file share and referenced by the HoSo's DuongDanAnh. The API serves it resized to 240 x 330 px.
 _Avoid_: Avatar, thumbnail.
 
-**Allowed IP**:
-A client IP address listed in `DriverApi:AllowedIps`. Only an Allowed IP may call the driver query endpoints.
-_Avoid_: Whitelisted user; the API has no users.
-
 **Tenant database**:
 The CSDT database a request reads, chosen by the `x-loai-xe` header: `moto` is CSDT_MOTO, anything else CSDT_OTO.
 _Avoid_: Environment.

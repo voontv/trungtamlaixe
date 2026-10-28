@@ -1,5 +1,10 @@
 # Driver endpoints are protected by an IP allowlist, not by JWT
 
+> **Superseded, temporarily.** The IP allowlist (`DriverApiIpFilter`, `DriverApi:AllowedIps`) was removed because it rejected
+> every call behind Cloudflare Tunnel, and its `X-Real-IP` check could be forged there. The endpoints are open until a
+> replacement exists (for example Cloudflare Access with a service token, or an allowlist built on `CF-Connecting-IP`).
+> The text below describes the removed design.
+
 The NestJS service had no credential and left access to the network. Here the three endpoints are `[AllowAnonymous]` (no JWT,
 the partner has no account) but gated by `DriverApiIpFilter` against `DriverApi:AllowedIps`, because `verify` and `profiles`
 return identity numbers and photos.
