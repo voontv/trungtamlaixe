@@ -116,15 +116,13 @@ namespace Ttlaixe
 
             loggerFactory.AddLog4Net();
 
-            // Behind a TLS-terminating proxy (Cloudflare Tunnel, IIS ARR...) the app only sees plain HTTP.
-            // Read X-Forwarded-Proto/For first, otherwise the redirect below loops forever and
-            // DriverApi:AllowedIps is matched against the proxy instead of the real client.
+            // Behind a TLS-terminating proxy (Cloudflare Tunnel) the app only sees plain HTTP from loopback.
+            // Read X-Forwarded-For so DriverApi:AllowedIps is matched against the real client, not the proxy.
+            // HTTP -> HTTPS is enforced at Cloudflare (Always Use HTTPS), not here.
             app.UseForwardedHeaders(new ForwardedHeadersOptions
             {
                 ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
             });
-
-            app.UseRewriter(new RewriteOptions().AddRedirectToHttps());
 
             app.UseCors(x => x
                 .AllowAnyMethod()
