@@ -9,21 +9,9 @@ Terms are defined in [GLOSSARY.md](../GLOSSARY.md). Decisions: [ADR 0001](adr/00
 
 ## Access
 
-There is no login. Only the IPs in `DriverApi:AllowedIps` (separated by `;`, exact match) may call these endpoints; anyone
-else gets an empty `403`. `appsettings.json` ships with `72.62.73.239`. **An empty or missing list rejects every call**, so
-overriding it with an empty value closes the API.
-
-```json
-"DriverApi": { "AllowedIps": "72.62.73.239;203.0.113.11" }
-```
-
-Setting `DriverApi__AllowedIps` replaces the whole list, it does not add to it.
-
-Environment variable form: `DriverApi__AllowedIps`. The client IP is the `X-Real-IP` header, else the connection's remote
-address. The reverse proxy in front must **set** `X-Real-IP` (overwriting what the client sent); if the app is reachable
-without that proxy, a caller can forge the header and the allowlist protects nothing.
-
-`verify` and `profiles` return identity numbers and photos, so keep the network path to this API restricted as well.
+There is no login and **no IP check**: anyone who can reach the API can call it (the allowlist was removed, see
+[ADR 0002](adr/0002-driver-api-ip-allowlist.md)). `verify` and `profiles` return identity numbers and photos, so restrict the
+network path to this API (firewall, Cloudflare Access) until an access control is back.
 
 ## Database
 

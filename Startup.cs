@@ -117,7 +117,7 @@ namespace Ttlaixe
             loggerFactory.AddLog4Net();
 
             // Behind a TLS-terminating proxy (Cloudflare Tunnel) the app only sees plain HTTP from loopback.
-            // Read X-Forwarded-For so DriverApi:AllowedIps is matched against the real client, not the proxy.
+            // Read X-Forwarded-For/Proto so Connection.RemoteIpAddress and Request.Scheme are the client's, not the proxy's.
             // HTTP -> HTTPS is enforced at Cloudflare (Always Use HTTPS), not here.
             app.UseForwardedHeaders(new ForwardedHeadersOptions
             {

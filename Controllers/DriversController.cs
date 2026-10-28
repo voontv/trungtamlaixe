@@ -8,13 +8,12 @@ namespace Ttlaixe.Controllers
 {
     /// <summary>
     /// Read-only driver queries for partner systems. Same contract as the NestJS sonhung service
-    /// (camelCase JSON, validation errors as 400), protected by an IP allowlist instead of a login.
+    /// (camelCase JSON, validation errors as 400). No login and no IP check: anyone who can reach it can call it.
     /// See docs/driver-query-api.md.
     /// </summary>
     [ApiController]
     [Route("api/v1/drivers")]
     [AllowAnonymous]
-    [TypeFilter(typeof(DriverApiIpFilter))]
     public class DriversController : ControllerBase
     {
         private readonly IDriversBusiness _business;
